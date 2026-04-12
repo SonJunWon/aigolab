@@ -4,6 +4,13 @@ import { MainHomePage } from "./pages/MainHomePage";
 import { HomePage as CodingHomePage } from "./pages/HomePage";
 import { CurriculumPage } from "./pages/CurriculumPage";
 import { LessonPage } from "./pages/LessonPage";
+import { useParams } from "react-router-dom";
+
+/** lessonId 변경 시 LessonPage 전체를 리마운트하는 래퍼 */
+function LessonPageWrapper() {
+  const { lessonId } = useParams();
+  return <LessonPage key={lessonId} />;
+}
 import { PlaygroundPage } from "./pages/PlaygroundPage";
 import { IdePage } from "./pages/IdePage";
 import { AuthPage } from "./pages/AuthPage";
@@ -80,7 +87,7 @@ function AppInner() {
         <Route path="/coding/learn/:language/:track" element={<CurriculumPage />} />
         <Route
           path="/coding/learn/:language/:track/:lessonId"
-          element={<LessonPage />}
+          element={<LessonPageWrapper />}
         />
         <Route path="/coding/playground" element={<PlaygroundPage />} />
         <Route path="/coding/ide" element={<IdePage />} />
