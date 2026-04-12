@@ -17,6 +17,9 @@ interface AuthState {
   /** 이메일 로그인 */
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
 
+  /** Google OAuth 로그인 */
+  signInWithGoogle: () => Promise<{ error?: string }>;
+
   /** 로그아웃 */
   signOut: () => Promise<void>;
 }
@@ -67,6 +70,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     });
     set({ loading: false });
 
+    if (error) return { error: error.message };
+    return {};
+  },
+
+  signInWithGoogle: async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
     if (error) return { error: error.message };
     return {};
   },
