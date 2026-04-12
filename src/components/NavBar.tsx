@@ -2,6 +2,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useUIStore } from "../store/uiStore";
 
+// @ts-expect-error -- Vite injects this from package.json
+const APP_VERSION: string = __APP_VERSION__;
+
 const NAV_ITEMS = [
   { path: "/courses", label: "📚 AI 강의" },
   { path: "/coding", label: "🐍 코딩 실습" },
@@ -31,6 +34,7 @@ export function NavBar() {
           <span className="text-base font-semibold text-brand-text group-hover:text-brand-primary transition-colors">
             AIGoLab
           </span>
+          <span className="text-[10px] text-brand-textDim/50">v{APP_VERSION}</span>
         </Link>
 
         {/* 네비게이션 */}
