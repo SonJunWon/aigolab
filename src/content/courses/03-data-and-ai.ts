@@ -299,4 +299,5 @@ df['나이'].fillna(df['나이'].mean(), inplace=True)
       },
     ],
   } satisfies Quiz,
+  nextCourseId: "deep-learning-basics",
 };

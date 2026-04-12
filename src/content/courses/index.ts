@@ -2,8 +2,10 @@ import type { Course, CourseSummary } from "../../types/course";
 import { course01 } from "./01-what-is-ai";
 import { course02 } from "./02-ml-basics";
 import { course03 } from "./03-data-and-ai";
+import { course04 } from "./04-deep-learning";
+import { course05 } from "./05-nlp-basics";
 
-export const COURSES: Course[] = [course01, course02, course03];
+export const COURSES: Course[] = [course01, course02, course03, course04, course05];
 
 export const COURSE_SUMMARIES: CourseSummary[] = COURSES.map((c) => ({
   id: c.id,

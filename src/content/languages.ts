@@ -53,6 +53,12 @@ export const TRACKS: TrackInfo[] = [
     description: "NumPy, Pandas, Matplotlib로 데이터를 다루고 분석해요.",
     estimatedHours: 5,
   },
+  {
+    id: "ml-practice",
+    name: "머신러닝 실습",
+    description: "scikit-learn으로 회귀, 분류, 클러스터링, 파이프라인까지.",
+    estimatedHours: 5,
+  },
 ];
 
 export function getLanguage(id: string): LanguageInfo | undefined {

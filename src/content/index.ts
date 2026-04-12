@@ -15,6 +15,10 @@ import {
   LESSONS as PY_DS,
   LESSON_SUMMARIES as PY_DS_SUMMARIES,
 } from "./python/data-science";
+import {
+  LESSONS as PY_ML,
+  LESSON_SUMMARIES as PY_ML_SUMMARIES,
+} from "./python/ml-practice";
 
 type Curriculum = {
   lessons: Lesson[];
@@ -34,6 +38,10 @@ const CURRICULA: Partial<Record<Language, Partial<Record<Track, Curriculum>>>> =
     "data-science": {
       lessons: PY_DS,
       summaries: PY_DS_SUMMARIES,
+    },
+    "ml-practice": {
+      lessons: PY_ML,
+      summaries: PY_ML_SUMMARIES,
     },
   },
   // javascript: { ... }  // 추후
