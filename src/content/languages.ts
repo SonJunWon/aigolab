@@ -47,6 +47,12 @@ export const TRACKS: TrackInfo[] = [
     name: "중급 이상",
     description: "이미 다른 언어를 알고 있어요. 이 언어만의 특징을 빠르게 배울게요.",
   },
+  {
+    id: "data-science",
+    name: "데이터 과학",
+    description: "NumPy, Pandas, Matplotlib로 데이터를 다루고 분석해요.",
+    estimatedHours: 5,
+  },
 ];
 
 export function getLanguage(id: string): LanguageInfo | undefined {

@@ -5,7 +5,7 @@
 import type { Quiz } from "./quiz";
 
 export type Language = "python" | "javascript" | "ruby" | "go";
-export type Track = "beginner" | "intermediate";
+export type Track = "beginner" | "intermediate" | "data-science";
 
 /** 콘텐츠의 언어 메타데이터 */
 export interface LanguageInfo {

@@ -11,6 +11,10 @@ import {
   LESSONS as PY_INTERMEDIATE,
   LESSON_SUMMARIES as PY_INTERMEDIATE_SUMMARIES,
 } from "./python/intermediate";
+import {
+  LESSONS as PY_DS,
+  LESSON_SUMMARIES as PY_DS_SUMMARIES,
+} from "./python/data-science";
 
 type Curriculum = {
   lessons: Lesson[];
@@ -26,6 +30,10 @@ const CURRICULA: Partial<Record<Language, Partial<Record<Track, Curriculum>>>> =
     intermediate: {
       lessons: PY_INTERMEDIATE,
       summaries: PY_INTERMEDIATE_SUMMARIES,
+    },
+    "data-science": {
+      lessons: PY_DS,
+      summaries: PY_DS_SUMMARIES,
     },
   },
   // javascript: { ... }  // 추후
