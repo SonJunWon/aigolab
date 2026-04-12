@@ -13,6 +13,7 @@ import { NavBar } from "./components/NavBar";
 import { ShortcutsHelp } from "./components/ShortcutsHelp";
 import { useGlobalShortcuts } from "./hooks/useGlobalShortcuts";
 import { useAuthStore } from "./store/authStore";
+import { MyPage } from "./pages/MyPage";
 import { useProgressStore } from "./store/progressStore";
 
 /**
@@ -86,7 +87,7 @@ function AppInner() {
         <Route path="/courses" element={<CoursesPage />} />
         <Route path="/courses/:courseId" element={<CourseDetailPage />} />
         <Route path="/projects" element={<ComingSoon title="🧪 AI 프로젝트" />} />
-        <Route path="/my" element={<ComingSoon title="👤 마이페이지" />} />
+        <Route path="/my" element={<MyPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
