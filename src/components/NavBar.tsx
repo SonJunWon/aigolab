@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { useUIStore } from "../store/uiStore";
 
 const NAV_ITEMS = [
   { path: "/courses", label: "📚 AI 강의" },
@@ -13,6 +14,8 @@ export function NavBar() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
+  const theme = useUIStore((s) => s.theme);
+  const toggleTheme = useUIStore((s) => s.toggleTheme);
 
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + "/");
@@ -47,8 +50,17 @@ export function NavBar() {
             </button>
           ))}
 
+          {/* 테마 토글 */}
+          <button
+            onClick={toggleTheme}
+            className="px-2 py-2 text-sm rounded-lg text-brand-textDim hover:text-brand-text hover:bg-brand-hover/50 transition-colors"
+            title={theme === "dark" ? "라이트 모드" : "다크 모드"}
+          >
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
+
           {/* 구분선 */}
-          <div className="w-px h-5 bg-brand-subtle mx-2" />
+          <div className="w-px h-5 bg-brand-subtle mx-1" />
 
           {/* 로그인 상태 */}
           {user ? (

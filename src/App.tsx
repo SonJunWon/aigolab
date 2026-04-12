@@ -13,7 +13,10 @@ import { NavBar } from "./components/NavBar";
 import { ShortcutsHelp } from "./components/ShortcutsHelp";
 import { useGlobalShortcuts } from "./hooks/useGlobalShortcuts";
 import { useAuthStore } from "./store/authStore";
+import { useUIStore } from "./store/uiStore";
 import { MyPage } from "./pages/MyPage";
+import { ProjectsPage } from "./pages/ProjectsPage";
+import { ProjectDetailPage } from "./pages/ProjectDetailPage";
 import { useProgressStore } from "./store/progressStore";
 
 /**
@@ -46,6 +49,13 @@ function AppInner() {
   const initialize = useAuthStore((s) => s.initialize);
   const user = useAuthStore((s) => s.user);
   const migrateToServer = useProgressStore((s) => s.migrateToServer);
+
+  const theme = useUIStore((s) => s.theme);
+
+  // 테마 적용
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
   // 앱 시작 시 Supabase 세션 복원
   useEffect(() => {
@@ -86,7 +96,8 @@ function AppInner() {
         {/* AI 강의 */}
         <Route path="/courses" element={<CoursesPage />} />
         <Route path="/courses/:courseId" element={<CourseDetailPage />} />
-        <Route path="/projects" element={<ComingSoon title="🧪 AI 프로젝트" />} />
+        <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
         <Route path="/my" element={<MyPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
