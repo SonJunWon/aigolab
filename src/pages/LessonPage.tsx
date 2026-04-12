@@ -231,6 +231,7 @@ export function LessonPage() {
       {/* 퀴즈 (레슨에 quiz가 있으면 표시) */}
       {lesson.quiz && (
         <QuizPanel
+          key={lesson.id}
           quiz={lesson.quiz}
           onNext={nextLesson ? () => handleNext(nextLesson.id) : undefined}
         />
