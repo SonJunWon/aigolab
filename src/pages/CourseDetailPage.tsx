@@ -1,12 +1,24 @@
+import { useEffect } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { getCourseById } from "../content/courses";
 import { Markdown } from "../components/Markdown";
 import { QuizPanel } from "../components/quiz/QuizPanel";
+import { useAuthStore } from "../store/authStore";
+import { saveCourseProgress } from "../storage/supabaseQuizRepo";
 import type { CourseSection } from "../types/course";
 
 export function CourseDetailPage() {
   const { courseId } = useParams<{ courseId: string }>();
   const course = courseId ? getCourseById(courseId) : undefined;
+
+  const user = useAuthStore((s) => s.user);
+
+  // 강의 열람 기록 저장
+  useEffect(() => {
+    if (user && course) {
+      void saveCourseProgress(user.id, course.id, false);
+    }
+  }, [user, course]);
 
   if (!course) return <Navigate to="/courses" replace />;
 
@@ -60,7 +72,9 @@ export function CourseDetailPage() {
         {course.quiz && (
           <div className="mt-12">
             <QuizPanel
+              key={course.id}
               quiz={course.quiz}
+              quizId={course.id}
               onNext={
                 nextCourse
                   ? () => {

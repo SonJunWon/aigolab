@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { loadAllProgressFromSupabase } from "../storage/supabaseProgressRepo";
+import { loadQuizResults, loadAllCourseProgress } from "../storage/supabaseQuizRepo";
 import { getCurriculum } from "../content";
 import { COURSES } from "../content/courses";
 import { getLanguage, getTrack } from "../content/languages";
@@ -24,41 +25,42 @@ export function MyPage() {
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
   const [tracks, setTracks] = useState<TrackProgress[]>([]);
+  const [completedCourses, setCompletedCourses] = useState(0);
+  const [quizCount, setQuizCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
 
     (async () => {
+      // 코딩 트랙 진도
       const all = await loadAllProgressFromSupabase(user.id);
       const result: TrackProgress[] = [];
-
       for (const p of all) {
         const lang = getLanguage(p.language);
         const trk = getTrack(p.track);
-        const curriculum = getCurriculum(
-          p.language as Language,
-          p.track as Track
-        );
+        const curriculum = getCurriculum(p.language as Language, p.track as Track);
         if (!lang || !trk) continue;
-
         const total = curriculum?.summaries.length ?? 0;
         const completed = p.completed_lessons.length;
         result.push({
-          language: p.language,
-          track: p.track,
-          langName: lang.name,
-          trackName: trk.name,
-          icon: lang.icon,
-          completedCount: completed,
-          totalCount: total,
-          percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+          language: p.language, track: p.track, langName: lang.name,
+          trackName: trk.name, icon: lang.icon, completedCount: completed,
+          totalCount: total, percent: total > 0 ? Math.round((completed / total) * 100) : 0,
           currentLesson: p.current_lesson ?? undefined,
           isComplete: total > 0 && completed >= total,
         });
       }
-
       setTracks(result);
+
+      // AI 강의 진도
+      const courseProgress = await loadAllCourseProgress(user.id);
+      setCompletedCourses(courseProgress.filter(c => c.completed).length);
+
+      // 퀴즈 결과
+      const quizResults = await loadQuizResults(user.id);
+      setQuizCount(quizResults.length);
+
       setLoading(false);
     })();
   }, [user]);
@@ -67,7 +69,6 @@ export function MyPage() {
 
   const totalCompleted = tracks.reduce((s, t) => s + t.completedCount, 0);
   const totalLessons = tracks.reduce((s, t) => s + t.totalCount, 0);
-  const completedCourses = 0; // AI 강의 진도는 아직 미구현
   const completeTracks = tracks.filter((t) => t.isComplete);
 
   return (
@@ -105,7 +106,7 @@ export function MyPage() {
           <StatCard label="완료 챕터" value={`${totalCompleted}`} sub={`/ ${totalLessons}`} />
           <StatCard label="완료 트랙" value={`${completeTracks.length}`} sub={`/ ${tracks.length}`} />
           <StatCard label="AI 강의" value={`${completedCourses}`} sub={`/ ${COURSES.length}`} />
-          <StatCard label="수료증" value={`${completeTracks.length}`} sub="장" />
+          <StatCard label="퀴즈" value={`${quizCount}`} sub="회 완료" />
         </section>
 
         {/* 트랙별 진도 */}

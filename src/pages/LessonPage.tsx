@@ -233,6 +233,7 @@ export function LessonPage() {
         <QuizPanel
           key={lesson.id}
           quiz={lesson.quiz}
+          quizId={lesson.id}
           onNext={nextLesson ? () => handleNext(nextLesson.id) : undefined}
         />
       )}
