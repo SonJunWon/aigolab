@@ -108,23 +108,6 @@ function AppInner() {
   );
 }
 
-function ComingSoon({ title }: { title: string }) {
-  return (
-    <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-6 bg-brand-bg">
-      <div className="text-6xl mb-4">🚧</div>
-      <h1 className="text-2xl font-semibold text-brand-text mb-2">{title}</h1>
-      <p className="text-brand-textDim mb-6">
-        이 코너는 열심히 준비 중입니다. 곧 만나요!
-      </p>
-      <a
-        href="/"
-        className="px-5 py-2 text-sm rounded-lg bg-brand-primary text-white hover:bg-brand-primaryDim transition-colors"
-      >
-        홈으로 돌아가기
-      </a>
-    </div>
-  );
-}
 
 function App() {
   return (
