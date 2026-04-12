@@ -1,0 +1,272 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { LANGUAGES, TRACKS, getLanguage, getTrack } from "../content/languages";
+import { getLessonById } from "../content";
+import { listAllProgress } from "../storage/progressRepo";
+import type { StoredProgress } from "../storage/db";
+import type { Language, Track } from "../types/lesson";
+
+export function HomePage() {
+  const navigate = useNavigate();
+  const [selectedLang, setSelectedLang] = useState<Language | null>(null);
+  const [latestProgress, setLatestProgress] = useState<StoredProgress | null>(
+    null
+  );
+
+  // 마운트 시 가장 최근 진도 조회
+  useEffect(() => {
+    let cancelled = false;
+    listAllProgress()
+      .then((list) => {
+        if (cancelled) return;
+        // currentLesson 이 있는 것만, lastStudiedAt 내림차순
+        const withLesson = list.filter((p) => p.currentLesson);
+        const sorted = withLesson.sort(
+          (a, b) => b.lastStudiedAt - a.lastStudiedAt
+        );
+        setLatestProgress(sorted[0] ?? null);
+      })
+      .catch((err) => {
+        console.error("[HomePage] listAllProgress failed:", err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleTrackSelect = (track: Track) => {
+    if (!selectedLang) return;
+    navigate(`/coding/learn/${selectedLang}/${track}`);
+  };
+
+  // ─── 이어서 학습 배너용 정보 ─────────────────────
+  const resumeInfo = latestProgress
+    ? (() => {
+        const lang = getLanguage(latestProgress.language);
+        const track = getTrack(latestProgress.track);
+        const lesson =
+          lang && track && latestProgress.currentLesson
+            ? getLessonById(
+                lang.id,
+                track.id,
+                latestProgress.currentLesson
+              )
+            : undefined;
+        if (!lang || !track || !lesson) return null;
+        return { lang, track, lesson };
+      })()
+    : null;
+
+  return (
+    <div className="min-h-screen bg-colab-bg text-colab-text">
+      <div className="mx-auto max-w-5xl px-6 py-16">
+        {/* Hero */}
+        <header className="text-center mb-12">
+          <div className="text-6xl mb-4">🐍</div>
+          <h1 className="text-4xl font-semibold mb-3 text-colab-text">
+            Python Notebook
+          </h1>
+          <p className="text-lg text-colab-textDim">
+            브라우저에서 바로 시작하는 프로그래밍 언어 학습 플랫폼
+          </p>
+        </header>
+
+        {/* ─── 이어서 학습 배너 (진도 있을 때만) ─── */}
+        {resumeInfo && (
+          <section className="mb-10">
+            <Link
+              to={`/coding/learn/${resumeInfo.lang.id}/${resumeInfo.track.id}/${resumeInfo.lesson.id}`}
+              className="block p-6 rounded-xl border border-colab-accent/40 bg-gradient-to-r from-colab-panel to-colab-panel/60
+                         hover:border-colab-accent hover:from-colab-panel hover:shadow-lg hover:shadow-colab-accent/10
+                         transition-all group"
+            >
+              <div className="flex items-center gap-5">
+                <div className="shrink-0 text-5xl">{resumeInfo.lang.icon}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-colab-accent/15 text-colab-accent font-medium uppercase tracking-wider">
+                      📖 이어서 학습
+                    </span>
+                    <span className="text-xs text-colab-textDim">
+                      {resumeInfo.lang.name} · {resumeInfo.track.name} · 챕터{" "}
+                      {resumeInfo.lesson.order}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-medium text-colab-text truncate">
+                    {resumeInfo.lesson.title}
+                  </h3>
+                  {resumeInfo.lesson.subtitle && (
+                    <p className="mt-0.5 text-sm text-colab-textDim truncate">
+                      {resumeInfo.lesson.subtitle}
+                    </p>
+                  )}
+                </div>
+                <div className="shrink-0 flex items-center gap-2 text-colab-accent group-hover:translate-x-1 transition-transform">
+                  <span className="text-sm font-medium">계속하기</span>
+                  <span className="text-xl">→</span>
+                </div>
+              </div>
+            </Link>
+          </section>
+        )}
+
+        {/* Playground + IDE 바로가기 */}
+        <section className="mb-10 grid md:grid-cols-2 gap-4">
+          <Link
+            to="/coding/playground"
+            className="block p-5 rounded-xl border border-colab-subtle bg-colab-panel
+                       hover:border-colab-accent/60 hover:shadow-lg hover:shadow-colab-accent/5
+                       transition-all group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="shrink-0 w-12 h-12 rounded-lg bg-colab-accent/10 flex items-center justify-center text-2xl">
+                🧪
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-medium text-colab-text">
+                  Playground
+                </h3>
+                <p className="text-xs text-colab-textDim">
+                  노트북에서 자유 코딩. 자동 저장.
+                </p>
+              </div>
+              <span className="shrink-0 text-colab-textDim group-hover:text-colab-accent group-hover:translate-x-1 transition-all text-xl">
+                →
+              </span>
+            </div>
+          </Link>
+
+          <Link
+            to="/coding/ide"
+            className="block p-5 rounded-xl border border-colab-subtle bg-colab-panel
+                       hover:border-colab-accent/60 hover:shadow-lg hover:shadow-colab-accent/5
+                       transition-all group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="shrink-0 w-12 h-12 rounded-lg bg-colab-green/10 flex items-center justify-center text-2xl">
+                💻
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-medium text-colab-text">
+                  Python IDE
+                </h3>
+                <p className="text-xs text-colab-textDim">
+                  멀티 파일 · import 지원 · VS Code 스타일
+                </p>
+              </div>
+              <span className="shrink-0 text-colab-textDim group-hover:text-colab-accent group-hover:translate-x-1 transition-all text-xl">
+                →
+              </span>
+            </div>
+          </Link>
+        </section>
+
+        {/* Step 1: 언어 선택 */}
+        <section className="mb-12">
+          <h2 className="text-sm font-medium text-colab-textDim uppercase tracking-wider mb-4">
+            {resumeInfo ? "또는 새로 시작하기" : "1 — 배우고 싶은 언어를 선택하세요"}
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {LANGUAGES.map((lang) => {
+              const isSelected = selectedLang === lang.id;
+              const isDisabled = lang.status === "coming-soon";
+              return (
+                <button
+                  key={lang.id}
+                  disabled={isDisabled}
+                  onClick={() => setSelectedLang(lang.id)}
+                  className={`relative p-6 rounded-lg border text-left transition-all
+                    ${
+                      isDisabled
+                        ? "border-colab-subtle bg-colab-panel/50 opacity-50 cursor-not-allowed"
+                        : isSelected
+                        ? "border-colab-accent bg-colab-panel ring-2 ring-colab-accent/40"
+                        : "border-colab-subtle bg-colab-panel hover:border-colab-accent/60"
+                    }`}
+                >
+                  <div className="text-4xl mb-3">{lang.icon}</div>
+                  <h3 className="text-lg font-medium mb-1 text-colab-text">
+                    {lang.name}
+                  </h3>
+                  <p className="text-xs text-colab-textDim leading-relaxed">
+                    {lang.description}
+                  </p>
+                  {isDisabled && (
+                    <span className="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded-full bg-colab-subtle text-colab-textDim">
+                      준비 중
+                    </span>
+                  )}
+                  {isSelected && (
+                    <span className="absolute top-3 right-3 text-colab-accent">
+                      ✓
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Step 2: 트랙 선택 */}
+        <section
+          className={`transition-opacity ${
+            selectedLang ? "opacity-100" : "opacity-30 pointer-events-none"
+          }`}
+        >
+          <h2 className="text-sm font-medium text-colab-textDim uppercase tracking-wider mb-4">
+            {resumeInfo
+              ? "트랙을 선택하세요"
+              : "2 — 자신의 수준을 선택하세요"}
+          </h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            {TRACKS.map((track) => (
+              <button
+                key={track.id}
+                onClick={() => handleTrackSelect(track.id)}
+                disabled={!selectedLang}
+                className="group p-6 rounded-lg border border-colab-subtle bg-colab-panel text-left
+                           hover:border-colab-accent hover:bg-colab-panel/80 transition-all"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-xl font-medium text-colab-text">
+                    {track.name}
+                  </h3>
+                  <span className="text-colab-textDim group-hover:text-colab-accent transition-colors">
+                    →
+                  </span>
+                </div>
+                <p className="text-sm text-colab-textDim leading-relaxed">
+                  {track.description}
+                </p>
+                {track.estimatedHours && (
+                  <p className="mt-3 text-xs text-colab-textDim">
+                    예상 학습 시간: 약 {track.estimatedHours}시간
+                  </p>
+                )}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* 하단 안내 */}
+        <footer className="mt-20 text-center text-xs text-colab-textDim">
+          <p>
+            모든 코드는 브라우저에서 바로 실행됩니다 — 설치 없이, 서버 없이,
+            오프라인에서도.
+          </p>
+          <p className="mt-1">
+            Python 3.12 via{" "}
+            <a
+              href="https://pyodide.org"
+              target="_blank"
+              rel="noreferrer"
+              className="text-colab-accent hover:underline"
+            >
+              Pyodide
+            </a>
+          </p>
+        </footer>
+      </div>
+    </div>
+  );
+}

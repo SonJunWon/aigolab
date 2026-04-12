@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    @apply bg-colab-bg text-colab-text antialiased;
+    font-family: "Google Sans", "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+  }
+
+  /* 스크롤바 */
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: #5f6368;
+    border-radius: 5px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: #80868b;
+  }
+}
+
+@layer components {
+  /* 마크다운 본문 공통 스타일 — colab/brand 양쪽에서 작동 */
+  .md-prose {
+    @apply leading-relaxed;
+    color: #e8eaed;
+  }
+  .md-prose h1 { @apply text-2xl font-semibold mt-4 mb-3; color: #e8eaed; }
+  .md-prose h2 { @apply text-xl font-semibold mt-4 mb-2; color: #e8eaed; }
+  .md-prose h3 { @apply text-lg font-semibold mt-3 mb-2; color: #e8eaed; }
+  .md-prose p  { @apply my-2; }
+  .md-prose ul { @apply list-disc pl-6 my-2; }
+  .md-prose ol { @apply list-decimal pl-6 my-2; }
+  .md-prose li { @apply my-0.5; }
+  .md-prose code {
+    @apply px-1.5 py-0.5 rounded text-[13px] font-mono;
+    background: rgba(255,255,255,0.08);
+    color: #a78bfa;
+  }
+  .md-prose pre {
+    @apply p-3 rounded my-2 overflow-x-auto;
+    background: rgba(255,255,255,0.05);
+  }
+  .md-prose pre code {
+    @apply bg-transparent p-0;
+    color: #e8eaed;
+  }
+  .md-prose a {
+    color: #8ab4f8;
+    @apply underline;
+  }
+  .md-prose strong {
+    @apply font-bold;
+    color: #ffffff;
+  }
+  .md-prose em {
+    @apply italic;
+    color: #c4b5fd;
+  }
+  .md-prose blockquote {
+    @apply pl-4 my-2;
+    border-left: 4px solid rgba(255,255,255,0.15);
+    color: #9ca3af;
+  }
+  .md-prose table {
+    @apply w-full my-3 text-sm;
+    border-collapse: collapse;
+  }
+  .md-prose th, .md-prose td {
+    @apply px-3 py-2 text-left;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .md-prose th {
+    @apply font-semibold;
+    background: rgba(255,255,255,0.05);
+  }
+  .md-prose hr {
+    @apply my-4;
+    border-color: rgba(255,255,255,0.1);
+  }
+}
+
+/* kbd 단축키 표시 */
+kbd {
+  @apply inline-block px-1.5 py-0.5 text-xs font-mono bg-colab-subtle border border-colab-subtle rounded text-colab-text;
+  min-width: 18px;
+  text-align: center;
+}

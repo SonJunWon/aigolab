@@ -1,0 +1,183 @@
+import { useState } from "react";
+import type { OutputChunk } from "../../types/notebook";
+import {
+  translateError,
+  type TranslatedError,
+} from "../../runtime/errorTranslator";
+
+interface Props {
+  outputs: OutputChunk[];
+  executionTime?: number;
+}
+
+const streamColor: Record<OutputChunk["stream"], string> = {
+  stdout: "text-colab-text",
+  stderr: "text-colab-red",
+  error:  "text-colab-red",
+  result: "text-colab-text",
+};
+
+export function CellOutput({ outputs, executionTime }: Props) {
+  if (outputs.length === 0) return null;
+
+  // stdout/result 와 error 를 분리해서 처리
+  const normalChunks = outputs.filter((c) => c.stream !== "error");
+  const errorChunks = outputs.filter((c) => c.stream === "error");
+  const errorText = errorChunks.map((c) => c.text).join("\n");
+  const translated = errorText ? translateError(errorText) : null;
+
+  return (
+    <div className="border-t border-colab-subtle bg-colab-bg">
+      {/* 일반 출력 (print, 반환값) */}
+      {normalChunks.length > 0 && (
+        <div className="px-4 py-3 font-mono text-[13px] leading-relaxed">
+          {normalChunks.map((chunk, i) => (
+            <pre
+              key={i}
+              className={`m-0 whitespace-pre-wrap break-words ${streamColor[chunk.stream]}`}
+            >
+              {chunk.text}
+            </pre>
+          ))}
+        </div>
+      )}
+
+      {/* 에러 */}
+      {errorChunks.length > 0 && (
+        translated ? (
+          <TranslatedErrorBox error={translated} rawText={errorText} />
+        ) : (
+          <RawErrorBox text={errorText} />
+        )
+      )}
+
+      {executionTime !== undefined && (
+        <div className="px-4 pb-2 text-[11px] text-colab-textDim">
+          실행 시간: {executionTime.toFixed(0)}ms
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// 친절하게 번역된 에러 박스
+// ─────────────────────────────────────────────────────────
+
+function TranslatedErrorBox({
+  error,
+  rawText,
+}: {
+  error: TranslatedError;
+  rawText: string;
+}) {
+  const [showRaw, setShowRaw] = useState(false);
+
+  return (
+    <div className="mx-4 my-3 rounded-lg border border-colab-red/40 bg-colab-red/5 overflow-hidden">
+      <div className="px-4 py-3">
+        {/* 제목 + 설명 */}
+        <div className="flex items-start gap-2.5">
+          <span className="text-xl leading-none mt-0.5">{error.emoji}</span>
+          <div className="flex-1 min-w-0">
+            <div className="font-medium text-colab-red text-sm">
+              {error.title}
+            </div>
+            <div
+              className="text-sm text-colab-text mt-1 leading-relaxed"
+              // 간단한 인라인 코드 하이라이트 (backtick → <code>)
+              dangerouslySetInnerHTML={{
+                __html: renderInlineCode(error.explanation),
+              }}
+            />
+          </div>
+        </div>
+
+        {/* 힌트 */}
+        {error.hints.length > 0 && (
+          <div className="mt-3 pl-8">
+            <div className="text-xs text-colab-textDim font-medium mb-1">
+              💡 시도해볼 것:
+            </div>
+            <ul className="space-y-1 text-xs text-colab-text list-disc pl-5 marker:text-colab-textDim">
+              {error.hints.map((hint, i) => (
+                <li
+                  key={i}
+                  className="leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: renderInlineCode(hint) }}
+                />
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* 원본 에러 보기 토글 */}
+        <button
+          onClick={() => setShowRaw(!showRaw)}
+          className="mt-3 pl-8 text-[11px] text-colab-textDim hover:text-colab-text transition-colors"
+        >
+          {showRaw ? "▼ 원본 에러 숨기기" : "▶ 원본 에러 보기 (개발자용)"}
+        </button>
+
+        {showRaw && (
+          <pre
+            className="mt-2 ml-8 p-3 bg-colab-bg rounded text-[11px] text-colab-red/90 font-mono
+                       overflow-x-auto whitespace-pre-wrap break-words"
+          >
+            {rawText}
+          </pre>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// 번역 못 한 에러 — fallback
+// ─────────────────────────────────────────────────────────
+
+function RawErrorBox({ text }: { text: string }) {
+  return (
+    <div className="mx-4 my-3 rounded-lg border border-colab-red/40 bg-colab-red/5 overflow-hidden">
+      <div className="px-4 py-3">
+        <div className="flex items-start gap-2.5 mb-2">
+          <span className="text-xl leading-none">⚠️</span>
+          <div className="font-medium text-colab-red text-sm">
+            에러가 발생했어요
+          </div>
+        </div>
+        <pre className="ml-8 p-3 bg-colab-bg rounded text-[11px] text-colab-red/90 font-mono overflow-x-auto whitespace-pre-wrap break-words">
+          {text}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// 간단한 인라인 코드 렌더링 (backtick → <code>)
+// ─────────────────────────────────────────────────────────
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function renderInlineCode(text: string): string {
+  // 백틱으로 감싼 부분을 <code>로. 나머지는 이스케이프.
+  const parts = text.split(/(`[^`]+`)/g);
+  return parts
+    .map((part) => {
+      if (part.startsWith("`") && part.endsWith("`")) {
+        const code = part.slice(1, -1);
+        return `<code class="px-1 py-0.5 rounded bg-colab-bg border border-colab-subtle text-colab-accent font-mono text-[12px]">${escapeHtml(
+          code
+        )}</code>`;
+      }
+      return escapeHtml(part);
+    })
+    .join("");
+}
