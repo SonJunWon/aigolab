@@ -3,36 +3,46 @@ import { Link, useNavigate } from "react-router-dom";
 import { LANGUAGES, TRACKS, getLanguage, getTrack } from "../content/languages";
 import { getLessonById } from "../content";
 import { listAllProgress } from "../storage/progressRepo";
-import type { StoredProgress } from "../storage/db";
+import { loadAllProgressFromSupabase } from "../storage/supabaseProgressRepo";
+import { useAuthStore } from "../store/authStore";
 import type { Language, Track } from "../types/lesson";
+
+interface ResumeData {
+  language: string;
+  track: string;
+  currentLesson: string;
+  lastStudiedAt: number;
+}
 
 export function HomePage() {
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
   const [selectedLang, setSelectedLang] = useState<Language | null>(null);
-  const [latestProgress, setLatestProgress] = useState<StoredProgress | null>(
-    null
-  );
+  const [latestProgress, setLatestProgress] = useState<ResumeData | null>(null);
 
-  // 마운트 시 가장 최근 진도 조회
   useEffect(() => {
     let cancelled = false;
-    listAllProgress()
-      .then((list) => {
-        if (cancelled) return;
-        // currentLesson 이 있는 것만, lastStudiedAt 내림차순
-        const withLesson = list.filter((p) => p.currentLesson);
-        const sorted = withLesson.sort(
-          (a, b) => b.lastStudiedAt - a.lastStudiedAt
-        );
-        setLatestProgress(sorted[0] ?? null);
-      })
-      .catch((err) => {
-        console.error("[HomePage] listAllProgress failed:", err);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    (async () => {
+      let items: ResumeData[] = [];
+      if (user) {
+        const remote = await loadAllProgressFromSupabase(user.id);
+        items = remote.filter(r => r.current_lesson).map(r => ({
+          language: r.language, track: r.track,
+          currentLesson: r.current_lesson!, lastStudiedAt: new Date(r.last_studied_at).getTime(),
+        }));
+      } else {
+        const local = await listAllProgress();
+        items = local.filter(l => l.currentLesson).map(l => ({
+          language: l.language, track: l.track,
+          currentLesson: l.currentLesson!, lastStudiedAt: l.lastStudiedAt,
+        }));
+      }
+      if (cancelled) return;
+      const sorted = items.sort((a, b) => b.lastStudiedAt - a.lastStudiedAt);
+      setLatestProgress(sorted[0] ?? null);
+    })().catch(() => {});
+    return () => { cancelled = true; };
+  }, [user]);
 
   const handleTrackSelect = (track: Track) => {
     if (!selectedLang) return;

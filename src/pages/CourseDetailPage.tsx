@@ -75,6 +75,11 @@ export function CourseDetailPage() {
               key={course.id}
               quiz={course.quiz}
               quizId={course.id}
+              onComplete={(score, total) => {
+                if (user) {
+                  void saveCourseProgress(user.id, course.id, true, score, total);
+                }
+              }}
               onNext={
                 nextCourse
                   ? () => {

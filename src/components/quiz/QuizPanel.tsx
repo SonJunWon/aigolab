@@ -7,25 +7,30 @@ import { saveQuizResult } from "../../storage/supabaseQuizRepo";
 
 interface Props {
   quiz: Quiz;
-  /** 퀴즈 ID (서버 저장용, 예: lesson.id 또는 course.id) */
+  /** 퀴즈 ID (서버 저장용) */
   quizId?: string;
   onNext?: () => void;
+  /** 퀴즈 완료 시 콜백 (점수, 총점) */
+  onComplete?: (score: number, total: number) => void;
 }
 
 type Phase = "intro" | "questions" | "result";
 
-export function QuizPanel({ quiz, quizId, onNext }: Props) {
+export function QuizPanel({ quiz, quizId, onNext, onComplete }: Props) {
   const [phase, setPhase] = useState<Phase>("intro");
   const [currentQ, setCurrentQ] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const user = useAuthStore((s) => s.user);
 
-  // 결과 단계에 도달하면 서버에 저장
+  // 결과 단계에 도달하면 서버에 저장 + 콜백
   useEffect(() => {
-    if (phase === "result" && user && quizId) {
-      void saveQuizResult(user.id, quizId, correctCount, quiz.questions.length);
+    if (phase === "result") {
+      if (user && quizId) {
+        void saveQuizResult(user.id, quizId, correctCount, quiz.questions.length);
+      }
+      onComplete?.(correctCount, quiz.questions.length);
     }
-  }, [phase, user, quizId, correctCount, quiz.questions.length]);
+  }, [phase, user, quizId, correctCount, quiz.questions.length, onComplete]);
 
   const handleStart = () => {
     setPhase("questions");
