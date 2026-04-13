@@ -186,13 +186,19 @@ export function translateError(errorText: string): TranslatedError | null {
         };
       }
       if (errorMessage.includes("object is not callable")) {
+        // 어떤 타입이 호출됐는지 추출 (예: "'int' object is not callable" → "int")
+        const typeMatch = errorMessage.match(/'(\w+)' object is not callable/);
+        const objType = typeMatch?.[1] ?? "값";
         return {
           emoji: "📞",
           title: "함수처럼 호출할 수 없는 값이에요",
-          explanation: "이 값은 함수가 아닌데 괄호 `()` 로 호출하려고 했어요.",
+          explanation:
+            `이 자리는 함수여야 하는데 \`${objType}\` 타입의 값이 들어있어요. ` +
+            `**아마 같은 이름의 변수가 함수(또는 빌트인)를 덮어썼을 가능성이 큽니다.**`,
           hints: [
-            "변수 이름이 함수 이름과 겹치지 않았는지 확인하세요",
-            `예: \`list = [1, 2]\` 후에 \`list([3])\` 을 하면 에러나요`,
+            `예: 어딘가에서 \`max = 50\` 같은 코드를 실행한 적 있나요? 그 후엔 \`max([1,2,3])\` 이 안 돼요.`,
+            `먼저 그 변수 이름을 다른 것으로 바꾸세요 (예: \`max\` → \`max_value\`).`,
+            `**이름만 바꿔도 안 고쳐지면**: 헤더의 \`🔄 런타임\` 버튼으로 재시작하세요. 이전 셰도잉이 메모리에 남아 있어요.`,
           ],
           originalLine: lastLine,
         };
@@ -271,6 +277,7 @@ export function translateError(errorText: string): TranslatedError | null {
             "메서드 이름에 오타가 없는지 확인하세요",
             `올바른 타입인지 확인하세요 — 리스트의 메서드를 문자열에 쓰려고 했을 수 있어요`,
             `\`dir(변수)\` 를 출력해보면 사용 가능한 메서드 목록이 나와요`,
+            `**이전 셀에서 같은 이름 변수를 만들어 덮어쓴 건 아닌가요?** 그럴 땐 헤더 \`🔄 런타임\` 으로 재시작하세요.`,
           ],
           originalLine: lastLine,
         };
@@ -279,7 +286,10 @@ export function translateError(errorText: string): TranslatedError | null {
         emoji: "🧩",
         title: "없는 속성이나 메서드를 호출했어요",
         explanation: errorMessage,
-        hints: ["값의 타입과 사용 가능한 기능을 확인해보세요"],
+        hints: [
+          "값의 타입과 사용 가능한 기능을 확인해보세요",
+          `이전 셀에서 변수가 함수를 덮어썼다면 \`🔄 런타임\` 재시작이 필요해요.`,
+        ],
         originalLine: lastLine,
       };
     }

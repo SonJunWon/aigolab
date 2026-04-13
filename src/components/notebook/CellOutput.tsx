@@ -128,6 +128,24 @@ function TranslatedErrorBox({
             {rawText}
           </pre>
         )}
+
+        <RecoveryHint />
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// 회복 안내 — 모든 에러 박스 하단에 작게 노출
+// ─────────────────────────────────────────────────────────
+function RecoveryHint() {
+  return (
+    <div className="mt-3 pl-8 pr-2">
+      <div className="px-3 py-2 rounded bg-colab-bg/60 border border-colab-subtle text-[11px] text-colab-textDim leading-relaxed">
+        <span className="text-colab-yellow">💡 막혔으면?</span>{" "}
+        헤더의 <span className="text-colab-text font-medium">🔄 런타임</span> 버튼을
+        누르면 변수·함수가 깨끗하게 초기화돼요. 이름을 바꿔도 에러가 계속 나면 이걸로
+        해결됩니다.
       </div>
     </div>
   );
@@ -150,6 +168,7 @@ function RawErrorBox({ text }: { text: string }) {
         <pre className="ml-8 p-3 bg-colab-bg rounded text-[11px] text-colab-red/90 font-mono overflow-x-auto whitespace-pre-wrap break-words">
           {text}
         </pre>
+        <RecoveryHint />
       </div>
     </div>
   );
