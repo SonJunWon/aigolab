@@ -178,6 +178,9 @@ export function CodeCell({ cell, isSelected }: Props) {
               lineDecorationsWidth: 8,
               glyphMargin: false,
               wordWrap: "on",
+              // 한글 IME에서 자동 닫는 따옴표/괄호의 overtype 정상 작동
+              autoClosingOvertype: "always",
+              autoClosingDelete: "always",
             }}
           />
         </div>

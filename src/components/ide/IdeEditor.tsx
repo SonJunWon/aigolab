@@ -75,6 +75,9 @@ export function IdeEditor() {
         },
         padding: { top: 12, bottom: 12 },
         wordWrap: "on",
+        // 한글 IME에서 자동 닫는 따옴표/괄호의 overtype 정상 작동
+        autoClosingOvertype: "always",
+        autoClosingDelete: "always",
       }}
     />
   );
