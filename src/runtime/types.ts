@@ -7,6 +7,7 @@
  */
 
 import type { Language } from "../types/lesson";
+import type { TableData } from "../types/notebook";
 
 /** 런타임 지원 언어 — 콘텐츠 도메인의 Language와 동일 */
 export type SupportedLanguage = Language;
@@ -18,6 +19,8 @@ export interface RunCallbacks {
   onStdout?: (text: string) => void;
   /** 오류·경고 출력 */
   onStderr?: (text: string) => void;
+  /** SQL SELECT 등 표 형식 결과 (해당 런타임만 호출) */
+  onTable?: (table: TableData) => void;
 }
 
 export interface RunResult {

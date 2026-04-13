@@ -11,12 +11,13 @@
 
 import { pythonRunner } from "./pythonRunner";
 import { javascriptRunner } from "./javascriptRunner";
+import { sqlRunner } from "./sqlRunner";
 import type { LanguageRuntime, SupportedLanguage } from "./types";
 
 const RUNTIMES: Partial<Record<SupportedLanguage, LanguageRuntime>> = {
   python: pythonRunner,
   javascript: javascriptRunner,
-  // sql: sqlRunner,                 // 3.0.0-4 단계에서 추가
+  sql: sqlRunner,
 };
 
 /**

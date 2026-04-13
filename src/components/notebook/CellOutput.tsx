@@ -16,23 +16,27 @@ const streamColor: Record<OutputChunk["stream"], string> = {
   error:  "text-colab-red",
   result: "text-colab-text",
   warning: "text-colab-yellow",
+  table: "text-colab-text",  // table은 SqlTable 컴포넌트로 따로 렌더, 색은 사용 안 함
 };
 
 export function CellOutput({ outputs, executionTime }: Props) {
   if (outputs.length === 0) return null;
 
-  // stdout/result 와 error 를 분리해서 처리
-  const normalChunks = outputs.filter((c) => c.stream !== "error");
+  // 종류별 분리
+  const tableChunks = outputs.filter((c) => c.stream === "table");
   const errorChunks = outputs.filter((c) => c.stream === "error");
+  const textChunks = outputs.filter(
+    (c) => c.stream !== "error" && c.stream !== "table"
+  );
   const errorText = errorChunks.map((c) => c.text).join("\n");
   const translated = errorText ? translateError(errorText) : null;
 
   return (
     <div className="border-t border-colab-subtle bg-colab-bg">
-      {/* 일반 출력 (print, 반환값) */}
-      {normalChunks.length > 0 && (
+      {/* 일반 텍스트 출력 (print, console.log, 경고 등) */}
+      {textChunks.length > 0 && (
         <div className="px-4 py-3 font-mono text-[13px] leading-relaxed">
-          {normalChunks.map((chunk, i) => (
+          {textChunks.map((chunk, i) => (
             <pre
               key={i}
               className={`m-0 whitespace-pre-wrap break-words ${streamColor[chunk.stream]}`}
@@ -41,6 +45,11 @@ export function CellOutput({ outputs, executionTime }: Props) {
             </pre>
           ))}
         </div>
+      )}
+
+      {/* SQL 표 결과 */}
+      {tableChunks.map((chunk, i) =>
+        chunk.table ? <SqlTable key={`table-${i}`} table={chunk.table} /> : null
       )}
 
       {/* 에러 */}
@@ -57,6 +66,68 @@ export function CellOutput({ outputs, executionTime }: Props) {
           실행 시간: {executionTime.toFixed(0)}ms
         </div>
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// SQL 표 렌더링
+// ─────────────────────────────────────────────────────────
+import type { TableData } from "../../types/notebook";
+
+const MAX_VISIBLE_ROWS = 100;
+
+function SqlTable({ table }: { table: TableData }) {
+  const truncated = table.rows.length > MAX_VISIBLE_ROWS;
+  const visibleRows = truncated
+    ? table.rows.slice(0, MAX_VISIBLE_ROWS)
+    : table.rows;
+
+  return (
+    <div className="px-4 py-3">
+      <div className="text-[11px] text-colab-textDim mb-2">
+        {table.rowCount}행 × {table.columns.length}열
+        {truncated && ` (앞 ${MAX_VISIBLE_ROWS}행만 표시)`}
+      </div>
+      <div className="overflow-x-auto rounded border border-colab-subtle">
+        <table className="min-w-full text-[12px] font-mono">
+          <thead className="bg-colab-panel border-b border-colab-subtle">
+            <tr>
+              {table.columns.map((col) => (
+                <th
+                  key={col}
+                  className="text-left px-3 py-2 font-medium text-colab-accent whitespace-nowrap"
+                >
+                  {col}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {visibleRows.map((row, ri) => (
+              <tr
+                key={ri}
+                className={`border-b border-colab-subtle/50 hover:bg-colab-hover/40 transition-colors ${
+                  ri % 2 === 0 ? "bg-colab-bg" : "bg-colab-panel/30"
+                }`}
+              >
+                {row.map((cell, ci) => (
+                  <td
+                    key={ci}
+                    className={`px-3 py-1.5 whitespace-nowrap ${
+                      cell === null
+                        ? "text-colab-textDim/60 italic"
+                        : "text-colab-text"
+                    }`}
+                  >
+                    {cell === null ? "NULL" : String(cell)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

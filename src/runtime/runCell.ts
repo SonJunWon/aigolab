@@ -71,6 +71,13 @@ export async function runCell(cellId: string): Promise<void> {
         useNotebookStore
           .getState()
           .appendOutput(cellId, { stream: "stderr", text }),
+      // SQL SELECT 결과 등 표 형식
+      onTable: (table) =>
+        useNotebookStore.getState().appendOutput(cellId, {
+          stream: "table",
+          text: "",
+          table,
+        }),
     });
 
     if (result.value !== undefined && result.value !== "None") {

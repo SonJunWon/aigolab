@@ -6,10 +6,21 @@ export type CellType = "code" | "markdown";
 
 export type CellStatus = "idle" | "queued" | "running" | "success" | "error";
 
+/** SQL SELECT 결과 등 표 형식 출력 */
+export interface TableData {
+  columns: string[];
+  rows: Array<Array<string | number | null>>;
+  /** 결과 행 수 (rows.length와 같지만 명시적으로) */
+  rowCount: number;
+}
+
 export interface OutputChunk {
-  /** stdout / stderr / result / error / warning(셰도잉 등 선제 경고) */
-  stream: "stdout" | "stderr" | "result" | "error" | "warning";
+  /** stdout / stderr / result / error / warning(선제 경고) / table(SQL 결과) */
+  stream: "stdout" | "stderr" | "result" | "error" | "warning" | "table";
+  /** 텍스트 출력 — table 일 때는 사용 안 함 */
   text: string;
+  /** table 일 때만 사용 */
+  table?: TableData;
 }
 
 export interface Cell {
