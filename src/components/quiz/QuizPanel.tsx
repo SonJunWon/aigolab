@@ -4,6 +4,7 @@ import { QuizQuestion } from "./QuizQuestion";
 import { QuizResult } from "./QuizResult";
 import { useAuthStore } from "../../store/authStore";
 import { saveQuizResult } from "../../storage/supabaseQuizRepo";
+import { incrementCompletedToday } from "../../storage/supabaseActivityRepo";
 
 interface Props {
   quiz: Quiz;
@@ -27,6 +28,7 @@ export function QuizPanel({ quiz, quizId, onNext, onComplete }: Props) {
     if (phase === "result") {
       if (user && quizId) {
         void saveQuizResult(user.id, quizId, correctCount, quiz.questions.length);
+        void incrementCompletedToday(user.id); // 오늘 활동 카운트
       }
       onComplete?.(correctCount, quiz.questions.length);
     }

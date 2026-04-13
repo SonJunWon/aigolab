@@ -13,6 +13,7 @@ import {
   setCurrentLessonInSupabase,
   migrateProgressToSupabase,
 } from "../storage/supabaseProgressRepo";
+import { incrementCompletedToday } from "../storage/supabaseActivityRepo";
 import { useAuthStore } from "./authStore";
 import type { Language, Track } from "../types/lesson";
 
@@ -105,8 +106,14 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     const userId = getUserId();
     const key = progressKey(language, track);
 
+    // 새로운 완료인지 확인 (중복 카운트 방지)
+    const wasAlreadyCompleted = get().isCompleted(language, track, lessonId);
+
     if (userId) {
       await markLessonCompletedInSupabase(userId, language, track, lessonId);
+      if (!wasAlreadyCompleted) {
+        void incrementCompletedToday(userId); // 오늘 활동 카운트 증가
+      }
     } else {
       await markInIDB(language, track, lessonId);
     }

@@ -3,6 +3,13 @@ import { Link, Navigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { loadAllProgressFromSupabase } from "../storage/supabaseProgressRepo";
 import { loadQuizResults, loadAllCourseProgress } from "../storage/supabaseQuizRepo";
+import {
+  loadAllActivity,
+  loadRecentActivity,
+  calculateStreak,
+} from "../storage/supabaseActivityRepo";
+import type { DailyActivity, StreakInfo } from "../storage/supabaseActivityRepo";
+import { ActivityHeatmap } from "../components/ActivityHeatmap";
 import { getCurriculum } from "../content";
 import { COURSES } from "../content/courses";
 import { getLanguage, getTrack } from "../content/languages";
@@ -28,6 +35,14 @@ export function MyPage() {
   const [completedCourses, setCompletedCourses] = useState(0);
   const [quizCount, setQuizCount] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  const [totalStudySeconds, setTotalStudySeconds] = useState(0);
+  const [recentActivity, setRecentActivity] = useState<DailyActivity[]>([]);
+  const [streak, setStreak] = useState<StreakInfo>({
+    currentStreak: 0,
+    longestStreak: 0,
+    todayActive: false,
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -60,6 +75,17 @@ export function MyPage() {
       // 퀴즈 결과
       const quizResults = await loadQuizResults(user.id);
       setQuizCount(quizResults.length);
+
+      // 학습 시간 & 스트릭
+      const [recent91, allActivity] = await Promise.all([
+        loadRecentActivity(user.id, 91), // 히트맵 13주
+        loadAllActivity(user.id),         // 전체 합계 + 스트릭
+      ]);
+      setRecentActivity(recent91);
+      setTotalStudySeconds(
+        allActivity.reduce((sum, a) => sum + a.study_seconds, 0)
+      );
+      setStreak(calculateStreak(allActivity));
 
       setLoading(false);
     })();
@@ -102,11 +128,45 @@ export function MyPage() {
         </header>
 
         {/* 통계 카드 */}
-        <section className="mb-10 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <section className="mb-10 grid grid-cols-2 md:grid-cols-3 gap-4">
+          <StatCard
+            label="현재 스트릭"
+            value={`${streak.currentStreak}`}
+            sub="일"
+            accent={streak.currentStreak > 0 ? "🔥" : undefined}
+          />
+          <StatCard
+            label="최장 스트릭"
+            value={`${streak.longestStreak}`}
+            sub="일"
+          />
+          <StatCard
+            label="누적 학습 시간"
+            value={formatStudyTimeValue(totalStudySeconds)}
+            sub={formatStudyTimeSub(totalStudySeconds)}
+          />
           <StatCard label="완료 챕터" value={`${totalCompleted}`} sub={`/ ${totalLessons}`} />
-          <StatCard label="완료 트랙" value={`${completeTracks.length}`} sub={`/ ${tracks.length}`} />
           <StatCard label="AI 강의" value={`${completedCourses}`} sub={`/ ${COURSES.length}`} />
           <StatCard label="퀴즈" value={`${quizCount}`} sub="회 완료" />
+        </section>
+
+        {/* 활동 히트맵 */}
+        <section className="mb-10 p-5 rounded-xl border border-brand-subtle bg-brand-panel">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-medium text-brand-textDim uppercase tracking-wider">
+              최근 13주 활동
+            </h2>
+            {streak.todayActive && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-brand-green/15 text-brand-green">
+                오늘 학습 완료
+              </span>
+            )}
+          </div>
+          {loading ? (
+            <p className="text-brand-textDim text-sm">로딩 중...</p>
+          ) : (
+            <ActivityHeatmap activity={recentActivity} weeks={13} />
+          )}
         </section>
 
         {/* 트랙별 진도 */}
@@ -234,14 +294,17 @@ function StatCard({
   label,
   value,
   sub,
+  accent,
 }: {
   label: string;
   value: string;
   sub: string;
+  accent?: string;
 }) {
   return (
     <div className="p-4 rounded-xl border border-brand-subtle bg-brand-panel text-center">
       <div className="text-2xl font-bold text-brand-text">
+        {accent && <span className="mr-1">{accent}</span>}
         {value}
         <span className="text-sm font-normal text-brand-textDim ml-1">
           {sub}
@@ -250,6 +313,20 @@ function StatCard({
       <div className="text-xs text-brand-textDim mt-1">{label}</div>
     </div>
   );
+}
+
+// ─── 시간 포맷 ───
+// 1시간 미만: value=분, sub="분"
+// 1시간 이상: value=시간, sub="시간 N분"
+// 아직 없음: value="0", sub="분"
+function formatStudyTimeValue(seconds: number): string {
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}`;
+  return `${Math.floor(seconds / 3600)}`;
+}
+function formatStudyTimeSub(seconds: number): string {
+  if (seconds < 3600) return "분";
+  const m = Math.floor((seconds % 3600) / 60);
+  return `시간 ${m}분`;
 }
 
 // ─── 수료증 SVG 생성 + 다운로드 ───

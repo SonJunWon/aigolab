@@ -2,12 +2,16 @@ import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { getProjectById } from "../content/projects";
 import { Markdown } from "../components/Markdown";
 import { useFileStore } from "../store/fileStore";
+import { useStudyTimeTracking } from "../hooks/useStudyTimeTracking";
 
 export function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const project = projectId ? getProjectById(projectId) : undefined;
   const navigate = useNavigate();
   const loadProject = useFileStore((s) => s.loadProject);
+
+  // 학습 시간 추적
+  useStudyTimeTracking(!!project);
 
   if (!project) return <Navigate to="/projects" replace />;
 

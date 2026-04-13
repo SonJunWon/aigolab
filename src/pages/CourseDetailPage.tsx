@@ -5,6 +5,7 @@ import { Markdown } from "../components/Markdown";
 import { QuizPanel } from "../components/quiz/QuizPanel";
 import { useAuthStore } from "../store/authStore";
 import { saveCourseProgress } from "../storage/supabaseQuizRepo";
+import { useStudyTimeTracking } from "../hooks/useStudyTimeTracking";
 import type { CourseSection } from "../types/course";
 
 export function CourseDetailPage() {
@@ -19,6 +20,9 @@ export function CourseDetailPage() {
       void saveCourseProgress(user.id, course.id, false);
     }
   }, [user, course]);
+
+  // 학습 시간 추적
+  useStudyTimeTracking(!!course);
 
   if (!course) return <Navigate to="/courses" replace />;
 

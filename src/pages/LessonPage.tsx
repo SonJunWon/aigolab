@@ -9,6 +9,7 @@ import { Notebook } from "../components/notebook/Notebook";
 import { QuizPanel } from "../components/quiz/QuizPanel";
 import { usePyodideStatus } from "../hooks/usePyodideStatus";
 import { useAutoSave } from "../hooks/useAutoSave";
+import { useStudyTimeTracking } from "../hooks/useStudyTimeTracking";
 import { loadNotebook, deleteNotebook } from "../storage/notebookRepo";
 import { downloadIpynb } from "../utils/exportNotebook";
 import type { Language, Lesson, Track } from "../types/lesson";
@@ -60,6 +61,9 @@ export function LessonPage() {
 
   // 자동 저장 — loadState가 ready일 때만 활성화
   useAutoSave(lesson?.id ?? null, loadState === "ready");
+
+  // 학습 시간 추적 (로그인 사용자만)
+  useStudyTimeTracking(!!lesson);
 
   // 진도 초기 로드
   useEffect(() => {
