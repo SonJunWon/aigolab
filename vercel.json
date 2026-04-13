@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "/((?!assets/|robots\\.txt|sitemap\\.xml|favicon\\.svg|pyodide-worker\\.js).*)", "destination": "/index.html" }
+    { "source": "/((?!assets/|robots\\.txt|sitemap\\.xml|favicon\\.svg|pyodide-worker\\.js|javascript-worker\\.js).*)", "destination": "/index.html" }
   ]
 }
