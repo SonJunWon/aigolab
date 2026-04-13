@@ -11,6 +11,9 @@ import {
 } from "../storage/supabaseActivityRepo";
 import type { DailyActivity, StreakInfo } from "../storage/supabaseActivityRepo";
 import { ActivityHeatmap } from "../components/ActivityHeatmap";
+import { ActivityFeed } from "../components/ActivityFeed";
+import { buildActivityFeed } from "../utils/activityFeed";
+import type { FeedItem } from "../utils/activityFeed";
 import { DefaultAvatar } from "../components/DefaultAvatar";
 import { ProfileEditModal } from "../components/ProfileEditModal";
 import { getCurriculum } from "../content";
@@ -50,6 +53,7 @@ export function MyPage() {
     longestStreak: 0,
     todayActive: false,
   });
+  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
 
   // 표시할 이름: 닉네임 > 이메일 @ 앞 > 이메일
   const displayName =
@@ -89,6 +93,9 @@ export function MyPage() {
       // 퀴즈 결과
       const quizResults = await loadQuizResults(user.id);
       setQuizCount(quizResults.length);
+
+      // 최근 활동 피드 (퀴즈+강의 통합, 시간 desc, 상위 10개)
+      setFeedItems(buildActivityFeed(quizResults, courseProgress, 10));
 
       // 학습 시간 & 스트릭
       const [recent91, allActivity] = await Promise.all([
@@ -203,6 +210,14 @@ export function MyPage() {
           ) : (
             <ActivityHeatmap activity={recentActivity} weeks={13} />
           )}
+        </section>
+
+        {/* 최근 활동 피드 */}
+        <section className="mb-10">
+          <h2 className="text-sm font-medium text-brand-textDim uppercase tracking-wider mb-4">
+            최근 활동
+          </h2>
+          <ActivityFeed items={feedItems} loading={loading} />
         </section>
 
         {/* 트랙별 진도 */}
