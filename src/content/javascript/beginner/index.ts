@@ -5,10 +5,13 @@ import { lesson03 } from "./03-operators";
 import { lesson04 } from "./04-conditions";
 import { lesson05 } from "./05-loops";
 import { lesson06 } from "./06-arrays";
+import { lesson07 } from "./07-objects";
+import { lesson08 } from "./08-functions";
+import { lesson09 } from "./09-strings";
 
 /**
  * JavaScript 입문 트랙의 모든 레슨.
- * 첫·두 번째 묶음(1~6챕터) 공개. 후속(7~11)은 점진적으로 추가될 예정.
+ * 1~9 챕터 공개. 마무리(10 에러처리, 11 미니 프로젝트)는 다음 묶음에서.
  */
 export const LESSONS: Lesson[] = [
   lesson01,
@@ -17,6 +20,9 @@ export const LESSONS: Lesson[] = [
   lesson04,
   lesson05,
   lesson06,
+  lesson07,
+  lesson08,
+  lesson09,
 ];
 
 export const LESSON_SUMMARIES: LessonSummary[] = LESSONS.map((l) => ({
