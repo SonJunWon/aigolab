@@ -9,6 +9,10 @@
 
 import { getRuntime, isLanguageSupported } from "./registry";
 import { useNotebookStore } from "../store/notebookStore";
+import {
+  analyzeCellShadowing,
+  formatConflictMessage,
+} from "./lessonAnalysis";
 
 export async function runCell(cellId: string): Promise<void> {
   const store = useNotebookStore.getState();
@@ -28,6 +32,34 @@ export async function runCell(cellId: string): Promise<void> {
 
   store.clearOutputs(cellId);
   store.setStatus(cellId, "running");
+
+  // ── 셰도잉 사전 경고 (Python 한정) ──
+  // 변수가 빌트인 또는 같은 챕터의 다른 셀 정의와 충돌하면 경고 출력
+  if (store.language === "python") {
+    const cellIndex = store.cells.findIndex((c) => c.id === cellId);
+    const allCodeSources = store.cells
+      .filter((c) => c.type === "code")
+      .map((c) => c.source);
+    // codeOnly 인덱스로 변환 (현재 셀이 코드일 때만 유효)
+    const codeIndex = store.cells
+      .filter((c) => c.type === "code")
+      .findIndex((c) => c.id === cellId);
+
+    if (codeIndex >= 0) {
+      const conflicts = analyzeCellShadowing(
+        cell.source,
+        codeIndex,
+        allCodeSources
+      );
+      for (const c of conflicts) {
+        store.appendOutput(cellId, {
+          stream: "warning",
+          text: formatConflictMessage(c) + "\n",
+        });
+      }
+    }
+    void cellIndex; // ESLint 잠재 미사용 경고 회피
+  }
 
   try {
     const result = await runtime.run(cellId, cell.source, {

@@ -7,8 +7,8 @@ export type CellType = "code" | "markdown";
 export type CellStatus = "idle" | "queued" | "running" | "success" | "error";
 
 export interface OutputChunk {
-  /** stdout / stderr / result 값 / 에러 메시지 등 한 덩어리 */
-  stream: "stdout" | "stderr" | "result" | "error";
+  /** stdout / stderr / result / error / warning(셰도잉 등 선제 경고) */
+  stream: "stdout" | "stderr" | "result" | "error" | "warning";
   text: string;
 }
 

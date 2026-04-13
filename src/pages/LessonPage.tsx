@@ -8,6 +8,7 @@ import { useAutoSaveStore } from "../store/autoSaveStore";
 import { Notebook } from "../components/notebook/Notebook";
 import { QuizPanel } from "../components/quiz/QuizPanel";
 import { useLanguageRuntime } from "../hooks/useLanguageRuntime";
+import { getRuntime } from "../runtime/registry";
 import { useAutoSave } from "../hooks/useAutoSave";
 import { useStudyTimeTracking } from "../hooks/useStudyTimeTracking";
 import { loadNotebook, deleteNotebook } from "../storage/notebookRepo";
@@ -175,6 +176,25 @@ export function LessonPage() {
     loadCells((lesson as Lesson).cells, lesson.language);
   };
 
+  // ─── 런타임 재시작: 변수/함수 셰도잉 등 막혔을 때 회복용 ───
+  const [restarting, setRestarting] = useState(false);
+  const handleRestartRuntime = async () => {
+    if (restarting) return;
+    if (
+      !confirm(
+        "런타임을 재시작합니다. 셀에서 만들었던 모든 변수·함수가 사라져요. 계속할까요?"
+      )
+    ) {
+      return;
+    }
+    setRestarting(true);
+    try {
+      await getRuntime(lesson.language).terminate();
+    } finally {
+      setRestarting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-colab-bg flex flex-col">
       {/* 레슨 헤더 */}
@@ -219,13 +239,21 @@ export function LessonPage() {
               title={statusDot.title}
             />
 
-            {/* 데스크탑: .ipynb + 리셋 */}
+            {/* 데스크탑: .ipynb + 런타임 재시작 + 리셋 */}
             <button
               onClick={() => downloadIpynb(cells, `${lesson.id}.ipynb`)}
               className="hidden sm:inline-flex px-3 py-1.5 text-xs rounded border border-colab-subtle text-colab-textDim hover:text-colab-text hover:border-colab-accent transition-colors"
               title=".ipynb 파일로 다운로드"
             >
               ↓ .ipynb
+            </button>
+            <button
+              onClick={handleRestartRuntime}
+              disabled={restarting}
+              title="런타임 재시작 (변수·함수 모두 초기화)"
+              className="hidden sm:inline-flex px-3 py-1.5 text-xs rounded border border-colab-subtle text-colab-textDim hover:text-colab-text hover:border-colab-yellow transition-colors disabled:opacity-50"
+            >
+              {restarting ? "🔄 재시작 중..." : "🔄 런타임"}
             </button>
             <button
               onClick={handleReset}
@@ -272,6 +300,16 @@ export function LessonPage() {
                     className="w-full text-left px-3 py-2 text-xs text-colab-text hover:bg-colab-hover transition-colors"
                   >
                     ↓ .ipynb 다운로드
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      void handleRestartRuntime();
+                    }}
+                    disabled={restarting}
+                    className="w-full text-left px-3 py-2 text-xs text-colab-text hover:bg-colab-hover transition-colors disabled:opacity-50"
+                  >
+                    {restarting ? "🔄 재시작 중..." : "🔄 런타임 재시작"}
                   </button>
                   <button
                     onClick={() => {

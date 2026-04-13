@@ -15,6 +15,7 @@ const streamColor: Record<OutputChunk["stream"], string> = {
   stderr: "text-colab-red",
   error:  "text-colab-red",
   result: "text-colab-text",
+  warning: "text-colab-yellow",
 };
 
 export function CellOutput({ outputs, executionTime }: Props) {
