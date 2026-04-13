@@ -171,92 +171,102 @@ export function HomePage() {
           </Link>
         </section>
 
-        {/* Step 1: 언어 선택 */}
-        <section className="mb-12">
-          <h2 className="text-sm font-medium text-colab-textDim uppercase tracking-wider mb-4">
-            {resumeInfo ? "또는 새로 시작하기" : "1 — 배우고 싶은 언어를 선택하세요"}
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {LANGUAGES.map((lang) => {
-              const isSelected = selectedLang === lang.id;
-              const isDisabled = lang.status === "coming-soon";
-              return (
-                <button
-                  key={lang.id}
-                  disabled={isDisabled}
-                  onClick={() => setSelectedLang(lang.id)}
-                  className={`relative p-6 rounded-lg border text-left transition-all
-                    ${
-                      isDisabled
-                        ? "border-colab-subtle bg-colab-panel/50 opacity-50 cursor-not-allowed"
-                        : isSelected
-                        ? "border-colab-accent bg-colab-panel ring-2 ring-colab-accent/40"
-                        : "border-colab-subtle bg-colab-panel hover:border-colab-accent/60"
-                    }`}
-                >
-                  <div className="text-4xl mb-3">{lang.icon}</div>
-                  <h3 className="text-lg font-medium mb-1 text-colab-text">
-                    {lang.name}
-                  </h3>
-                  <p className="text-xs text-colab-textDim leading-relaxed">
-                    {lang.description}
-                  </p>
-                  {isDisabled && (
-                    <span className="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded-full bg-colab-subtle text-colab-textDim">
-                      준비 중
-                    </span>
-                  )}
-                  {isSelected && (
-                    <span className="absolute top-3 right-3 text-colab-accent">
-                      ✓
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </section>
+        {/* Step 1: 언어 선택 — selectedLang 없을 때만 노출 */}
+        {!selectedLang && (
+          <section className="mb-12">
+            <h2 className="text-sm font-medium text-colab-textDim uppercase tracking-wider mb-4">
+              {resumeInfo ? "또는 새로 시작하기" : "배우고 싶은 언어를 선택하세요"}
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {LANGUAGES.map((lang) => {
+                const isDisabled = lang.status === "coming-soon";
+                return (
+                  <button
+                    key={lang.id}
+                    disabled={isDisabled}
+                    onClick={() => setSelectedLang(lang.id)}
+                    className={`relative p-6 rounded-lg border text-left transition-all
+                      ${
+                        isDisabled
+                          ? "border-colab-subtle bg-colab-panel/50 opacity-50 cursor-not-allowed"
+                          : "border-colab-subtle bg-colab-panel hover:border-colab-accent/60 hover:shadow-lg hover:shadow-colab-accent/5"
+                      }`}
+                  >
+                    <div className="text-4xl mb-3">{lang.icon}</div>
+                    <h3 className="text-lg font-medium mb-1 text-colab-text">
+                      {lang.name}
+                    </h3>
+                    <p className="text-xs text-colab-textDim leading-relaxed">
+                      {lang.description}
+                    </p>
+                    {isDisabled && (
+                      <span className="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded-full bg-colab-subtle text-colab-textDim">
+                        준비 중
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
-        {/* Step 2: 트랙 선택 */}
-        <section
-          className={`transition-opacity ${
-            selectedLang ? "opacity-100" : "opacity-30 pointer-events-none"
-          }`}
-        >
-          <h2 className="text-sm font-medium text-colab-textDim uppercase tracking-wider mb-4">
-            {resumeInfo
-              ? "트랙을 선택하세요"
-              : "2 — 자신의 수준을 선택하세요"}
-          </h2>
-          <div className="grid md:grid-cols-2 gap-4">
-            {TRACKS.map((track) => (
-              <button
-                key={track.id}
-                onClick={() => handleTrackSelect(track.id)}
-                disabled={!selectedLang}
-                className="group p-6 rounded-lg border border-colab-subtle bg-colab-panel text-left
-                           hover:border-colab-accent hover:bg-colab-panel/80 transition-all"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-xl font-medium text-colab-text">
-                    {track.name}
-                  </h3>
-                  <span className="text-colab-textDim group-hover:text-colab-accent transition-colors">
-                    →
+        {/* Step 2: 트랙 선택 — selectedLang 있을 때만 노출 */}
+        {selectedLang && (() => {
+          const lang = getLanguage(selectedLang);
+          if (!lang) return null;
+          return (
+            <section className="mb-12">
+              {/* 뒤로가기 + 현재 언어 표시 */}
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <button
+                  onClick={() => setSelectedLang(null)}
+                  className="flex items-center gap-2 text-sm text-colab-textDim hover:text-colab-accent transition-colors"
+                >
+                  <span>←</span>
+                  <span>다른 언어 선택</span>
+                </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{lang.icon}</span>
+                  <span className="text-sm font-medium text-colab-text">
+                    {lang.name}
                   </span>
                 </div>
-                <p className="text-sm text-colab-textDim leading-relaxed">
-                  {track.description}
-                </p>
-                {track.estimatedHours && (
-                  <p className="mt-3 text-xs text-colab-textDim">
-                    예상 학습 시간: 약 {track.estimatedHours}시간
-                  </p>
-                )}
-              </button>
-            ))}
-          </div>
-        </section>
+              </div>
+
+              <h2 className="text-sm font-medium text-colab-textDim uppercase tracking-wider mb-4">
+                트랙을 선택하세요
+              </h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                {TRACKS.map((track) => (
+                  <button
+                    key={track.id}
+                    onClick={() => handleTrackSelect(track.id)}
+                    className="group p-6 rounded-lg border border-colab-subtle bg-colab-panel text-left
+                               hover:border-colab-accent hover:bg-colab-panel/80 hover:shadow-lg hover:shadow-colab-accent/5 transition-all"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-xl font-medium text-colab-text">
+                        {track.name}
+                      </h3>
+                      <span className="text-colab-textDim group-hover:text-colab-accent group-hover:translate-x-1 transition-all">
+                        →
+                      </span>
+                    </div>
+                    <p className="text-sm text-colab-textDim leading-relaxed">
+                      {track.description}
+                    </p>
+                    {track.estimatedHours && (
+                      <p className="mt-3 text-xs text-colab-textDim">
+                        예상 학습 시간: 약 {track.estimatedHours}시간
+                      </p>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
 
         {/* 하단 안내 */}
         <footer className="mt-20 text-center text-xs text-colab-textDim">
