@@ -142,11 +142,12 @@ export function MainHomePage() {
               <div className="text-3xl mb-3">📚</div>
               <h3 className="text-lg font-semibold mb-1 group-hover:text-brand-primary transition-colors">AI 강의</h3>
               <p className="text-sm text-brand-textDim mb-3">
-                AI/머신러닝/딥러닝 이론을 영상, 텍스트, 슬라이드로 배워요.
+                AI/머신러닝/딥러닝 이론을 챕터별로 배우고 퀴즈로 점검해요.
               </p>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-brand-subtle text-brand-textDim">
-                준비 중
-              </span>
+              <div className="flex items-center gap-4 text-xs text-brand-textDim">
+                <span>📖 5개 강의</span>
+                <span>🎯 강의별 퀴즈</span>
+              </div>
             </Link>
 
             {/* 코딩 실습 */}
@@ -161,10 +162,10 @@ export function MainHomePage() {
                 코딩 실습
               </h3>
               <p className="text-sm text-brand-textDim mb-3">
-                Python 입문부터 중급까지. Colab 스타일 노트북 + IDE 환경.
+                Python 입문 · 중급 · 데이터과학 · ML 실습. 노트북 + IDE 환경.
               </p>
               <div className="flex items-center gap-4 text-xs text-brand-textDim">
-                <span>📖 16챕터</span>
+                <span>📖 26챕터</span>
                 <span>🧪 Playground</span>
                 <span>💻 IDE</span>
               </div>
@@ -181,9 +182,10 @@ export function MainHomePage() {
               <p className="text-sm text-brand-textDim mb-3">
                 실제 데이터로 ML 모델을 만들어보는 미니 프로젝트.
               </p>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-brand-subtle text-brand-textDim">
-                준비 중
-              </span>
+              <div className="flex items-center gap-4 text-xs text-brand-textDim">
+                <span>🧪 5개 프로젝트</span>
+                <span>📊 입문 · 중급</span>
+              </div>
             </Link>
 
             {/* 마이페이지 */}
@@ -195,11 +197,13 @@ export function MainHomePage() {
               <div className="text-3xl mb-3">👤</div>
               <h3 className="text-lg font-semibold mb-1 group-hover:text-brand-primary transition-colors">마이페이지</h3>
               <p className="text-sm text-brand-textDim mb-3">
-                학습 진도, 수료증, 통계를 한눈에.
+                학습 진도, 스트릭, 활동 히트맵, 수료증까지 한눈에.
               </p>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-brand-subtle text-brand-textDim">
-                준비 중
-              </span>
+              <div className="flex items-center gap-4 text-xs text-brand-textDim">
+                <span>🔥 스트릭</span>
+                <span>📊 통계</span>
+                <span>🏆 수료증</span>
+              </div>
             </Link>
           </div>
         </section>
@@ -213,10 +217,10 @@ export function MainHomePage() {
             {[
               { label: "Python 기초", icon: "🐍", active: true },
               { label: "Python 중급", icon: "⚡", active: true },
-              { label: "AI 이론", icon: "🧠", active: false },
-              { label: "데이터 분석", icon: "📊", active: false },
-              { label: "머신러닝", icon: "🤖", active: false },
-              { label: "딥러닝", icon: "🧬", active: false },
+              { label: "AI 이론", icon: "🧠", active: true },
+              { label: "데이터 분석", icon: "📊", active: true },
+              { label: "머신러닝", icon: "🤖", active: true },
+              { label: "딥러닝", icon: "🧬", active: true },
             ].map((step, i) => (
               <div key={i} className="flex items-center gap-3">
                 <div
@@ -274,15 +278,6 @@ export function MainHomePage() {
           </div>
         </section>
 
-        {/* ─── Footer ─── */}
-        <footer className="pb-10 text-center text-xs text-brand-textDim/60 border-t border-brand-subtle/30 pt-8">
-          <p>
-            AIGoLab — AI를 시작하는 가장 쉬운 실험실
-          </p>
-          <p className="mt-1">
-            Python 3.12 via Pyodide · Monaco Editor · 100% 브라우저 실행
-          </p>
-        </footer>
       </div>
     </div>
   );
