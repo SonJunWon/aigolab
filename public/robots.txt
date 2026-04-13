@@ -1,0 +1,15 @@
+# AIGoLab — Crawler policy
+# https://aigolab.co.kr
+
+User-agent: *
+Allow: /
+
+# 사용자 전용 페이지 (개인 데이터)
+Disallow: /my
+Disallow: /auth
+
+# 전체화면 인터랙티브 도구 (콘텐츠 가치 낮음)
+Disallow: /coding/playground
+Disallow: /coding/ide
+
+Sitemap: https://aigolab.co.kr/sitemap.xml
