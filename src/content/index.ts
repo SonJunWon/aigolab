@@ -19,6 +19,10 @@ import {
   LESSONS as PY_ML,
   LESSON_SUMMARIES as PY_ML_SUMMARIES,
 } from "./python/ml-practice";
+import {
+  LESSONS as JS_BEGINNER,
+  LESSON_SUMMARIES as JS_BEGINNER_SUMMARIES,
+} from "./javascript/beginner";
 
 type Curriculum = {
   lessons: Lesson[];
@@ -44,7 +48,13 @@ const CURRICULA: Partial<Record<Language, Partial<Record<Track, Curriculum>>>> =
       summaries: PY_ML_SUMMARIES,
     },
   },
-  // javascript: { ... }  // 추후
+  javascript: {
+    beginner: {
+      lessons: JS_BEGINNER,
+      summaries: JS_BEGINNER_SUMMARIES,
+    },
+    // 다른 트랙은 추후
+  },
 };
 
 export function getCurriculum(

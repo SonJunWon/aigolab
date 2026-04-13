@@ -14,7 +14,7 @@ export const LANGUAGES: LanguageInfo[] = [
     name: "JavaScript",
     icon: "📜",
     description: "웹 브라우저에서 돌아가는 언어. 프론트엔드 개발의 필수.",
-    status: "coming-soon",
+    status: "available",
     color: "from-yellow-400 to-orange-500",
   },
   {
