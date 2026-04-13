@@ -13,6 +13,15 @@
 
 ---
 
+## [2.7.0] - 2026-04-14
+
+### Added — SQL 입문 트랙 두 번째 묶음 (3.0.0-5 2/4)
+- 챕터 4: 컬럼 가공 — \`||\` 결합, UPPER/LOWER/LENGTH/SUBSTR/TRIM/REPLACE, ROUND/ABS, \`CASE WHEN\`
+- 챕터 5: \`LIKE\` (\`%\`/\`_\`) + NULL 본질 + \`COALESCE\`
+- 챕터 6: \`COUNT/SUM/AVG/MIN/MAX\` + 조건부 집계 + GROUP BY 미리보기
+
+---
+
 ## [2.6.0] - 2026-04-14
 
 ### Added — SQL 입문 트랙 첫 묶음 (3.0.0-5 1/4)
