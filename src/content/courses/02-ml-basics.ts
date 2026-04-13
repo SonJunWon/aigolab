@@ -8,7 +8,7 @@ export const course02: Course = {
   icon: "🤖",
   category: "ai-basics",
   level: "beginner",
-  estimatedMinutes: 25,
+  estimatedMinutes: 30,
   order: 2,
   sections: [
     {
@@ -103,6 +103,56 @@ export const course02: Course = {
 \`\`\`
 
 > 💡 결과가 "종류"면 분류, "숫자"면 회귀라고 기억하세요!`,
+    },
+    {
+      type: "code",
+      title: "🧪 실습 — 선형 회귀 직접 구현하기",
+      content: `## 회귀를 **직접** 돌려봅시다
+
+이론만 보면 추상적이죠? 여러분의 브라우저에서 **지금 바로 Python 코드가 실행**됩니다. 설치도 필요 없어요.
+
+아래 코드는 유명한 **최소제곱법(Least Squares)** 으로 직선 \`y = a*x + b\` 를 데이터에 맞춰 기울기 \`a\` 와 절편 \`b\` 를 **직접 계산** 합니다. scikit-learn 없이 순수 Python으로요!
+
+**▶ 실행** 을 누르면 모델이 학습되고, 학습된 직선으로 새 값을 예측까지 합니다.
+
+> 🎯 **직접 해보기**: 코드 안의 \`x\`, \`y\` 숫자를 바꿔서 다시 실행해 보세요. 기울기 \`a\` 와 절편 \`b\` 가 어떻게 달라지는지 관찰하면 "학습" 이 무엇인지 감이 옵니다.`,
+      code: `# 선형 회귀(Linear Regression) — 집 면적으로 가격 예측
+# 모델 형태: y = a*x + b  (a=기울기, b=절편)
+
+# 👇 여기 숫자를 바꿔 보세요!
+x = [10, 20, 30, 40, 50]          # 면적 (평)
+y = [150, 280, 420, 560, 700]     # 가격 (백만원)
+
+# ── 최소제곱법: 수식으로 a, b 직접 계산 ──
+n = len(x)
+x_mean = sum(x) / n
+y_mean = sum(y) / n
+
+numerator   = sum((x[i] - x_mean) * (y[i] - y_mean) for i in range(n))
+denominator = sum((x[i] - x_mean) ** 2 for i in range(n))
+
+a = numerator / denominator       # 기울기
+b = y_mean - a * x_mean           # 절편
+
+print(f"📈 학습된 모델:  y = {a:.3f} * x + {b:.3f}")
+print()
+
+# ── 새로운 입력으로 예측해 보기 ──
+new_x = 35
+prediction = a * new_x + b
+print(f"🔮 면적 {new_x}평 → 예측 가격 {prediction:.1f}백만원")
+print()
+
+# ── 학습 데이터의 실제값 vs 예측값 비교 (얼마나 잘 맞는지) ──
+print("📊 학습 데이터 검증")
+print(f"{'면적':>6} {'실제':>8} {'예측':>8} {'오차':>8}")
+for xi, yi in zip(x, y):
+    pred = a * xi + b
+    print(f"{xi:>6} {yi:>8.1f} {pred:>8.1f} {pred - yi:>+8.2f}")
+`,
+      codeLanguage: "python",
+      codeHint:
+        "x, y 데이터를 수정하면 모델도 다시 학습됩니다. 일부러 한 점만 크게 바꿔 보면 '이상치(outlier)'의 영향을 체감할 수 있어요.",
     },
     {
       type: "text",

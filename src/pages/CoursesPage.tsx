@@ -70,7 +70,7 @@ export function CoursesPage() {
         {/* 추가 예정 안내 */}
         <div className="mt-10 p-6 rounded-xl border border-dashed border-brand-subtle text-center">
           <p className="text-brand-textDim text-sm">
-            🚧 머신러닝 실습, 딥러닝 기초 등 더 많은 강의가 준비 중입니다.
+            💡 일부 강의엔 <span className="text-brand-primary font-medium">브라우저에서 바로 실행되는 Python 실습</span>이 포함돼 있어요. 더 많은 강의가 추가될 예정입니다.
           </p>
         </div>
       </div>

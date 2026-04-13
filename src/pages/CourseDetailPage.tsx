@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { getCourseById } from "../content/courses";
 import { Markdown } from "../components/Markdown";
 import { QuizPanel } from "../components/quiz/QuizPanel";
+import { InlineCodeRunner } from "../components/course/InlineCodeRunner";
 import { useAuthStore } from "../store/authStore";
 import { saveCourseProgress } from "../storage/supabaseQuizRepo";
 import { useStudyTimeTracking } from "../hooks/useStudyTimeTracking";
@@ -152,9 +153,33 @@ function SectionRenderer({
       return <VideoSection section={section} />;
     case "link":
       return <LinkSection section={section} />;
+    case "code":
+      return <CodeSection section={section} />;
     default:
       return <TextSection section={section} />;
   }
+}
+
+function CodeSection({ section }: { section: CourseSection }) {
+  return (
+    <section>
+      {section.title && (
+        <h2 className="text-xl font-semibold text-brand-text mb-4">
+          {section.title}
+        </h2>
+      )}
+      {section.content && (
+        <div className="mb-4">
+          <Markdown content={section.content} />
+        </div>
+      )}
+      <InlineCodeRunner
+        initialCode={section.code ?? ""}
+        language={section.codeLanguage ?? "python"}
+        hint={section.codeHint}
+      />
+    </section>
+  );
 }
 
 function TextSection({ section }: { section: CourseSection }) {

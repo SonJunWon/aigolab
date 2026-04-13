@@ -13,6 +13,24 @@
 
 ---
 
+## [3.1.0] - 2026-04-14
+
+### Added — AI 강의 강화 (실습 렌더러 + 트렌드 콘텐츠 2강)
+- **`code` 섹션 렌더러** — AI 강의 본문에 Pyodide 기반 인라인 코드 실행기 삽입 가능
+  - `src/components/course/InlineCodeRunner.tsx` 신규 (Monaco 에디터 + 실행/원본복귀/출력지우기)
+  - Python 런타임 싱글톤 공유로 강의 전환 시 재로딩 없음
+  - 에러 번역(translateError) 재사용
+- **강의 02 "머신러닝 기초"** — 선형 회귀를 최소제곱법으로 **직접 실행** 하는 실습 섹션 추가
+- **강의 06 "생성형 AI와 LLM의 원리"** — ChatGPT 작동 원리(다음 토큰 예측), 토큰화, Transformer, 환각 설명 + 바이그램 언어모델 직접 구현 실습
+- **강의 07 "프롬프트 엔지니어링 실전"** — Master Protocol 6기둥(RCTFCE) + Before/After 리라이팅 + 프롬프트 품질 자동 점검기 실습 + 고급 기법(Few-shot, CoT, Persona, Self-Check)
+- `course05` → `course06` → `course07` nextCourseId 체인 연결
+- CoursesPage 안내 문구: "준비중" → "브라우저에서 바로 실행되는 Python 실습"
+
+### Changed
+- `CourseSection` 타입에 `code` / `codeLanguage` / `codeHint` 필드 추가
+
+---
+
 ## [3.0.0] - 2026-04-14
 
 > 🎉 **Multi-Language Milestone** — Python 단일 언어에서 **Python + JavaScript + SQL** 3개 언어 플랫폼으로 확장 완료.

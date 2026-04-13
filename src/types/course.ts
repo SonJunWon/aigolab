@@ -3,6 +3,7 @@
  */
 
 import type { Quiz } from "./quiz";
+import type { Language } from "./lesson";
 
 export type SectionType = "text" | "video" | "slide" | "link" | "code";
 
@@ -11,7 +12,7 @@ export interface CourseSection {
   type: SectionType;
   /** 섹션 제목 (선택) */
   title?: string;
-  /** 본문 — 텍스트(마크다운), 코드, 슬라이드 설명 등 */
+  /** 본문 — 마크다운(text) 또는 설명문(video/link/code 보조 설명) */
   content: string;
   /** 영상 URL (type="video" 시 YouTube URL) */
   videoUrl?: string;
@@ -21,6 +22,12 @@ export interface CourseSection {
   linkUrl?: string;
   /** 외부 링크 설명 */
   linkLabel?: string;
+  /** 실행할 초기 코드 (type="code" 시 필수) */
+  code?: string;
+  /** 코드 언어 (type="code" 시, 기본 python) */
+  codeLanguage?: Language;
+  /** 코드 블록 하단에 표시할 힌트 (선택) */
+  codeHint?: string;
 }
 
 export interface Course {
