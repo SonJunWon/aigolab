@@ -8,9 +8,10 @@ import { lesson06 } from "./06-aggregates";
 import { lesson07 } from "./07-group-by";
 import { lesson08 } from "./08-joins";
 import { lesson09 } from "./09-subqueries";
+import { lesson10 } from "./10-mini-project";
 
 /**
- * SQL 입문 트랙의 모든 레슨. 1~9 공개. 미니 프로젝트(10)는 마지막 묶음에서.
+ * SQL 입문 트랙의 모든 레슨. 1~10 완성 (챕터 10 = 미니 프로젝트).
  */
 export const LESSONS: Lesson[] = [
   lesson01,
@@ -22,6 +23,7 @@ export const LESSONS: Lesson[] = [
   lesson07,
   lesson08,
   lesson09,
+  lesson10,
 ];
 
 export const LESSON_SUMMARIES: LessonSummary[] = LESSONS.map((l) => ({

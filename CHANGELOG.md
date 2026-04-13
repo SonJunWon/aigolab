@@ -13,6 +13,34 @@
 
 ---
 
+## [3.0.0] - 2026-04-14
+
+> 🎉 **Multi-Language Milestone** — Python 단일 언어에서 **Python + JavaScript + SQL** 3개 언어 플랫폼으로 확장 완료.
+
+### Added — SQL 입문 트랙 마무리 (3.0.0-5 4/4)
+- 챕터 10 미니 프로젝트: Chinook 베스트셀러 분석 (6개 비즈니스 질문 + 종합 미션 2개)
+- 4단 연쇄 JOIN, SELECT 내부 서브쿼리 비율 계산, \`ROW_NUMBER() OVER\`, \`strftime\`, \`HAVING\` 총동원
+- SQL 입문 트랙 10챕터 공식 완주
+
+### 🏆 v3.0.0 마일스톤 요약 (v2.1.0 → v3.0.0)
+**인프라**
+- \`LanguageRuntime\` 추상 인터페이스 — Python/JS/SQL 공통
+- JavaScript 런타임 (Web Worker + console 캡처 + Python 호환 \`print()\`)
+- SQL 런타임 (sql.js + Chinook DB + React 표 렌더러)
+- 셰도잉 사전 경고, 런타임 재시작 버튼, 에러 박스 회복 안내
+
+**콘텐츠**
+- Python 입문 (기존)
+- JavaScript 입문 11챕터 (~250셀, 22 미션, 44 퀴즈)
+- SQL 입문 10챕터 (SELECT부터 윈도우·미니 프로젝트까지 완주 가능)
+
+**UX**
+- 코딩 실습 2단계 네비게이션 (언어 → 트랙)
+- 한국어 IME 자동 페어 따옴표 중복 입력 수정
+- 메인 화면 배지 정리
+
+---
+
 ## [2.8.0] - 2026-04-14
 
 ### Added — SQL 입문 트랙 세 번째 묶음 (3.0.0-5 3/4)
