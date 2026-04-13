@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { useProfileStore } from "../store/profileStore";
 import { useUIStore } from "../store/uiStore";
+import { DefaultAvatar } from "./DefaultAvatar";
 
 // @ts-expect-error -- Vite injects this from package.json
 const APP_VERSION: string = __APP_VERSION__;
@@ -18,8 +20,17 @@ export function NavBar() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
+  const nickname = useProfileStore((s) => s.nickname);
+  const avatarEmoji = useProfileStore((s) => s.avatarEmoji);
   const theme = useUIStore((s) => s.theme);
   const toggleTheme = useUIStore((s) => s.toggleTheme);
+
+  // 표시할 이름: 닉네임 > 이메일 @ 앞부분 > 이메일 전체
+  const displayName =
+    (nickname && nickname.trim()) ||
+    (user?.email ? user.email.split("@")[0] : "") ||
+    user?.email ||
+    "";
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -79,16 +90,21 @@ export function NavBar() {
           {/* 로그인 상태 */}
           {user ? (
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-panel">
-                <div className="w-6 h-6 rounded-full bg-brand-primary/20 flex items-center justify-center">
-                  <span className="text-brand-primary text-xs font-medium">
-                    {user.email?.[0].toUpperCase() ?? "?"}
-                  </span>
-                </div>
+              <Link
+                to="/my"
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-brand-panel hover:bg-brand-hover transition-colors"
+                title="마이페이지"
+              >
+                <DefaultAvatar
+                  avatarEmoji={avatarEmoji}
+                  nickname={nickname}
+                  email={user.email}
+                  size={24}
+                />
                 <span className="text-xs text-brand-text max-w-[120px] truncate hidden lg:inline">
-                  {user.email}
+                  {displayName}
                 </span>
-              </div>
+              </Link>
               <button
                 onClick={signOut}
                 className="px-3 py-1.5 text-xs text-brand-textDim hover:text-brand-text
@@ -159,16 +175,25 @@ export function NavBar() {
 
             {user ? (
               <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-panel">
-                  <div className="w-7 h-7 rounded-full bg-brand-primary/20 flex items-center justify-center">
-                    <span className="text-brand-primary text-xs font-medium">
-                      {user.email?.[0].toUpperCase() ?? "?"}
-                    </span>
+                <Link
+                  to="/my"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-panel hover:bg-brand-hover transition-colors"
+                >
+                  <DefaultAvatar
+                    avatarEmoji={avatarEmoji}
+                    nickname={nickname}
+                    email={user.email}
+                    size={28}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-brand-text truncate">
+                      {displayName}
+                    </div>
+                    <div className="text-[10px] text-brand-textDim truncate">
+                      {user.email}
+                    </div>
                   </div>
-                  <span className="text-xs text-brand-text truncate flex-1">
-                    {user.email}
-                  </span>
-                </div>
+                </Link>
                 <button
                   onClick={signOut}
                   className="text-left px-3 py-2 text-sm text-brand-textDim hover:text-brand-text

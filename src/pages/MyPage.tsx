@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { useProfileStore } from "../store/profileStore";
 import { loadAllProgressFromSupabase } from "../storage/supabaseProgressRepo";
 import { loadQuizResults, loadAllCourseProgress } from "../storage/supabaseQuizRepo";
 import {
@@ -10,6 +11,8 @@ import {
 } from "../storage/supabaseActivityRepo";
 import type { DailyActivity, StreakInfo } from "../storage/supabaseActivityRepo";
 import { ActivityHeatmap } from "../components/ActivityHeatmap";
+import { DefaultAvatar } from "../components/DefaultAvatar";
+import { ProfileEditModal } from "../components/ProfileEditModal";
 import { getCurriculum } from "../content";
 import { COURSES } from "../content/courses";
 import { getLanguage, getTrack } from "../content/languages";
@@ -31,10 +34,14 @@ interface TrackProgress {
 export function MyPage() {
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
+  const nickname = useProfileStore((s) => s.nickname);
+  const avatarEmoji = useProfileStore((s) => s.avatarEmoji);
+
   const [tracks, setTracks] = useState<TrackProgress[]>([]);
   const [completedCourses, setCompletedCourses] = useState(0);
   const [quizCount, setQuizCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [editingProfile, setEditingProfile] = useState(false);
 
   const [totalStudySeconds, setTotalStudySeconds] = useState(0);
   const [recentActivity, setRecentActivity] = useState<DailyActivity[]>([]);
@@ -43,6 +50,13 @@ export function MyPage() {
     longestStreak: 0,
     todayActive: false,
   });
+
+  // 표시할 이름: 닉네임 > 이메일 @ 앞 > 이메일
+  const displayName =
+    (nickname && nickname.trim()) ||
+    (user?.email ? user.email.split("@")[0] : "") ||
+    user?.email ||
+    "";
 
   useEffect(() => {
     if (!user) return;
@@ -101,15 +115,29 @@ export function MyPage() {
     <div className="min-h-screen bg-brand-bg text-brand-text">
       <div className="mx-auto max-w-4xl px-6 py-12">
         {/* 프로필 */}
-        <header className="mb-10 flex items-center gap-5">
-          <div className="w-16 h-16 rounded-full bg-brand-primary/20 flex items-center justify-center">
-            <span className="text-brand-primary text-2xl font-bold">
-              {user.email?.[0].toUpperCase() ?? "?"}
-            </span>
-          </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">{user.email}</h1>
-            <p className="text-sm text-brand-textDim">
+        <header className="mb-10 flex items-center gap-4 sm:gap-5">
+          <DefaultAvatar
+            avatarEmoji={avatarEmoji}
+            nickname={nickname}
+            email={user.email}
+            size={64}
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold truncate">
+                {displayName}
+              </h1>
+              <button
+                onClick={() => setEditingProfile(true)}
+                className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-brand-textDim hover:text-brand-primary hover:bg-brand-hover transition-colors"
+                title="프로필 편집"
+                aria-label="프로필 편집"
+              >
+                ✏
+              </button>
+            </div>
+            <p className="text-xs text-brand-textDim truncate">{user.email}</p>
+            <p className="text-xs text-brand-textDim mt-0.5">
               가입일:{" "}
               {new Date(user.created_at).toLocaleDateString("ko-KR", {
                 year: "numeric",
@@ -120,12 +148,20 @@ export function MyPage() {
           </div>
           <button
             onClick={signOut}
-            className="px-4 py-2 text-xs rounded-lg border border-brand-subtle text-brand-textDim
+            className="shrink-0 px-3 sm:px-4 py-2 text-xs rounded-lg border border-brand-subtle text-brand-textDim
                        hover:text-brand-text hover:border-brand-red transition-colors"
           >
             로그아웃
           </button>
         </header>
+
+        {/* 편집 모달 */}
+        {editingProfile && (
+          <ProfileEditModal
+            userId={user.id}
+            onClose={() => setEditingProfile(false)}
+          />
+        )}
 
         {/* 통계 카드 */}
         <section className="mb-10 grid grid-cols-2 md:grid-cols-3 gap-4">

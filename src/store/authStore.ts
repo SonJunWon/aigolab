@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { supabase } from "../lib/supabase";
+import { useProfileStore } from "./profileStore";
 import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthState {
@@ -44,12 +45,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       initialized: true,
     });
 
+    // 기존 세션이 있으면 프로필 로드
+    if (session?.user) {
+      void useProfileStore.getState().loadForUser(session.user.id);
+    }
+
     // 세션 변경 실시간 구독 (로그인/로그아웃/토큰 갱신)
     supabase.auth.onAuthStateChange((_event, session) => {
       set({
         session,
         user: session?.user ?? null,
       });
+      if (session?.user) {
+        void useProfileStore.getState().loadForUser(session.user.id);
+      } else {
+        useProfileStore.getState().clear();
+      }
     });
   },
 
@@ -88,5 +99,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     await supabase.auth.signOut();
     set({ user: null, session: null });
+    useProfileStore.getState().clear();
   },
 }));
