@@ -22,7 +22,7 @@ export const LANGUAGES: LanguageInfo[] = [
     name: "SQL",
     icon: "🗄️",
     description: "데이터를 다루는 표준 언어. 데이터 분석과 백엔드의 기초.",
-    status: "coming-soon",
+    status: "available",
     color: "from-emerald-400 to-teal-500",
   },
 ];

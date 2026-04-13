@@ -23,6 +23,10 @@ import {
   LESSONS as JS_BEGINNER,
   LESSON_SUMMARIES as JS_BEGINNER_SUMMARIES,
 } from "./javascript/beginner";
+import {
+  LESSONS as SQL_BEGINNER,
+  LESSON_SUMMARIES as SQL_BEGINNER_SUMMARIES,
+} from "./sql/beginner";
 
 type Curriculum = {
   lessons: Lesson[];
@@ -54,6 +58,13 @@ const CURRICULA: Partial<Record<Language, Partial<Record<Track, Curriculum>>>> =
       summaries: JS_BEGINNER_SUMMARIES,
     },
     // 다른 트랙은 추후
+  },
+  sql: {
+    beginner: {
+      lessons: SQL_BEGINNER,
+      summaries: SQL_BEGINNER_SUMMARIES,
+    },
+    // SQL은 입문만 (현재)
   },
 };
 
