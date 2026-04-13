@@ -17,6 +17,7 @@ import { AuthPage } from "./pages/AuthPage";
 import { CoursesPage } from "./pages/CoursesPage";
 import { CourseDetailPage } from "./pages/CourseDetailPage";
 import { NavBar } from "./components/NavBar";
+import { Footer } from "./components/Footer";
 import { ShortcutsHelp } from "./components/ShortcutsHelp";
 import { useGlobalShortcuts } from "./hooks/useGlobalShortcuts";
 import { useAuthStore } from "./store/authStore";
@@ -24,29 +25,33 @@ import { useUIStore } from "./store/uiStore";
 import { MyPage } from "./pages/MyPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { ProjectDetailPage } from "./pages/ProjectDetailPage";
+import { PrivacyPage } from "./pages/PrivacyPage";
+import { TermsPage } from "./pages/TermsPage";
 import { useProgressStore } from "./store/progressStore";
 
 /**
- * NavBar를 표시할지 결정하는 레이아웃.
+ * NavBar/Footer를 표시할지 결정하는 레이아웃.
  * IDE와 레슨 페이지는 자체 헤더가 있어서 NavBar 숨김.
+ * 전체화면 페이지(IDE, Playground, Lesson 상세, Auth)는 Footer도 숨김.
  */
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
-  // 이 경로들은 자체 헤더가 있으므로 NavBar 숨김
-  const hideNavBar =
+  // 이 경로들은 자체 헤더가 있으므로 NavBar + Footer 숨김
+  const hideChrome =
     location.pathname.startsWith("/coding/ide") ||
     location.pathname.startsWith("/coding/playground") ||
     location.pathname.startsWith("/auth") ||
-    location.pathname.match(/\/coding\/learn\/[^/]+\/[^/]+\/[^/]+/); // 레슨 상세
+    !!location.pathname.match(/\/coding\/learn\/[^/]+\/[^/]+\/[^/]+/); // 레슨 상세
 
   return (
     <>
-      {!hideNavBar && <NavBar />}
+      {!hideChrome && <NavBar />}
       {/* NavBar가 fixed라서 그 높이(56px=h-14)만큼 패딩 */}
-      <div className={hideNavBar ? "" : "pt-14"}>
+      <div className={hideChrome ? "" : "pt-14"}>
         {children}
       </div>
+      {!hideChrome && <Footer />}
     </>
   );
 }
@@ -106,6 +111,10 @@ function AppInner() {
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
         <Route path="/my" element={<MyPage />} />
+
+        {/* 정책 페이지 */}
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
