@@ -7,7 +7,7 @@ import { useProgressStore } from "../store/progressStore";
 import { useAutoSaveStore } from "../store/autoSaveStore";
 import { Notebook } from "../components/notebook/Notebook";
 import { QuizPanel } from "../components/quiz/QuizPanel";
-import { usePyodideStatus } from "../hooks/usePyodideStatus";
+import { useLanguageRuntime } from "../hooks/useLanguageRuntime";
 import { useAutoSave } from "../hooks/useAutoSave";
 import { useStudyTimeTracking } from "../hooks/useStudyTimeTracking";
 import { loadNotebook, deleteNotebook } from "../storage/notebookRepo";
@@ -24,7 +24,6 @@ export function LessonPage() {
 
   const cells = useNotebookStore((s) => s.cells);
   const loadCells = useNotebookStore((s) => s.loadCells);
-  const { status, version } = usePyodideStatus();
   const saveStatus = useAutoSaveStore((s) => s.status);
 
   const ensureLoaded = useProgressStore((s) => s.ensureLoaded);
@@ -38,6 +37,9 @@ export function LessonPage() {
     lang && trk && lessonId
       ? getLessonById(lang.id as Language, trk.id as Track, lessonId)
       : undefined;
+
+  // 레슨의 언어에 맞춰 런타임 init (Python이면 Pyodide, JS면 JS Worker)
+  const { status, version } = useLanguageRuntime(lesson?.language ?? "python");
 
   // 저장된 노트북을 먼저 로드했는지 추적
   //   null   = 아직 로드 시도 안 함 (또는 레슨 없음)
@@ -134,10 +136,13 @@ export function LessonPage() {
     lesson.id
   );
 
+  // 언어별 런타임 라벨
+  const runtimeLabel =
+    lesson.language === "javascript" ? "JavaScript" : "Python";
   const statusDot = {
     idle:    { cls: "bg-colab-textDim", title: "대기" },
-    loading: { cls: "bg-colab-yellow animate-pulse", title: "Pyodide 로딩 중..." },
-    ready:   { cls: "bg-colab-green", title: `Python ${version ?? ""} 준비됨` },
+    loading: { cls: "bg-colab-yellow animate-pulse", title: `${runtimeLabel} 로딩 중...` },
+    ready:   { cls: "bg-colab-green", title: `${runtimeLabel} ${version ?? ""} 준비됨` },
     error:   { cls: "bg-colab-red", title: "로딩 실패" },
   }[status];
 
