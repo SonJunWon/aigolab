@@ -21,6 +21,9 @@ export interface OutputLine {
   text: string;
 }
 
+/** 프로젝트 저장 상태 */
+export type ProjectSaveStatus = "idle" | "dirty" | "saving" | "saved" | "error";
+
 interface FileState {
   files: Record<string, FileEntry>;
   activeFile: string | null;
@@ -31,6 +34,10 @@ interface FileState {
   collapsedFolders: Set<string>;
   /** 프로젝트가 IDB에서 로드됐는지 */
   loaded: boolean;
+  /** 디스크(IDB)에 저장되지 않은 변경이 있는 파일 경로 Set */
+  dirtyFiles: Set<string>;
+  /** 프로젝트 전체 저장 상태 */
+  saveStatus: ProjectSaveStatus;
 
   // ── 파일 조작 ────────────────────────
   createFile: (name: string, content?: string) => void;
@@ -39,6 +46,10 @@ interface FileState {
   deleteFolder: (path: string) => void;
   renameFile: (oldName: string, newName: string) => void;
   updateContent: (name: string, content: string) => void;
+  /** 파일을 다른 폴더로 이동. targetFolder = "" 이면 루트로. */
+  moveFile: (filePath: string, targetFolder: string) => boolean;
+  /** 폴더(하위 전체)를 다른 폴더로 이동. targetFolder = "" 이면 루트로. */
+  moveFolder: (folderPath: string, targetFolder: string) => boolean;
 
   // ── 폴더 토글 ────────────────────────
   toggleFolder: (path: string) => void;
@@ -52,14 +63,22 @@ interface FileState {
   clearOutput: () => void;
   setRunning: (running: boolean) => void;
 
+  // ── 저장 상태 ────────────────────────
+  setSaveStatus: (status: ProjectSaveStatus) => void;
+  markAllSaved: () => void;
+
   // ── 전체 프로젝트 ────────────────────
+  /** IDB에서 복원 — dirty 표시 없음 */
   loadProject: (files: Record<string, FileEntry>) => void;
+  /** 외부(ZIP 등)에서 가져옴 — 전체 dirty 표시해서 autoSave가 IDB에 저장 */
+  importFiles: (files: Record<string, FileEntry>) => void;
+  resetToDefault: () => void;
   setLoaded: (loaded: boolean) => void;
   getFileList: () => FileEntry[];
   getFolders: () => string[];
 }
 
-const DEFAULT_FILES: Record<string, FileEntry> = {
+export const DEFAULT_FILES: Record<string, FileEntry> = {
   "main.py": {
     name: "main.py",
     content: `# main.py — 실행 진입점
@@ -111,6 +130,8 @@ export const useFileStore = create<FileState>((set, get) => ({
   running: false,
   collapsedFolders: new Set(),
   loaded: false,
+  dirtyFiles: new Set(),
+  saveStatus: "idle",
 
   createFile: (name, content = "") => {
     const lang = name.endsWith(".py") ? "python" : "plaintext";
@@ -118,6 +139,8 @@ export const useFileStore = create<FileState>((set, get) => ({
       files: { ...s.files, [name]: { name, content, language: lang } },
       openTabs: [...s.openTabs, name],
       activeFile: name,
+      dirtyFiles: new Set(s.dirtyFiles).add(name),
+      saveStatus: "dirty",
     }));
   },
 
@@ -137,6 +160,8 @@ export const useFileStore = create<FileState>((set, get) => ({
             language: "python",
           },
         },
+        dirtyFiles: new Set(s.dirtyFiles).add(initPath),
+        saveStatus: "dirty",
       }));
     }
   },
@@ -146,6 +171,8 @@ export const useFileStore = create<FileState>((set, get) => ({
       const next = { ...s.files };
       delete next[name];
       const tabs = s.openTabs.filter((t) => t !== name);
+      const dirty = new Set(s.dirtyFiles);
+      dirty.delete(name);
       return {
         files: next,
         openTabs: tabs,
@@ -153,6 +180,8 @@ export const useFileStore = create<FileState>((set, get) => ({
           s.activeFile === name
             ? tabs[tabs.length - 1] ?? null
             : s.activeFile,
+        dirtyFiles: dirty,
+        saveStatus: "dirty",
       };
     }),
 
@@ -164,6 +193,10 @@ export const useFileStore = create<FileState>((set, get) => ({
         if (!k.startsWith(prefix)) next[k] = v;
       }
       const tabs = s.openTabs.filter((t) => !t.startsWith(prefix));
+      const dirty = new Set<string>();
+      for (const p of s.dirtyFiles) {
+        if (!p.startsWith(prefix)) dirty.add(p);
+      }
       return {
         files: next,
         openTabs: tabs,
@@ -171,6 +204,8 @@ export const useFileStore = create<FileState>((set, get) => ({
           s.activeFile && s.activeFile.startsWith(prefix)
             ? tabs[tabs.length - 1] ?? null
             : s.activeFile,
+        dirtyFiles: dirty,
+        saveStatus: "dirty",
       };
     }),
 
@@ -181,17 +216,107 @@ export const useFileStore = create<FileState>((set, get) => ({
       const next = { ...s.files };
       delete next[oldName];
       next[newName] = { ...entry, name: newName };
+      const dirty = new Set(s.dirtyFiles);
+      // 이름이 바뀌면 디스크 상의 이전 이름과는 다른 파일이므로 dirty로 표시
+      dirty.delete(oldName);
+      dirty.add(newName);
       return {
         files: next,
         openTabs: s.openTabs.map((t) => (t === oldName ? newName : t)),
         activeFile: s.activeFile === oldName ? newName : s.activeFile,
+        dirtyFiles: dirty,
+        saveStatus: "dirty",
       };
     }),
 
   updateContent: (name, content) =>
-    set((s) => ({
-      files: { ...s.files, [name]: { ...s.files[name], content } },
-    })),
+    set((s) => {
+      if (s.files[name]?.content === content) return s;
+      const dirty = new Set(s.dirtyFiles);
+      dirty.add(name);
+      return {
+        files: { ...s.files, [name]: { ...s.files[name], content } },
+        dirtyFiles: dirty,
+        saveStatus: "dirty",
+      };
+    }),
+
+  moveFile: (filePath, targetFolder) => {
+    const state = get();
+    const entry = state.files[filePath];
+    if (!entry) return false;
+    const baseName = filePath.includes("/")
+      ? filePath.slice(filePath.lastIndexOf("/") + 1)
+      : filePath;
+    const prefix = targetFolder ? `${targetFolder}/` : "";
+    const newPath = `${prefix}${baseName}`;
+    if (newPath === filePath) return false; // 같은 위치
+    if (state.files[newPath]) return false; // 충돌
+    // 기존 renameFile 로직 재사용 (dirty 표시 + 탭 갱신 포함)
+    state.renameFile(filePath, newPath);
+    return true;
+  },
+
+  moveFolder: (folderPath, targetFolder) => {
+    const state = get();
+    const srcPrefix = folderPath.endsWith("/") ? folderPath : `${folderPath}/`;
+    const srcBase = folderPath.endsWith("/")
+      ? folderPath.slice(0, -1)
+      : folderPath;
+    const leafName = srcBase.includes("/")
+      ? srcBase.slice(srcBase.lastIndexOf("/") + 1)
+      : srcBase;
+
+    // 자기 자신 또는 자기 하위 폴더로는 이동 불가
+    if (targetFolder === srcBase) return false;
+    if (targetFolder.startsWith(srcPrefix)) return false;
+
+    const destBase = targetFolder ? `${targetFolder}/${leafName}` : leafName;
+    const destPrefix = `${destBase}/`;
+    if (destBase === srcBase) return false;
+
+    // 이동 대상 수집
+    const affectedPaths = Object.keys(state.files).filter((p) =>
+      p.startsWith(srcPrefix)
+    );
+    if (affectedPaths.length === 0) return false;
+
+    // 목적지 충돌 검사
+    for (const oldPath of affectedPaths) {
+      const newPath = oldPath.replace(srcPrefix, destPrefix);
+      if (state.files[newPath]) return false;
+    }
+
+    set((s) => {
+      const nextFiles = { ...s.files };
+      const nextTabs = [...s.openTabs];
+      const nextDirty = new Set(s.dirtyFiles);
+      let nextActive = s.activeFile;
+
+      for (const oldPath of affectedPaths) {
+        const newPath = oldPath.replace(srcPrefix, destPrefix);
+        const entry = nextFiles[oldPath];
+        delete nextFiles[oldPath];
+        nextFiles[newPath] = { ...entry, name: newPath };
+
+        const tabIdx = nextTabs.indexOf(oldPath);
+        if (tabIdx >= 0) nextTabs[tabIdx] = newPath;
+        if (nextActive === oldPath) nextActive = newPath;
+
+        nextDirty.delete(oldPath);
+        nextDirty.add(newPath);
+      }
+
+      return {
+        files: nextFiles,
+        openTabs: nextTabs,
+        activeFile: nextActive,
+        dirtyFiles: nextDirty,
+        saveStatus: "dirty",
+      };
+    });
+    return true;
+  },
 
   toggleFolder: (path) =>
     set((s) => {
@@ -225,6 +350,10 @@ export const useFileStore = create<FileState>((set, get) => ({
   clearOutput: () => set({ output: [] }),
   setRunning: (running) => set({ running }),
 
+  setSaveStatus: (status) => set({ saveStatus: status }),
+  markAllSaved: () =>
+    set({ dirtyFiles: new Set(), saveStatus: "saved" }),
+
   loadProject: (files) =>
     set({
       files,
@@ -232,6 +361,32 @@ export const useFileStore = create<FileState>((set, get) => ({
       openTabs: [Object.keys(files).find((f) => !f.includes("/")) ?? Object.keys(files)[0]].filter(Boolean) as string[],
       output: [],
       loaded: true,
+      dirtyFiles: new Set(),
+      saveStatus: "saved",
+    }),
+
+  importFiles: (files) =>
+    set({
+      files,
+      activeFile: Object.keys(files).find((f) => !f.includes("/")) ?? Object.keys(files)[0] ?? null,
+      openTabs: [Object.keys(files).find((f) => !f.includes("/")) ?? Object.keys(files)[0]].filter(Boolean) as string[],
+      output: [],
+      loaded: true,
+      dirtyFiles: new Set(Object.keys(files)),
+      saveStatus: "dirty",
+      collapsedFolders: new Set(),
+    }),
+
+  resetToDefault: () =>
+    set({
+      files: { ...DEFAULT_FILES },
+      activeFile: "main.py",
+      openTabs: ["main.py"],
+      output: [],
+      loaded: true,
+      dirtyFiles: new Set(Object.keys(DEFAULT_FILES)),
+      saveStatus: "dirty",
+      collapsedFolders: new Set(),
     }),
 
   setLoaded: (loaded) => set({ loaded }),

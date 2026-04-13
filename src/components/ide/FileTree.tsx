@@ -49,13 +49,43 @@ function buildTree(filePaths: string[]): TreeNode[] {
   return root;
 }
 
+// ─────────────────────────────────────────────────────────
+// 드래그 데이터 포맷
+// ─────────────────────────────────────────────────────────
+interface DragPayload {
+  type: "file" | "folder";
+  path: string;
+}
+const DRAG_MIME = "application/x-aigolab-ide";
+
+function encodePayload(p: DragPayload): string {
+  return JSON.stringify(p);
+}
+function decodePayload(s: string): DragPayload | null {
+  try {
+    const parsed = JSON.parse(s);
+    if (parsed && (parsed.type === "file" || parsed.type === "folder") && typeof parsed.path === "string") {
+      return parsed;
+    }
+  } catch {
+    // noop
+  }
+  return null;
+}
+
 export function FileTree() {
   const files = useFileStore((s) => s.files);
   const createFile = useFileStore((s) => s.createFile);
   const createFolder = useFileStore((s) => s.createFolder);
+  const moveFile = useFileStore((s) => s.moveFile);
+  const moveFolder = useFileStore((s) => s.moveFolder);
+
   const [creating, setCreating] = useState<"file" | "folder" | null>(null);
   const [newName, setNewName] = useState("");
   const [createParent, setCreateParent] = useState("");
+
+  /** 현재 드롭 타겟 경로. "" = 루트, null = 없음 */
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   const tree = buildTree(Object.keys(files));
 
@@ -86,6 +116,43 @@ export function FileTree() {
     setNewName("");
   };
 
+  // ── 드롭 처리 ──────────────────────────────────────────
+  // targetFolder: 목적 폴더. "" = 루트.
+  const doDrop = (payload: DragPayload, targetFolder: string): boolean => {
+    if (payload.type === "file") {
+      return moveFile(payload.path, targetFolder);
+    } else {
+      return moveFolder(payload.path, targetFolder);
+    }
+  };
+
+  const handleRootDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDropTarget(null);
+    const raw = e.dataTransfer.getData(DRAG_MIME);
+    const payload = decodePayload(raw);
+    if (!payload) return;
+    const ok = doDrop(payload, "");
+    if (!ok) {
+      // 이미 루트거나 충돌 — 조용히 무시
+    }
+  };
+
+  const handleRootDragOver = (e: React.DragEvent) => {
+    if (!e.dataTransfer.types.includes(DRAG_MIME)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    // 자식 노드에서 stopPropagation을 안 했으면 루트가 타겟
+    if (dropTarget !== "") setDropTarget("");
+  };
+
+  const handleRootDragLeave = (e: React.DragEvent) => {
+    // 트리 영역 바깥으로 나갔을 때만 해제 (자식으로 이동한 경우는 leave만 나고 enter가 곧 발생)
+    if (e.currentTarget === e.target) {
+      setDropTarget(null);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* 헤더 */}
@@ -113,14 +180,24 @@ export function FileTree() {
         </div>
       </div>
 
-      {/* 트리 */}
-      <div className="flex-1 overflow-y-auto py-1">
+      {/* 트리 (루트 드롭 타겟) */}
+      <div
+        className={`flex-1 overflow-y-auto py-1 transition-colors ${
+          dropTarget === "" ? "bg-colab-accent/5 ring-1 ring-inset ring-colab-accent/40" : ""
+        }`}
+        onDragOver={handleRootDragOver}
+        onDragLeave={handleRootDragLeave}
+        onDrop={handleRootDrop}
+      >
         {tree.map((node) => (
           <TreeNodeView
             key={node.fullPath}
             node={node}
             depth={0}
             onCreateFile={(parent) => startCreate("file", parent)}
+            dropTarget={dropTarget}
+            setDropTarget={setDropTarget}
+            doDrop={doDrop}
           />
         ))}
       </div>
@@ -163,31 +240,110 @@ export function FileTree() {
 // 재귀 트리 노드
 // ─────────────────────────────────────────────────────────
 
+interface TreeNodeViewProps {
+  node: TreeNode;
+  depth: number;
+  onCreateFile: (parent: string) => void;
+  dropTarget: string | null;
+  setDropTarget: (t: string | null) => void;
+  doDrop: (payload: DragPayload, targetFolder: string) => boolean;
+}
+
 function TreeNodeView({
   node,
   depth,
   onCreateFile,
-}: {
-  node: TreeNode;
-  depth: number;
-  onCreateFile: (parent: string) => void;
-}) {
+  dropTarget,
+  setDropTarget,
+  doDrop,
+}: TreeNodeViewProps) {
   const activeFile = useFileStore((s) => s.activeFile);
+  const files = useFileStore((s) => s.files);
+  const dirtyFiles = useFileStore((s) => s.dirtyFiles);
   const openFile = useFileStore((s) => s.openFile);
   const deleteFile = useFileStore((s) => s.deleteFile);
   const deleteFolder = useFileStore((s) => s.deleteFolder);
+  const renameFile = useFileStore((s) => s.renameFile);
   const collapsedFolders = useFileStore((s) => s.collapsedFolders);
   const toggleFolder = useFileStore((s) => s.toggleFolder);
+
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState("");
 
   const isCollapsed = collapsedFolders.has(node.fullPath);
   const paddingLeft = 12 + depth * 16;
 
+  const startRename = () => {
+    setEditName(node.name);
+    setEditing(true);
+  };
+
+  const commitRename = () => {
+    const trimmed = editName.trim();
+    setEditing(false);
+    if (!trimmed || trimmed === node.name) return;
+    const parentPath = node.fullPath.includes("/")
+      ? node.fullPath.slice(0, node.fullPath.lastIndexOf("/") + 1)
+      : "";
+    // 확장자가 없으면 원본 확장자 유지 (없으면 .py)
+    const origExt = node.name.includes(".") ? node.name.slice(node.name.lastIndexOf(".")) : ".py";
+    const finalName = trimmed.includes(".") ? trimmed : `${trimmed}${origExt}`;
+    const newFullPath = `${parentPath}${finalName}`;
+    if (newFullPath === node.fullPath) return;
+    if (files[newFullPath]) {
+      alert("같은 이름의 파일이 이미 있어요.");
+      return;
+    }
+    renameFile(node.fullPath, newFullPath);
+  };
+
+  // ── 드래그 핸들러 (공통) ──────────────────────────
+  const handleDragStart = (e: React.DragEvent) => {
+    if (editing) {
+      e.preventDefault();
+      return;
+    }
+    const payload: DragPayload = {
+      type: node.isFolder ? "folder" : "file",
+      path: node.fullPath,
+    };
+    e.dataTransfer.setData(DRAG_MIME, encodePayload(payload));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  // ── 폴더 노드의 드롭 핸들러 ──────────────────────
+  const handleFolderDragOver = (e: React.DragEvent) => {
+    if (!e.dataTransfer.types.includes(DRAG_MIME)) return;
+    e.preventDefault();
+    e.stopPropagation(); // 루트 드롭 방지
+    e.dataTransfer.dropEffect = "move";
+    if (dropTarget !== node.fullPath) setDropTarget(node.fullPath);
+  };
+
+  const handleFolderDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropTarget(null);
+    const raw = e.dataTransfer.getData(DRAG_MIME);
+    const payload = decodePayload(raw);
+    if (!payload) return;
+    doDrop(payload, node.fullPath);
+  };
+
   if (node.isFolder) {
+    const isDropHighlight = dropTarget === node.fullPath;
     return (
       <>
         <div
-          className="group flex items-center gap-1.5 py-1 cursor-pointer text-xs text-colab-textDim hover:text-colab-text hover:bg-colab-hover transition-colors"
+          className={`group flex items-center gap-1.5 py-1 cursor-pointer text-xs transition-colors
+            ${isDropHighlight
+              ? "bg-colab-accent/20 ring-1 ring-inset ring-colab-accent text-colab-text"
+              : "text-colab-textDim hover:text-colab-text hover:bg-colab-hover"}`}
           style={{ paddingLeft }}
+          draggable
+          onDragStart={handleDragStart}
+          onDragOver={handleFolderDragOver}
+          onDrop={handleFolderDrop}
           onClick={() => toggleFolder(node.fullPath)}
         >
           <span className="text-[10px]">{isCollapsed ? "▶" : "▼"}</span>
@@ -225,6 +381,9 @@ function TreeNodeView({
               node={child}
               depth={depth + 1}
               onCreateFile={onCreateFile}
+              dropTarget={dropTarget}
+              setDropTarget={setDropTarget}
+              doDrop={doDrop}
             />
           ))}
       </>
@@ -233,30 +392,76 @@ function TreeNodeView({
 
   // 파일 노드
   const isActive = activeFile === node.fullPath;
+  const isDirty = dirtyFiles.has(node.fullPath);
 
   return (
     <div
       className={`group flex items-center gap-1.5 py-1 cursor-pointer text-xs transition-colors
         ${isActive ? "bg-colab-accent/10 text-colab-accent" : "text-colab-text hover:bg-colab-hover"}`}
       style={{ paddingLeft }}
-      onClick={() => openFile(node.fullPath)}
+      draggable={!editing}
+      onDragStart={handleDragStart}
+      onClick={() => !editing && openFile(node.fullPath)}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        if (!editing) startRename();
+      }}
+      title="드래그로 폴더 이동 · 더블클릭하면 이름 변경"
     >
       <span className="text-[10px] opacity-0">▶</span>
       <span>🐍</span>
-      <span className="flex-1 truncate">{node.name}</span>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          if (confirm(`"${node.fullPath}" 파일을 삭제하시겠습니까?`)) {
-            deleteFile(node.fullPath);
-          }
-        }}
-        className="opacity-0 group-hover:opacity-100 mr-1 w-5 h-5 flex items-center justify-center rounded
-                   text-xs text-colab-textDim hover:text-colab-red hover:bg-colab-hover transition-all"
-        title="삭제"
-      >
-        ✕
-      </button>
+      {editing ? (
+        <input
+          autoFocus
+          value={editName}
+          onChange={(e) => setEditName(e.target.value)}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            if (e.key === "Enter") commitRename();
+            if (e.key === "Escape") setEditing(false);
+          }}
+          onBlur={commitRename}
+          onClick={(e) => e.stopPropagation()}
+          className="flex-1 min-w-0 px-1 py-0 text-xs rounded bg-colab-bg border border-colab-accent
+                     text-colab-text focus:outline-none"
+        />
+      ) : (
+        <>
+          <span className="flex-1 truncate">{node.name}</span>
+          {isDirty && (
+            <span
+              className="w-1.5 h-1.5 rounded-full bg-colab-yellow shrink-0 mr-1"
+              title="저장되지 않은 변경"
+            />
+          )}
+          <div className="flex items-center gap-0.5 mr-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                startRename();
+              }}
+              className="w-5 h-5 flex items-center justify-center rounded
+                         text-xs text-colab-textDim hover:text-colab-accent hover:bg-colab-hover transition-all"
+              title="이름 변경"
+            >
+              ✏
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm(`"${node.fullPath}" 파일을 삭제하시겠습니까?`)) {
+                  deleteFile(node.fullPath);
+                }
+              }}
+              className="w-5 h-5 flex items-center justify-center rounded opacity-0 group-hover:opacity-100
+                         text-xs text-colab-textDim hover:text-colab-red hover:bg-colab-hover transition-all"
+              title="삭제"
+            >
+              ✕
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

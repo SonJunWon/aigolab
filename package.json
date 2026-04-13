@@ -13,6 +13,7 @@
     "@monaco-editor/react": "^4.7.0",
     "@supabase/supabase-js": "^2.103.0",
     "idb": "^8.0.3",
+    "jszip": "^3.10.1",
     "markdown-it": "^14.1.1",
     "marked": "^14.1.4",
     "pyodide": "^0.28.3",
