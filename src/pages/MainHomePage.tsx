@@ -1,75 +1,6 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuthStore } from "../store/authStore";
-import { listAllProgress } from "../storage/progressRepo";
-import { loadAllProgressFromSupabase } from "../storage/supabaseProgressRepo";
-import { getLessonById } from "../content";
-import { getLanguage, getTrack } from "../content/languages";
-
-interface ResumeData {
-  language: string;
-  track: string;
-  currentLesson: string;
-  lastStudiedAt: number;
-}
 
 export function MainHomePage() {
-  const user = useAuthStore((s) => s.user);
-  const [latestProgress, setLatestProgress] = useState<ResumeData | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      let items: ResumeData[] = [];
-
-      if (user) {
-        // 로그인: Supabase에서 로드
-        const remote = await loadAllProgressFromSupabase(user.id);
-        items = remote
-          .filter((r) => r.current_lesson)
-          .map((r) => ({
-            language: r.language,
-            track: r.track,
-            currentLesson: r.current_lesson!,
-            lastStudiedAt: new Date(r.last_studied_at).getTime(),
-          }));
-      } else {
-        // 비로그인: IDB에서 로드
-        const local = await listAllProgress();
-        items = local
-          .filter((l) => l.currentLesson)
-          .map((l) => ({
-            language: l.language,
-            track: l.track,
-            currentLesson: l.currentLesson!,
-            lastStudiedAt: l.lastStudiedAt,
-          }));
-      }
-
-      if (cancelled) return;
-      const sorted = items.sort((a, b) => b.lastStudiedAt - a.lastStudiedAt);
-      setLatestProgress(sorted[0] ?? null);
-    })().catch(() => {});
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
-
-  const resumeInfo = latestProgress
-    ? (() => {
-        const lang = getLanguage(latestProgress.language);
-        const track = getTrack(latestProgress.track);
-        const lesson =
-          lang && track && latestProgress.currentLesson
-            ? getLessonById(lang.id, track.id, latestProgress.currentLesson)
-            : undefined;
-        if (!lang || !track || !lesson) return null;
-        return { lang, track, lesson };
-      })()
-    : null;
-
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text">
       <div className="mx-auto max-w-6xl px-6">
@@ -93,39 +24,6 @@ export function MainHomePage() {
             AI GoLab (AI 고랩) — 브라우저만으로, 설치 없이, 이론부터 실습까지
           </p>
         </section>
-
-        {/* ─── 이어서 학습 배너 ─── */}
-        {resumeInfo && (
-          <section className="mb-10">
-            <Link
-              to={`/coding/learn/${resumeInfo.lang.id}/${resumeInfo.track.id}/${resumeInfo.lesson.id}`}
-              className="block p-5 rounded-xl border border-brand-primary/30 bg-gradient-to-r from-brand-panel to-brand-bg
-                         hover:border-brand-primary/60 hover:shadow-lg hover:shadow-brand-primary/10
-                         transition-all group"
-            >
-              <div className="flex items-center gap-5">
-                <div className="shrink-0 text-4xl">{resumeInfo.lang.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-brand-primary/15 text-brand-primary font-medium">
-                      📖 이어서 학습
-                    </span>
-                    <span className="text-xs text-brand-textDim">
-                      {resumeInfo.lang.name} · {resumeInfo.track.name} · 챕터{" "}
-                      {resumeInfo.lesson.order}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-medium text-brand-text truncate">
-                    {resumeInfo.lesson.title}
-                  </h3>
-                </div>
-                <span className="shrink-0 text-brand-primary group-hover:translate-x-1 transition-transform text-xl">
-                  →
-                </span>
-              </div>
-            </Link>
-          </section>
-        )}
 
         {/* ─── 4대 코너 ─── */}
         <section className="pb-16">
