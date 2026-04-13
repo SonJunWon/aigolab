@@ -6,6 +6,9 @@ import { course04 } from "./04-deep-learning";
 import { course05 } from "./05-nlp-basics";
 import { course06 } from "./06-generative-ai";
 import { course07 } from "./07-prompt-engineering";
+import { course08 } from "./08-computer-vision";
+import { course09 } from "./09-ai-ethics";
+import { course10 } from "./10-ai-agents";
 
 export const COURSES: Course[] = [
   course01,
@@ -15,6 +18,9 @@ export const COURSES: Course[] = [
   course05,
   course06,
   course07,
+  course08,
+  course09,
+  course10,
 ];
 
 export const COURSE_SUMMARIES: CourseSummary[] = COURSES.map((c) => ({

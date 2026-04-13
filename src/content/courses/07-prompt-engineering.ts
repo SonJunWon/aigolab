@@ -361,4 +361,5 @@ LLM 자신에게 **"다시 한번 읽어봐"** 라고 시키는 것만으로도 
       },
     ],
   } satisfies Quiz,
+  nextCourseId: "computer-vision",
 };
