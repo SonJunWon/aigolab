@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useUIStore } from "../store/uiStore";
@@ -20,25 +21,34 @@ export function NavBar() {
   const theme = useUIStore((s) => s.theme);
   const toggleTheme = useUIStore((s) => s.toggleTheme);
 
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // 경로 변경 시 모바일 메뉴 닫기
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + "/");
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-brand-bg/95 backdrop-blur-md border-b border-brand-subtle">
-      <div className="mx-auto max-w-6xl px-6 flex items-center justify-between h-14">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 flex items-center justify-between h-14">
         {/* 로고 */}
-        <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
+        <Link to="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0 group">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center">
             <span className="text-white text-xs font-bold">AI</span>
           </div>
           <span className="text-base font-semibold text-brand-text group-hover:text-brand-primary transition-colors">
             AIGoLab
           </span>
-          <span className="text-[10px] text-brand-textDim/50">v{APP_VERSION}</span>
+          <span className="hidden sm:inline text-[10px] text-brand-textDim/50">
+            v{APP_VERSION}
+          </span>
         </Link>
 
-        {/* 네비게이션 */}
-        <div className="flex items-center gap-1">
+        {/* 데스크탑 네비게이션 */}
+        <div className="hidden md:flex items-center gap-1">
           {NAV_ITEMS.map((item) => (
             <button
               key={item.path}
@@ -75,7 +85,7 @@ export function NavBar() {
                     {user.email?.[0].toUpperCase() ?? "?"}
                   </span>
                 </div>
-                <span className="text-xs text-brand-text max-w-[120px] truncate hidden sm:inline">
+                <span className="text-xs text-brand-text max-w-[120px] truncate hidden lg:inline">
                   {user.email}
                 </span>
               </div>
@@ -97,7 +107,92 @@ export function NavBar() {
             </button>
           )}
         </div>
+
+        {/* 모바일: 테마 토글 + 햄버거 */}
+        <div className="flex md:hidden items-center gap-1">
+          <button
+            onClick={toggleTheme}
+            className="p-2 text-sm rounded-lg text-brand-textDim hover:text-brand-text hover:bg-brand-hover/50 transition-colors"
+            aria-label={theme === "dark" ? "라이트 모드" : "다크 모드"}
+          >
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
+          <button
+            onClick={() => setMobileOpen((o) => !o)}
+            className="p-2 rounded-lg text-brand-textDim hover:text-brand-text hover:bg-brand-hover/50 transition-colors"
+            aria-label={mobileOpen ? "메뉴 닫기" : "메뉴 열기"}
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 6l12 12M6 18L18 6" />
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
+
+      {/* 모바일 드롭다운 메뉴 */}
+      {mobileOpen && (
+        <div className="md:hidden border-t border-brand-subtle bg-brand-bg/95 backdrop-blur-md">
+          <div className="px-4 py-3 flex flex-col gap-1">
+            {NAV_ITEMS.map((item) => (
+              <button
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className={`text-left px-3 py-2.5 text-sm rounded-lg transition-colors
+                  ${
+                    isActive(item.path)
+                      ? "text-brand-primary bg-brand-primary/10"
+                      : "text-brand-text hover:bg-brand-hover/50"
+                  }`}
+              >
+                {item.label}
+              </button>
+            ))}
+
+            <div className="h-px bg-brand-subtle my-2" />
+
+            {user ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-panel">
+                  <div className="w-7 h-7 rounded-full bg-brand-primary/20 flex items-center justify-center">
+                    <span className="text-brand-primary text-xs font-medium">
+                      {user.email?.[0].toUpperCase() ?? "?"}
+                    </span>
+                  </div>
+                  <span className="text-xs text-brand-text truncate flex-1">
+                    {user.email}
+                  </span>
+                </div>
+                <button
+                  onClick={signOut}
+                  className="text-left px-3 py-2 text-sm text-brand-textDim hover:text-brand-text
+                             rounded-lg hover:bg-brand-hover/50 transition-colors"
+                >
+                  로그아웃
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate("/auth")}
+                className="px-4 py-2.5 text-sm rounded-lg bg-brand-primary text-white font-medium
+                           hover:bg-brand-primaryDim transition-colors"
+              >
+                로그인
+              </button>
+            )}
+
+            <div className="pt-2 text-[10px] text-brand-textDim/50 text-center">
+              v{APP_VERSION}
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

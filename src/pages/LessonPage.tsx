@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { getLessonById, getCurriculum } from "../content";
 import { getLanguage, getTrack } from "../content/languages";
@@ -43,6 +43,20 @@ export function LessonPage() {
   //   "loading" = IDB 조회 중
   //   "ready"   = 로드 완료 → 자동 저장 ON
   const [loadState, setLoadState] = useState<"loading" | "ready">("loading");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // 오버플로 메뉴 바깥 클릭 시 닫기
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [menuOpen]);
 
   // 자동 저장 — loadState가 ready일 때만 활성화
   useAutoSave(lesson?.id ?? null, loadState === "ready");
@@ -156,8 +170,8 @@ export function LessonPage() {
     <div className="min-h-screen bg-colab-bg flex flex-col">
       {/* 레슨 헤더 */}
       <div className="border-b border-colab-subtle bg-colab-bg sticky top-0 z-20">
-        <div className="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="mx-auto max-w-5xl px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <Link
               to={`/coding/learn/${lang.id}/${trk.id}`}
               className="shrink-0 text-sm text-colab-textDim hover:text-colab-accent transition-colors"
@@ -165,24 +179,28 @@ export function LessonPage() {
             >
               ←
             </Link>
-            <div className="shrink-0 text-lg">{lang.icon}</div>
-            <div className="min-w-0">
-              <div className="text-[11px] text-colab-textDim flex items-center gap-1.5">
-                {lang.name} · {trk.name} · 챕터 {lesson.order}
+            <div className="shrink-0 text-base sm:text-lg">{lang.icon}</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] sm:text-[11px] text-colab-textDim flex items-center gap-1.5 truncate">
+                <span className="truncate">
+                  <span className="hidden sm:inline">{lang.name} · {trk.name} · </span>
+                  챕터 {lesson.order}
+                </span>
                 {alreadyDone && (
-                  <span className="text-colab-green" title="완료한 챕터">
-                    ✓ 완료
+                  <span className="text-colab-green shrink-0" title="완료한 챕터">
+                    ✓
                   </span>
                 )}
               </div>
-              <h1 className="text-base font-medium text-colab-text truncate">
+              <h1 className="text-sm sm:text-base font-medium text-colab-text truncate">
                 {lesson.title}
               </h1>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* 저장 상태 — 데스크탑 전용 (모바일은 플로팅 배지로 노출) */}
             <span
-              className={`text-[11px] ${saveLabel.cls}`}
+              className={`hidden md:inline text-[11px] ${saveLabel.cls}`}
               title="노트북 자동 저장 상태"
             >
               {saveLabel.text}
@@ -191,9 +209,11 @@ export function LessonPage() {
               className={`w-2 h-2 rounded-full ${statusDot.cls}`}
               title={statusDot.title}
             />
+
+            {/* 데스크탑: .ipynb + 리셋 */}
             <button
               onClick={() => downloadIpynb(cells, `${lesson.id}.ipynb`)}
-              className="px-3 py-1.5 text-xs rounded border border-colab-subtle text-colab-textDim hover:text-colab-text hover:border-colab-accent transition-colors"
+              className="hidden sm:inline-flex px-3 py-1.5 text-xs rounded border border-colab-subtle text-colab-textDim hover:text-colab-text hover:border-colab-accent transition-colors"
               title=".ipynb 파일로 다운로드"
             >
               ↓ .ipynb
@@ -201,23 +221,67 @@ export function LessonPage() {
             <button
               onClick={handleReset}
               title="처음부터 다시 (저장된 내용 삭제)"
-              className="px-3 py-1.5 text-xs rounded border border-colab-subtle text-colab-textDim hover:text-colab-text hover:border-colab-red transition-colors"
+              className="hidden sm:inline-flex px-3 py-1.5 text-xs rounded border border-colab-subtle text-colab-textDim hover:text-colab-text hover:border-colab-red transition-colors"
             >
               ↺ 리셋
             </button>
             {prevLesson && (
               <Link
                 to={`/coding/learn/${lang.id}/${trk.id}/${prevLesson.id}`}
-                className="px-3 py-1.5 text-xs rounded border border-colab-subtle text-colab-textDim hover:text-colab-text hover:border-colab-accent transition-colors"
+                className="hidden sm:inline-flex px-3 py-1.5 text-xs rounded border border-colab-subtle text-colab-textDim hover:text-colab-text hover:border-colab-accent transition-colors"
               >
                 ← 이전
               </Link>
             )}
+
+            {/* 모바일: 오버플로 메뉴 */}
+            <div ref={menuRef} className="relative sm:hidden">
+              <button
+                onClick={() => setMenuOpen((o) => !o)}
+                aria-label="더 보기"
+                aria-expanded={menuOpen}
+                className="px-2.5 py-1.5 text-xs rounded border border-colab-subtle text-colab-textDim hover:text-colab-text hover:border-colab-accent transition-colors"
+              >
+                ⋯
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 mt-1 w-44 rounded-lg border border-colab-subtle bg-colab-panel shadow-lg shadow-black/40 z-30 py-1">
+                  {prevLesson && (
+                    <Link
+                      to={`/coding/learn/${lang.id}/${trk.id}/${prevLesson.id}`}
+                      onClick={() => setMenuOpen(false)}
+                      className="block px-3 py-2 text-xs text-colab-text hover:bg-colab-hover transition-colors"
+                    >
+                      ← 이전 챕터
+                    </Link>
+                  )}
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      downloadIpynb(cells, `${lesson.id}.ipynb`);
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs text-colab-text hover:bg-colab-hover transition-colors"
+                  >
+                    ↓ .ipynb 다운로드
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      void handleReset();
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs text-colab-text hover:bg-colab-hover transition-colors"
+                  >
+                    ↺ 처음부터 다시
+                  </button>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => handleNext(nextLesson?.id)}
-              className="px-3 py-1.5 text-xs rounded bg-colab-accent text-colab-bg hover:bg-colab-accentDim transition-colors font-medium"
+              className="px-2.5 sm:px-3 py-1.5 text-xs rounded bg-colab-accent text-colab-bg hover:bg-colab-accentDim transition-colors font-medium whitespace-nowrap"
             >
-              {nextLesson ? "다음 →" : "✓ 완료하기"}
+              {nextLesson ? "다음 →" : "✓ 완료"}
             </button>
           </div>
         </div>
