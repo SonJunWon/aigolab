@@ -48,9 +48,9 @@ export function PlaygroundPage() {
       if (cancelled) return;
 
       if (saved && saved.cells.length > 0) {
-        loadCells(saved.cells);
+        loadCells(saved.cells, "python");
       } else {
-        loadCells(DEFAULT_CELLS);
+        loadCells(DEFAULT_CELLS, "python");
       }
       setLoadState("ready");
     })();

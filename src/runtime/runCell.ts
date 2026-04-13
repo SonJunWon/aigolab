@@ -1,13 +1,13 @@
 /**
  * 셀 실행 — standalone 함수.
  *
- * Hook 밖에서 호출 가능. Monaco editor의 addCommand 콜백처럼
- * 클로저 캡처가 문제되는 곳에서 안전하게 사용할 수 있다.
+ * 노트북 스토어의 `language`에 따라 적절한 LanguageRuntime을 골라 실행한다.
+ * Hook 밖에서 호출 가능 (Monaco editor의 addCommand 콜백 등).
  *
  * 매번 useNotebookStore.getState()를 호출하므로 항상 최신 상태로 동작한다.
  */
 
-import { pythonRunner } from "./pythonRunner";
+import { getRuntime, isLanguageSupported } from "./registry";
 import { useNotebookStore } from "../store/notebookStore";
 
 export async function runCell(cellId: string): Promise<void> {
@@ -18,14 +18,19 @@ export async function runCell(cellId: string): Promise<void> {
   if (!cell || cell.type !== "code") return;
   if (cell.status === "running") return;
 
-  // Pyodide가 아직 준비 안 됐다면 무시 (사용자가 보기엔 단축키가 무반응)
-  if (pythonRunner.getStatus() !== "ready") return;
+  // 등록되지 않은 언어면 무시
+  if (!isLanguageSupported(store.language)) return;
+
+  const runtime = getRuntime(store.language);
+
+  // 런타임이 아직 준비 안 됐다면 무시 (사용자가 보기엔 단축키가 무반응)
+  if (runtime.getStatus() !== "ready") return;
 
   store.clearOutputs(cellId);
   store.setStatus(cellId, "running");
 
   try {
-    const result = await pythonRunner.run(cellId, cell.source, {
+    const result = await runtime.run(cellId, cell.source, {
       onStdout: (text) =>
         useNotebookStore
           .getState()

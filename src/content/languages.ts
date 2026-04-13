@@ -18,20 +18,12 @@ export const LANGUAGES: LanguageInfo[] = [
     color: "from-yellow-400 to-orange-500",
   },
   {
-    id: "ruby",
-    name: "Ruby",
-    icon: "💎",
-    description: "읽기 편한 문법과 웹 개발 친화적인 언어.",
+    id: "sql",
+    name: "SQL",
+    icon: "🗄️",
+    description: "데이터를 다루는 표준 언어. 데이터 분석과 백엔드의 기초.",
     status: "coming-soon",
-    color: "from-red-500 to-pink-500",
-  },
-  {
-    id: "go",
-    name: "Go",
-    icon: "🐹",
-    description: "간결하고 빠른 시스템 언어. 서버와 인프라에 많이 쓰입니다.",
-    status: "coming-soon",
-    color: "from-cyan-400 to-blue-500",
+    color: "from-emerald-400 to-teal-500",
   },
 ];
 

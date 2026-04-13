@@ -1,30 +1,22 @@
 /**
  * Pyodide Web Worker의 메인 스레드 측 래퍼.
  *
- * Worker와의 메시지 통신을 Promise 기반 API로 감싸서
- * React 컴포넌트에서 깔끔하게 사용할 수 있게 한다.
+ * LanguageRuntime 인터페이스를 구현. 다른 언어 런타임도 동일 인터페이스를
+ * 따른다 (registry.ts 참고).
  */
 
-export type RunStatus = "idle" | "loading" | "ready" | "error";
+import type {
+  LanguageRuntime,
+  RunCallbacks,
+  RunError,
+  RunResult,
+  RunStatus,
+  SupportedLanguage,
+  VirtualFile,
+} from "./types";
 
-export interface RunCallbacks {
-  /** print() 한 줄 또는 청크가 들어올 때마다 호출 */
-  onStdout?: (text: string) => void;
-  onStderr?: (text: string) => void;
-}
-
-export interface RunResult {
-  /** 마지막 표현식의 반환값 (있을 경우) */
-  value?: string;
-  /** 실행 소요 시간 (ms) */
-  timeMs: number;
-}
-
-export interface RunError {
-  message: string;
-  name: string;
-  timeMs: number;
-}
+// 하위 호환을 위해 같은 이름으로 re-export
+export type { RunCallbacks, RunError, RunResult, RunStatus } from "./types";
 
 interface PendingRun {
   resolve: (result: RunResult) => void;
@@ -40,7 +32,9 @@ const generateId = () => `m${nextMessageId++}`;
  * 단일 Pyodide 인스턴스를 감싸는 클래스.
  * 앱 전체에서 하나의 인스턴스만 사용 (싱글톤).
  */
-class PythonRunner {
+class PythonRunner implements LanguageRuntime {
+  readonly language: SupportedLanguage = "python";
+
   private worker: Worker | null = null;
   private status: RunStatus = "idle";
   private version: string | null = null;
@@ -98,7 +92,7 @@ class PythonRunner {
    * 가상 파일 시스템에 파일들을 쓴다.
    * IDE 모드에서 import 가 작동하게 하려면 실행 전에 호출해야 한다.
    */
-  async writeFiles(files: Array<{ path: string; content: string }>): Promise<void> {
+  async writeFiles(files: VirtualFile[]): Promise<void> {
     await this.init();
     if (!this.worker) throw new Error("Worker not initialized");
 

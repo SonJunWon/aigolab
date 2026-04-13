@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { Cell, CellStatus, CellType, OutputChunk } from "../types/notebook";
+import type { SupportedLanguage } from "../runtime/types";
 
 /**
  * 노트북 상태 스토어 (Zustand).
@@ -23,11 +24,14 @@ interface NotebookState {
   executionCounter: number;
   /** 현재 선택된 셀 (Colab의 active cell) */
   selectedCellId: string | null;
+  /** 현재 노트북의 실행 언어 (런타임 선택용). 기본 'python'. */
+  language: SupportedLanguage;
 
   // ── 노트북 교체 (레슨 로드 시 사용) ────────────
   /**
    * 셀 배열로 노트북을 교체한다.
    * seeds는 레슨 또는 저장본에서 온다. hints/solution은 optional.
+   * language를 지정하면 해당 런타임으로 실행된다 (기본 'python').
    */
   loadCells: (
     cells: Array<{
@@ -35,8 +39,10 @@ interface NotebookState {
       source: string;
       hints?: string[];
       solution?: string;
-    }>
+    }>,
+    language?: SupportedLanguage
   ) => void;
+  setLanguage: (language: SupportedLanguage) => void;
   resetNotebook: () => void;
 
   // ── 셀 조작 ────────────────────────────────────
@@ -81,8 +87,9 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   cells: initialCells,
   executionCounter: 0,
   selectedCellId: initialCells[1].id, // 코드 셀을 기본 선택
+  language: "python",
 
-  loadCells: (seeds) => {
+  loadCells: (seeds, language) => {
     const newCells: Cell[] = seeds.map((s) => ({
       ...createCell(s.type, s.source),
       hints: s.hints,
@@ -96,8 +103,12 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
         newCells.find((c) => c.type === "code")?.id ??
         newCells[0]?.id ??
         null,
+      // 명시 시만 변경, 미지정 시 기존값 유지
+      ...(language ? { language } : {}),
     });
   },
+
+  setLanguage: (language) => set({ language }),
 
   resetNotebook: () => {
     set({

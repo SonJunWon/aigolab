@@ -93,13 +93,13 @@ export function LessonPage() {
           hints: lesson.cells[i]?.hints,
           solution: lesson.cells[i]?.solution,
         }));
-        loadCells(merged);
+        loadCells(merged, lesson.language);
       } else if (saved && saved.cells.length > 0) {
         // 구조 불일치 — 저장본만 사용 (힌트 없음)
-        loadCells(saved.cells);
+        loadCells(saved.cells, lesson.language);
       } else {
         // 처음 로드 — 원본 레슨
-        loadCells(lesson.cells);
+        loadCells(lesson.cells, lesson.language);
       }
       setLoadState("ready");
 
@@ -167,7 +167,7 @@ export function LessonPage() {
       return;
     }
     await deleteNotebook(lesson.id);
-    loadCells((lesson as Lesson).cells);
+    loadCells((lesson as Lesson).cells, lesson.language);
   };
 
   return (

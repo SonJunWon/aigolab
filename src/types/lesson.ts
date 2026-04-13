@@ -4,7 +4,11 @@
 
 import type { Quiz } from "./quiz";
 
-export type Language = "python" | "javascript" | "ruby" | "go";
+/**
+ * 지원 언어 — 런타임/콘텐츠 둘 다 이 타입을 사용.
+ * 새 언어 추가 시: 이 유니온 + content/languages.ts + runtime/registry.ts 동시에.
+ */
+export type Language = "python" | "javascript" | "sql";
 export type Track = "beginner" | "intermediate" | "data-science" | "ml-practice";
 
 /** 콘텐츠의 언어 메타데이터 */
