@@ -13,6 +13,74 @@
 
 ---
 
+## [2.6.0] - 2026-04-14
+
+### Added — SQL 입문 트랙 첫 묶음 (3.0.0-5 1/4)
+- 코딩 실습에 SQL 카드 활성화
+- 챕터 1: SELECT 기초, AS, 표현식 컬럼, Chinook DB 소개
+- 챕터 2: WHERE, AND/OR/NOT, BETWEEN, IN, IS NULL
+- 챕터 3: ORDER BY (ASC/DESC), 다중 컬럼 정렬, LIMIT/OFFSET 페이징
+
+---
+
+## [2.5.0] - 2026-04-14
+
+### Added — SQL 런타임 (3.0.0-4)
+- sql.js (SQLite WASM) 기반 SQL 런타임
+- Web Worker 격리 실행 (\`public/sql-worker.js\`)
+- Chinook 샘플 DB 자동 로드 (~1MB)
+- SELECT 결과 React 표 렌더링 (sticky 헤더, NULL 표시, 100행 안전 제한)
+- INSERT/UPDATE 등은 "N개 행 영향" 텍스트 출력
+- \`OutputChunk\` 에 \`table\` 스트림 타입 추가
+
+---
+
+## [2.4.0] - 2026-04-14
+
+### Added — JavaScript 입문 트랙 11챕터 완성 (3.0.0-3)
+- 챕터 1~3: console.log, 변수, 데이터 타입, 연산자 (=== vs ==)
+- 챕터 4~6: if/else/switch, for/while/break/continue, 배열 + map/filter/reduce
+- 챕터 7~9: 객체, 함수 + 화살표 + 클로저, 문자열 메서드
+- 챕터 10~11: try/catch/throw, To-Do 미니 프로젝트
+- 총 ~250 셀, 22 미션, 44 퀴즈
+
+### Changed
+- 셰도잉 사전 경고 (Python) — 빌트인·다른 셀 정의와 충돌 시 노란 경고
+- 헤더에 🔄 런타임 재시작 버튼 (회복 수단)
+- 에러 박스에 회복 안내 (RecoveryHint) 통합
+- 한글 IME 자동 페어 따옴표 중복 입력 수정 (\`autoClosingOvertype: "always"\`)
+- LessonPage가 lesson.language에 맞는 런타임 자동 init
+
+---
+
+## [2.3.0] - 2026-04-14
+
+### Added — JavaScript 런타임 (3.0.0-2)
+- Web Worker 기반 JS 런타임 (\`public/javascript-worker.js\`)
+- console.log/warn/error 캡처, Python 호환 \`print()\` 제공
+- 마지막 표현식 값 자동 반환 (Jupyter 스타일)
+- 풍부한 \`formatValue\` (Map/Set/Date/RegExp/순환 참조 안전)
+- 셀 단위 스코프 격리
+
+---
+
+## [2.2.0] - 2026-04-14
+
+### Added — 다중 언어 인프라 (3.0.0-1)
+- \`LanguageRuntime\` 인터페이스 + 타입 시스템
+- \`runtime/registry.ts\` — 언어별 런타임 레지스트리
+- \`useLanguageRuntime(lang)\` 훅 — 언어 인식 상태 구독
+- \`notebookStore.language\` 필드 + \`loadCells(cells, language)\`
+
+### Changed
+- \`pythonRunner\` 가 \`LanguageRuntime\` 명시 구현 (동작 무변경)
+- \`runCell\` 이 registry 기반으로 작동
+- \`usePyodideStatus\` 는 \`useLanguageRuntime("python")\` 의 deprecated alias
+- Language 타입에서 ruby/go 제거, sql 추가
+- 코딩 실습 페이지: Python/JavaScript/SQL 카드 (당시 JS·SQL은 coming-soon)
+
+---
+
 ## [2.1.0] - 2026-04-13
 
 도메인 전환, 모바일 대응, IDE 강화, 학습 활동 추적, 프로필 시스템을 한꺼번에 도입한 대규모 업데이트.
