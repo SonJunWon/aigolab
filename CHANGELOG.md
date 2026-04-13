@@ -13,6 +13,15 @@
 
 ---
 
+## [2.8.0] - 2026-04-14
+
+### Added — SQL 입문 트랙 세 번째 묶음 (3.0.0-5 3/4)
+- 챕터 7: \`GROUP BY\`, \`HAVING\`, 여러 컬럼 그룹화, SELECT 문 작성 순서 완성
+- 챕터 8: \`INNER JOIN\` / \`LEFT JOIN\`, 테이블 별칭, 3개 이상 연쇄 JOIN, JOIN+집계
+- 챕터 9: 서브쿼리 (WHERE/SELECT/FROM), \`ROW_NUMBER() OVER (PARTITION BY ...)\` 맛보기
+
+---
+
 ## [2.7.0] - 2026-04-14
 
 ### Added — SQL 입문 트랙 두 번째 묶음 (3.0.0-5 2/4)

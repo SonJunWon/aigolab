@@ -5,9 +5,12 @@ import { lesson03 } from "./03-order-limit";
 import { lesson04 } from "./04-expressions";
 import { lesson05 } from "./05-like-null";
 import { lesson06 } from "./06-aggregates";
+import { lesson07 } from "./07-group-by";
+import { lesson08 } from "./08-joins";
+import { lesson09 } from "./09-subqueries";
 
 /**
- * SQL 입문 트랙의 모든 레슨. 1~6 공개. 후속(7~10)은 다음 묶음에서.
+ * SQL 입문 트랙의 모든 레슨. 1~9 공개. 미니 프로젝트(10)는 마지막 묶음에서.
  */
 export const LESSONS: Lesson[] = [
   lesson01,
@@ -16,6 +19,9 @@ export const LESSONS: Lesson[] = [
   lesson04,
   lesson05,
   lesson06,
+  lesson07,
+  lesson08,
+  lesson09,
 ];
 
 export const LESSON_SUMMARIES: LessonSummary[] = LESSONS.map((l) => ({
