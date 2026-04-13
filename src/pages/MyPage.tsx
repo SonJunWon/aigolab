@@ -285,7 +285,7 @@ function downloadCertificate(email: string, track: TrackProgress) {
   <text x="400" y="465" text-anchor="middle" font-family="system-ui" font-size="14" fill="#9ca3af">${track.totalCount}챕터 전체 완료</text>
   <line x1="200" y1="500" x2="600" y2="500" stroke="#2a2545" stroke-width="1"/>
   <text x="400" y="540" text-anchor="middle" font-family="system-ui" font-size="14" fill="#9ca3af">${escapeXml(date)}</text>
-  <text x="400" y="565" text-anchor="middle" font-family="system-ui" font-size="12" fill="#4a4560">aigolab.vercel.app</text>
+  <text x="400" y="565" text-anchor="middle" font-family="system-ui" font-size="12" fill="#4a4560">aigolab.co.kr</text>
 </svg>`;
 
   const blob = new Blob([svg], { type: "image/svg+xml" });
