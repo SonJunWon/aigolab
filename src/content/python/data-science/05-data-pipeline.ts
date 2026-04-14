@@ -297,10 +297,9 @@ print(customer_stats)`,
     },
     {
       type: "markdown",
-      source: `## 📈 5단계: 시각화 (코드)
+      source: `## 📈 5단계: 시각화
 
-분석 결과를 시각화 코드로 표현합니다.
-(Jupyter/Colab에서 실행하면 그래프를 볼 수 있어요!)`,
+분석 결과를 \`matplotlib\` 으로 시각화합니다. 그래프는 셀 출력에 자동으로 표시됩니다.`,
     },
     {
       type: "code",
@@ -322,10 +321,10 @@ plt.title("카테고리별 총 매출")
 plt.ylabel("매출 (원)")
 for i, v in enumerate(totals):
     plt.text(i, v + 30000, f"{v:,}원", ha="center")
-# plt.show()
+# 그래프 ↓ 자동 표시
 
-print("=== 시각화 코드 준비 완료 ===")
-print("카테고리별 매출:")
+print("=== 카테고리별 매출 ===")
+print("텍스트 미리보기:")
 for cat, total in zip(categories, totals):
     bar = "█" * (total // 100000)
     print(f"  {cat}: {total:>10,}원 {bar}")`,

@@ -183,9 +183,9 @@ plt.xlabel("공부 시간")
 plt.ylabel("시험 점수")
 plt.grid(True, alpha=0.3)
 
-# plt.show()
+# 그래프 ↓ 자동 표시
 
-print("=== 산점도 코드 실행 완료 ===")
+print("=== 산점도 ===")
 print(f"학생 수: {len(study_hours)}명")
 print(f"공부 시간 범위: {study_hours.min():.1f} ~ {study_hours.max():.1f}시간")
 print(f"점수 범위: {scores.min():.1f} ~ {scores.max():.1f}점")
@@ -217,9 +217,9 @@ plt.ylabel("학생 수")
 plt.axvline(np.mean(scores), color="red", linestyle="--", label=f"평균: {np.mean(scores):.1f}")
 plt.legend()
 
-# plt.show()
+# 그래프 ↓ 자동 표시
 
-print("=== 히스토그램 코드 실행 완료 ===")
+print("=== 히스토그램 ===")
 print(f"학생 수: {len(scores)}명")
 print(f"평균: {np.mean(scores):.1f}")
 print(f"표준편차: {np.std(scores):.1f}")
@@ -305,7 +305,7 @@ ___
 # 그리드 표시
 ___
 
-# plt.show()
+# 그래프 ↓ 자동 표시
 
 # 텍스트 미리보기
 print("=== 월별 매출 미리보기 ===")
@@ -332,7 +332,7 @@ plt.ylabel("매출 (만원)")
 
 plt.grid(True, alpha=0.3)
 
-# plt.show()
+# 그래프 ↓ 자동 표시
 
 print("=== 월별 매출 미리보기 ===")
 for m, s in zip(months, sales):
@@ -369,7 +369,7 @@ ___
 ___
 ___
 
-# plt.show()
+# 그래프 ↓ 자동 표시
 
 print("=== 부서별 프로젝트 수 ===")
 for dept, proj in zip(departments, projects):
@@ -396,7 +396,7 @@ plt.title("부서별 프로젝트 수", fontsize=16)
 plt.xlabel("부서")
 plt.ylabel("프로젝트 수")
 
-# plt.show()
+# 그래프 ↓ 자동 표시
 
 print("=== 부서별 프로젝트 수 ===")
 for dept, proj in zip(departments, projects):
