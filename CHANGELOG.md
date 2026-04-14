@@ -13,6 +13,34 @@
 
 ---
 
+## [3.8.0] - 2026-04-14
+
+### Added — 트렌디 신규 AI 프로젝트 3개 (총 5 → 8개)
+
+#### 🧭 프롬프트 품질 분류기 (`prompt-classifier`)
+- AI 강의 07 (프롬프트 엔지니어링) Master Protocol 6기둥 자동 채점
+- 등급(S/A/B/C) 매핑 + 기둥별 ✅/❌ 진단 + 자동 개선 제안
+- LLM 시대의 메타 도구 — 프롬프트를 LLM 에 보내기 전 검증
+
+#### 🤖 미니 챗봇 (`mini-chatbot`)
+- AI 강의 10 (에이전트) 의 의도 분류 + 도구 호출 패턴
+- 7개 의도 (greeting/time/math/weather/help/thanks/bye) + 응답 생성기
+- 시간·계산 등은 실제 함수 호출 (도구 사용)
+- v2 에서 메모리(이름 기억) + 새 의도 추가로 확장
+
+#### 📊 K-means 고객 세그먼트 (`customer-segmentation`)
+- ML Ch4 (클러스터링) 의 비지도 학습 첫 프로젝트
+- 기존 5개 프로젝트는 모두 분류·추천 → **첫 비지도 학습**
+- RFM 분석 + StandardScaler + KMeans(k=4)
+- 자동 라벨링 (VIP/활성/일반/이탈위험) + 신규 고객 즉시 분류 + 마케팅 액션 추천
+
+각 프로젝트:
+- 7단계 (6 STEP + 결과 해설)
+- 모든 STEP 에 stepMarker + snippet + solution
+- 결과 해설은 풍부한 마크다운 + 시도해 볼 변형 + 한계 비교
+
+---
+
 ## [3.7.1] - 2026-04-14
 
 ### Fixed — 감성 분석기 SyntaxError (f-string 따옴표 충돌)

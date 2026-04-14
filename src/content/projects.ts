@@ -1746,6 +1746,1336 @@ for text in custom_texts:
       },
     },
   },
+
+  // ════════════════════════════════════════════════════════════
+  //  v3.8.0 — 트렌디 신규 프로젝트 3개
+  // ════════════════════════════════════════════════════════════
+
+  {
+    id: "prompt-classifier",
+    title: "프롬프트 품질 분류기",
+    subtitle: "Master Protocol 6기둥으로 프롬프트 자동 채점",
+    icon: "🧭",
+    difficulty: "intermediate",
+    estimatedMinutes: 35,
+    tags: ["LLM", "프롬프트", "NLP", "분류"],
+    description: `## 🧭 프롬프트 품질 분류기 프로젝트
+
+**목표**: 사용자가 작성한 프롬프트를 **6가지 기준 (Role/Context/Task/Format/Constraints/Examples)** 으로 자동 채점하는 분류기를 만듭니다.
+
+[AI 강의 07 — 프롬프트 엔지니어링] 의 Master Protocol 을 코드로 구현해, **여러분이 ChatGPT/Claude 에 던지기 전에** 프롬프트 품질을 미리 검증할 수 있어요.
+
+### 배울 것
+- 키워드 기반 텍스트 분류 (NLP 입문)
+- 다차원 점수 → 등급 매핑
+- 자동 개선 제안 시스템
+- LLM 시대의 새로운 리터러시`,
+    steps: [
+      {
+        title: "Master Protocol 6기둥 키워드 사전 구축",
+        stepMarker: "STEP 1",
+        description:
+          "각 기둥마다 그 의도를 시그널링하는 한국어·영어 키워드를 모읍니다. 사전이 풍부할수록 채점 정확도 ↑.",
+        hint: "Role 은 '당신은/너는/역할', Context 는 '데이터/상황/배경', Task 는 동사형('만들어/작성/분석') 위주.",
+        snippet: `PILLARS = {
+    "Role":        ["당신은", "너는", "역할", "you are"],
+    "Context":     ["데이터", "상황", "배경", "현재"],
+    "Task":        ["만들", "작성", "분석", "찾", "요약"],
+    "Format":      ["형식", "마크다운", "표", "JSON"],
+    "Constraints": ["제약", "이내", "없이", "금지"],
+    "Examples":    ["예:", "예시", "example"],
+}`,
+        solution: `PILLARS = {
+    "👤 Role":        ["당신은", "너는", "역할", "act as", "you are", "role:"],
+    "📋 Context":     ["데이터", "상황", "배경", "저희", "우리", "현재", "context"],
+    "🎯 Task":        ["만들", "작성", "분석", "찾", "요약", "생성", "추천", "제안"],
+    "📐 Format":      ["형식", "마크다운", "표", "리스트", "JSON", "코드 블록", "format"],
+    "🚧 Constraints": ["제약", "금지", "없이", "이내", "최대", "말 것", "하지 마"],
+    "💡 Examples":    ["예:", "예시", "example", "->", "| "],
+}
+print(f"6기둥 사전 준비 완료: {len(PILLARS)}개 기둥")`,
+      },
+      {
+        title: "프롬프트 점수 계산 함수",
+        stepMarker: "STEP 2",
+        description:
+          "입력 프롬프트를 받아 각 기둥별로 키워드가 하나라도 매칭되면 1점, 아니면 0점. 단순하지만 강력한 패턴.",
+        hint: "`any(kw.lower() in text for kw in keywords)` 로 한 줄 매칭.",
+        snippet: `def score_prompt(prompt):
+    text = prompt.lower()
+    return {pillar: any(kw.lower() in text for kw in keywords)
+            for pillar, keywords in PILLARS.items()}`,
+        solution: `def score_prompt(prompt: str) -> dict:
+    """프롬프트를 6기둥 기준으로 점수화. 각 기둥 True/False 반환."""
+    text = prompt.lower()
+    return {
+        pillar: any(kw.lower() in text for kw in keywords)
+        for pillar, keywords in PILLARS.items()
+    }
+
+# 테스트
+result = score_prompt("당신은 데이터 분석가입니다. CSV를 분석해주세요.")
+print(result)`,
+      },
+      {
+        title: "종합 점수 → 등급 매핑 (S/A/B/C)",
+        stepMarker: "STEP 3",
+        description:
+          "6점 만점 기준으로 등급 부여. 채용 인터뷰처럼 한눈에 품질 파악 가능.",
+        hint: "점수 6=S, 4~5=A, 2~3=B, 0~1=C.",
+        snippet: `def grade(scores):
+    points = sum(scores.values())
+    if points == 6:   return "S"
+    elif points >= 4: return "A"
+    elif points >= 2: return "B"
+    else:             return "C"`,
+        solution: `def grade(scores: dict) -> tuple[str, str]:
+    """점수 dict → (등급, 메시지) 반환."""
+    points = sum(scores.values())
+    if points == 6:
+        return "S", "🏆 Master Prompt — 모든 기둥 갖춤"
+    elif points >= 4:
+        return "A", "👍 양호 — 빠진 1~2개만 보강하면 최상"
+    elif points >= 2:
+        return "B", "🧐 보통 — 절반 이상 빠짐, 개선 필요"
+    else:
+        return "C", "🚨 막연 — 역할·문맥·형식 기본부터"
+
+print(grade({"R":True, "C":True, "T":True, "F":True, "Co":True, "E":True}))`,
+      },
+      {
+        title: "여러 샘플 프롬프트로 채점 실행",
+        stepMarker: "STEP 4",
+        description:
+          "막연한 프롬프트부터 Master Protocol 적용한 프롬프트까지 4종을 동시 비교 — 차이가 한눈에 보임.",
+        hint: "for 루프로 각 샘플마다 score_prompt + grade 호출.",
+        snippet: `samples = ["글 써줘", "당신은 마케터다. 광고 카피 5개 만들어줘"]
+for s in samples:
+    scores = score_prompt(s)
+    g, msg = grade(scores)
+    print(f"[{g}] {s}")`,
+        solution: `samples = [
+    # C 등급 — 막연
+    "글 써줘",
+    # B 등급 — 역할만
+    "당신은 마케터다. 광고 카피 만들어줘",
+    # A 등급 — 형식까지
+    "당신은 SNS 마케터입니다. 20대 여성 대상 화장품 광고 카피 5개를 마크다운 표로 작성해 주세요.",
+    # S 등급 — Master Protocol
+    """당신은 10년차 SNS 마케터입니다.
+저희는 비건 스킨케어 스타트업이고 20대 여성이 타깃입니다.
+신제품(비건 썬스틱) 광고 카피 5개를 작성해 주세요.
+형식: 각 카피마다 (제목/본문/CTA) 마크다운으로.
+제약: 카피당 100자 이내, 이모지 최대 2개.
+예: ✨ 봄 햇살, 비건으로 막다 — 지금 만나보기""",
+]
+
+print(f"{'등급':>4} {'점수':>4}  프롬프트 (앞 40자)")
+print("-" * 60)
+for s in samples:
+    scores = score_prompt(s)
+    g, msg = grade(scores)
+    pts = sum(scores.values())
+    preview = s.replace("\\n", " ")[:40]
+    print(f"{g:>4} {pts}/6  {preview}{'...' if len(s) > 40 else ''}")`,
+      },
+      {
+        title: "기둥별 상세 진단 출력",
+        stepMarker: "STEP 5",
+        description:
+          "어떤 기둥이 있고 빠졌는지 ✅/❌ 로 시각화. 학습자가 즉시 개선 포인트 인지.",
+        hint: "scores.items() 순회하며 ✅ 또는 ❌ 출력.",
+        snippet: `def diagnose(prompt):
+    scores = score_prompt(prompt)
+    for pillar, ok in scores.items():
+        mark = "✅" if ok else "❌"
+        print(f"  {mark} {pillar}")`,
+        solution: `def diagnose(prompt: str):
+    scores = score_prompt(prompt)
+    g, msg = grade(scores)
+    pts = sum(scores.values())
+
+    print("─" * 50)
+    print(f"📝 프롬프트: {prompt[:60]}{'...' if len(prompt) > 60 else ''}")
+    print(f"🎯 등급: {g} ({pts}/6)  — {msg}")
+    print()
+    for pillar, ok in scores.items():
+        mark = "✅" if ok else "❌"
+        print(f"   {mark} {pillar}")
+    print()
+
+# 검증
+diagnose("글 써줘")
+diagnose(samples[3])  # Master Prompt`,
+      },
+      {
+        title: "자동 개선 제안 (빠진 기둥 알려주기)",
+        stepMarker: "STEP 6",
+        description:
+          "단순 채점에 그치지 말고 **무엇을 더 추가해야 하는지** 안내. 학습자에게 실용적.",
+        hint: "scores 에서 False 인 기둥들 추출 → 안내 문구 생성.",
+        snippet: `def suggest(prompt):
+    scores = score_prompt(prompt)
+    missing = [p for p, ok in scores.items() if not ok]
+    if not missing:
+        return "✨ 완벽!"
+    return f"빠진 기둥: {', '.join(missing)}"`,
+        solution: `def suggest_improvement(prompt: str) -> str:
+    scores = score_prompt(prompt)
+    missing = [p for p, ok in scores.items() if not ok]
+
+    if not missing:
+        return "✨ 더 추가할 것 없음 — 이미 완벽한 프롬프트!"
+
+    advice = {
+        "👤 Role":        "→ '당신은 [전문가/역할] 입니다' 로 시작",
+        "📋 Context":     "→ 배경·상황·가진 데이터를 한 줄로 명시",
+        "🎯 Task":        "→ '~해 주세요' / '~를 작성' 등 행동 동사",
+        "📐 Format":      "→ '마크다운 표로' / 'JSON 으로' 같은 출력 형식",
+        "🚧 Constraints": "→ '300자 이내' / '~없이' 같은 제약",
+        "💡 Examples":    "→ '예: ...' 형태로 샘플 1~2개",
+    }
+
+    print("🔧 개선 제안")
+    for pillar in missing:
+        print(f"   {pillar}")
+        print(f"      {advice.get(pillar, '')}")
+    print()
+    return f"빠진 기둥 {len(missing)}개를 보강하면 등급 ↑"
+
+# 사용
+suggest_improvement("당신은 마케터다. 광고 카피 만들어줘")`,
+      },
+      {
+        title: "🎯 결과 해설 — 출력이 무슨 뜻인가?",
+        description: `## 여러분이 방금 한 일 정리
+
+[AI 강의 07 — 프롬프트 엔지니어링] 의 **Master Protocol 6기둥** 을 자동 채점하는 미니 모델을 만들었어요. 이건 LLM 시대의 새로운 "스펠 체커" 같은 역할.
+
+---
+
+### 📋 STEP 4 — 4단계 샘플 비교 결과
+\`\`\`
+등급  점수  프롬프트 (앞 40자)
+------------------------------------------
+   C  1/6  글 써줘
+   B  2/6  당신은 마케터다. 광고 카피 만들어줘
+   A  4/6  당신은 SNS 마케터입니다. 20대 여성 대상 화장품 ...
+   S  6/6  당신은 10년차 SNS 마케터입니다. 저희는 비건 스킨...
+\`\`\`
+
+**해석 (가장 중요)**
+- 같은 의도를 가진 4개 프롬프트가 **C → B → A → S** 단계적으로 점수가 오릅니다.
+- **글 써줘 (C)** — Task 동사 하나만 있고 나머지 다 빠짐
+- **마케터+카피 (B)** — Role + Task 두 기둥
+- **SNS+여성+카피+표 (A)** — Role + Context + Task + Format = 4점
+- **Master Prompt (S)** — 6기둥 모두 충족
+
+> 💡 **차이의 본질**: AI 모델 성능이 아니라 **"입력의 명확성"** 이 결과를 가른다.
+
+---
+
+### 🔍 STEP 5 — 진단 모드
+\`\`\`
+📝 프롬프트: 글 써줘
+🎯 등급: C (1/6) — 🚨 막연
+
+   ❌ 👤 Role
+   ❌ 📋 Context
+   ✅ 🎯 Task
+   ❌ 📐 Format
+   ❌ 🚧 Constraints
+   ❌ 💡 Examples
+\`\`\`
+
+**해석**
+- ✅/❌ 로 어떤 기둥이 있고 없는지 한눈에 파악.
+- 학습자는 "아, 내가 항상 Format/Examples 를 빼먹는구나" 같은 자기 진단 가능.
+
+---
+
+### 🔧 STEP 6 — 개선 제안
+\`\`\`
+🔧 개선 제안
+   📋 Context
+      → 배경·상황·가진 데이터를 한 줄로 명시
+   📐 Format
+      → '마크다운 표로' / 'JSON 으로' 같은 출력 형식
+   ...
+\`\`\`
+
+**해석**
+- **단순 채점 도구가 아니라 코칭 도구**.
+- 빠진 기둥마다 **"이렇게 추가해 보세요"** 가이드.
+- 실무에서 프롬프트 작성 전 미리 돌려보면 시간 절약.
+
+---
+
+### ⚠️ 이 모델의 한계
+
+| 이슈 | 설명 |
+|---|---|
+| **키워드 매칭만** | "역할" 이라는 단어 없이도 문맥상 역할 부여한 프롬프트 못 잡음 |
+| **품질 vs 형식** | "당신은 무엇이든 잘하는 사람" 도 Role 로 쳐줌 (사실은 모호함) |
+| **언어 의존** | 한국어 기준. 영어 프롬프트는 별도 키워드 필요 |
+| **컨텍스트 깊이 못 봄** | 같은 Role 도 "마케터" vs "10년차 성과 마케터" 차이 못 잡음 |
+
+**진짜 평가** 는 LLM 으로 다시 LLM 을 평가해야 가능 (LLM-as-Judge). 오늘 만든 건 그 단순화 버전.
+
+---
+
+### 🧪 지금 시도해 볼 것
+1. STEP 1 의 사전을 영어 프롬프트용으로 확장 (you are / context: / output format)
+2. **가중치** 추가 — Role 과 Context 가 가장 중요하니 1.5x 점수
+3. 본인이 **자주 쓰는 프롬프트** 를 \`diagnose()\` 에 넣어 점수 확인 → 개선
+4. 등급 기준을 더 엄격하게 (S 는 6점 + 길이 100자 이상 같이)
+
+### 🏁 이 프로젝트에서 배운 것
+- ✅ 키워드 기반 **다차원 점수 모델** 의 본질
+- ✅ 점수 → **등급 매핑** 의 디자인
+- ✅ **자동 개선 제안** 시스템 (단순 평가를 코칭으로)
+- ✅ LLM 시대의 **메타 도구** — AI 를 더 잘 쓰기 위한 AI`,
+        checkpoint: "위 해석을 읽고, 본인이 자주 쓰는 프롬프트 1개를 STEP 5 의 diagnose() 에 넣어 점수를 확인해 보세요.",
+      },
+    ],
+    starterFiles: {
+      "main.py": {
+        name: "main.py",
+        content: `# 🧭 프롬프트 품질 분류기 프로젝트
+# 우측 가이드 패널에서 단계를 클릭해 각 STEP으로 이동할 수 있어요.
+
+
+## STEP 1: Master Protocol 6기둥 키워드 사전
+PILLARS = {
+    "👤 Role":        ["당신은", "너는", "역할", "act as", "you are", "role:"],
+    "📋 Context":     ["데이터", "상황", "배경", "저희", "우리", "현재", "context"],
+    "🎯 Task":        ["만들", "작성", "분석", "찾", "요약", "생성", "추천", "제안"],
+    "📐 Format":      ["형식", "마크다운", "표", "리스트", "JSON", "코드 블록", "format"],
+    "🚧 Constraints": ["제약", "금지", "없이", "이내", "최대", "말 것", "하지 마"],
+    "💡 Examples":    ["예:", "예시", "example", "->", "| "],
+}
+print(f"✅ 6기둥 사전 준비 완료: {len(PILLARS)}개 기둥")
+print()
+
+
+## STEP 2: 프롬프트 점수 계산 함수
+def score_prompt(prompt: str) -> dict:
+    """프롬프트를 6기둥 기준으로 점수화. 각 기둥 True/False."""
+    text = prompt.lower()
+    return {
+        pillar: any(kw.lower() in text for kw in keywords)
+        for pillar, keywords in PILLARS.items()
+    }
+
+
+## STEP 3: 종합 점수 → 등급 매핑
+def grade(scores: dict):
+    points = sum(scores.values())
+    if points == 6:
+        return "S", "🏆 Master Prompt — 모든 기둥 갖춤"
+    elif points >= 4:
+        return "A", "👍 양호 — 빠진 1~2개만 보강하면 최상"
+    elif points >= 2:
+        return "B", "🧐 보통 — 절반 이상 빠짐, 개선 필요"
+    else:
+        return "C", "🚨 막연 — 역할·문맥·형식 기본부터"
+
+
+## STEP 4: 4단계 샘플 프롬프트 비교
+samples = [
+    "글 써줘",
+    "당신은 마케터다. 광고 카피 만들어줘",
+    "당신은 SNS 마케터입니다. 20대 여성 대상 화장품 광고 카피 5개를 마크다운 표로 작성해 주세요.",
+    """당신은 10년차 SNS 마케터입니다.
+저희는 비건 스킨케어 스타트업이고 20대 여성이 타깃입니다.
+신제품(비건 썬스틱) 광고 카피 5개를 작성해 주세요.
+형식: 각 카피마다 (제목/본문/CTA) 마크다운으로.
+제약: 카피당 100자 이내, 이모지 최대 2개.
+예: ✨ 봄 햇살, 비건으로 막다 — 지금 만나보기""",
+]
+
+print(f"{'등급':>4} {'점수':>4}  프롬프트 (앞 40자)")
+print("-" * 60)
+for s in samples:
+    scores = score_prompt(s)
+    g, msg = grade(scores)
+    pts = sum(scores.values())
+    preview = s.replace("\\n", " ")[:40]
+    print(f"{g:>4} {pts}/6  {preview}{'...' if len(s) > 40 else ''}")
+print()
+
+
+## STEP 5: 기둥별 상세 진단
+def diagnose(prompt: str):
+    scores = score_prompt(prompt)
+    g, msg = grade(scores)
+    pts = sum(scores.values())
+    print("─" * 50)
+    print(f"📝 프롬프트: {prompt[:60]}{'...' if len(prompt) > 60 else ''}")
+    print(f"🎯 등급: {g} ({pts}/6)  — {msg}")
+    print()
+    for pillar, ok in scores.items():
+        mark = "✅" if ok else "❌"
+        print(f"   {mark} {pillar}")
+    print()
+
+diagnose("글 써줘")
+diagnose(samples[3])
+
+
+## STEP 6: 자동 개선 제안
+def suggest_improvement(prompt: str):
+    scores = score_prompt(prompt)
+    missing = [p for p, ok in scores.items() if not ok]
+    if not missing:
+        print("✨ 더 추가할 것 없음 — 이미 완벽한 프롬프트!")
+        return
+    advice = {
+        "👤 Role":        "→ '당신은 [전문가/역할] 입니다' 로 시작",
+        "📋 Context":     "→ 배경·상황·가진 데이터를 한 줄로 명시",
+        "🎯 Task":        "→ '~해 주세요' / '~를 작성' 등 행동 동사",
+        "📐 Format":      "→ '마크다운 표로' / 'JSON 으로' 같은 출력 형식",
+        "🚧 Constraints": "→ '300자 이내' / '~없이' 같은 제약",
+        "💡 Examples":    "→ '예: ...' 형태로 샘플 1~2개",
+    }
+    print("🔧 개선 제안")
+    for pillar in missing:
+        print(f"   {pillar}")
+        print(f"      {advice.get(pillar, '')}")
+    print()
+    print(f"💡 빠진 기둥 {len(missing)}개를 보강하면 등급 ↑")
+
+suggest_improvement("당신은 마케터다. 광고 카피 만들어줘")
+`,
+        language: "python",
+      },
+    },
+  },
+
+  {
+    id: "mini-chatbot",
+    title: "미니 챗봇 — 의도 분류 + 응답",
+    subtitle: "ML 라이브러리 없이 의도 인식 챗봇 만들기",
+    icon: "🤖",
+    difficulty: "intermediate",
+    estimatedMinutes: 35,
+    tags: ["NLP", "챗봇", "에이전트"],
+    description: `## 🤖 미니 챗봇 프로젝트
+
+**목표**: 사용자 입력의 **의도(Intent)** 를 분류하고 적절한 응답을 생성하는 규칙 기반 챗봇을 만듭니다.
+
+[AI 강의 10 — AI 에이전트] 에서 배운 도구 사용의 축소판. 실제 ChatGPT/Claude 도 내부적으로 의도 분류 + 응답 생성 + 도구 호출의 조합으로 동작해요.
+
+### 배울 것
+- **의도 분류 (Intent Classification)** — NLP 의 핵심 패턴
+- 정규식 + 키워드 매칭 조합
+- 응답 생성기 (Rule-based response)
+- 도구 호출 (계산기, 시간 등) 시뮬레이션
+- 챗봇의 한계와 LLM 의 등장 이유`,
+    steps: [
+      {
+        title: "의도(Intent) 패턴 사전 구축",
+        stepMarker: "STEP 1",
+        description:
+          "챗봇이 처리할 수 있는 의도 카테고리를 정의. 각 의도마다 트리거 패턴(키워드 또는 정규식) 등록.",
+        hint: "인사·시간·날씨·계산·도움말·작별 정도면 입문엔 충분.",
+        snippet: `INTENTS = {
+    "greeting":  ["안녕", "헬로", "hello", "hi"],
+    "time":      ["시간", "몇시", "지금"],
+    "math":      [r"\\d+\\s*[+\\-*/]\\s*\\d+"],
+    "help":      ["도움", "기능", "사용법"],
+    "bye":       ["잘가", "안녕히", "bye"],
+}`,
+        solution: `INTENTS = {
+    "greeting":  ["안녕", "헬로", "반가워", "hi", "hello"],
+    "time":      ["시간", "몇시", "몇 시", "지금"],
+    "weather":   ["날씨", "기온", "비", "맑"],
+    "math":      [r"\\d+\\s*[+\\-*/]\\s*\\d+", "계산", "더하"],
+    "help":      ["도움", "뭐 해", "기능", "사용법", "할 수 있"],
+    "thanks":    ["고마워", "감사", "thanks"],
+    "bye":       ["잘가", "안녕히", "bye", "끝", "종료"],
+}
+print(f"✅ {len(INTENTS)}개 의도 등록됨: {list(INTENTS.keys())}")`,
+      },
+      {
+        title: "의도 분류 함수 (intent classifier)",
+        stepMarker: "STEP 2",
+        description:
+          "사용자 입력 텍스트를 받아 어느 의도에 해당하는지 판단. 정규식 패턴 vs 단순 키워드를 구분 처리.",
+        hint: "정규식은 `re.search`, 키워드는 `in text` 로 매칭.",
+        snippet: `def classify_intent(text):
+    text_low = text.lower()
+    for intent, patterns in INTENTS.items():
+        for pat in patterns:
+            if re.search(pat, text_low) or pat in text_low:
+                return intent
+    return "unknown"`,
+        solution: `import re
+
+def classify_intent(text: str) -> str:
+    """텍스트에서 가장 먼저 매칭되는 의도 반환. 없으면 unknown."""
+    text_low = text.lower()
+    for intent, patterns in INTENTS.items():
+        for pat in patterns:
+            # 정규식인지 단순 키워드인지 자동 판별
+            is_regex = any(c in pat for c in r".\\?+*()[]{}|")
+            if is_regex:
+                if re.search(pat, text):
+                    return intent
+            elif pat in text_low:
+                return intent
+    return "unknown"
+
+# 테스트
+for q in ["안녕!", "지금 몇시?", "10 + 5", "도움말", "오늘 메뉴 추천"]:
+    print(f"  {q!r:<20} → {classify_intent(q)}")`,
+      },
+      {
+        title: "응답 생성기 — 의도별 답변 + 도구 호출",
+        stepMarker: "STEP 3",
+        description:
+          "의도가 분류되면 그에 맞는 응답 생성. **시간·계산** 같은 의도는 실제 함수(도구) 를 호출 — 이게 [강의 10 에이전트] 의 핵심 패턴.",
+        hint: "math 의도면 정규식으로 수식 추출 → eval, time 의도면 datetime.now().",
+        snippet: `def respond(intent, text):
+    if intent == "greeting":
+        return "안녕하세요!"
+    if intent == "time":
+        return f"지금은 {datetime.now().strftime('%H:%M')}"
+    if intent == "math":
+        m = re.search(r"\\d+\\s*[+\\-*/]\\s*\\d+", text)
+        return f"= {eval(m.group())}" if m else "수식을 못 찾았어요"
+    return "?"`,
+        solution: `import datetime
+import random
+
+def respond(intent: str, text: str) -> str:
+    """의도별 응답 생성. 일부 의도는 '도구' 호출."""
+    if intent == "greeting":
+        return random.choice([
+            "안녕하세요! 무엇을 도와드릴까요?",
+            "반갑습니다! 'help' 라고 하시면 기능을 알려드려요.",
+        ])
+    if intent == "time":
+        now = datetime.datetime.now().strftime("%H:%M:%S")
+        return f"⏰ 지금 시간은 {now} 입니다."
+    if intent == "weather":
+        return "🌤️ 죄송, 이 챗봇은 인터넷을 못 써서 실시간 날씨는 모릅니다."
+    if intent == "math":
+        m = re.search(r"\\d+\\s*[+\\-*/]\\s*\\d+", text)
+        if m:
+            try:
+                result = eval(m.group(), {"__builtins__": {}}, {})
+                return f"🧮 {m.group()} = {result}"
+            except Exception:
+                return "🧮 계산이 안 돼요. 수식을 확인해 주세요."
+        return "🧮 수식을 못 찾았어요. 예: '12 + 34'"
+    if intent == "help":
+        return "📌 가능한 의도: " + ", ".join(INTENTS.keys())
+    if intent == "thanks":
+        return "천만에요! 😊"
+    if intent == "bye":
+        return "안녕히 가세요! 👋"
+    # unknown
+    return "🤔 죄송해요, 못 알아들었어요. 'help' 입력 가능."`,
+      },
+      {
+        title: "대화 루프 시뮬레이션",
+        stepMarker: "STEP 4",
+        description:
+          "사용자 발화 리스트를 순회하며 의도 분류 → 응답을 출력. 실제 채팅 화면처럼 보이게.",
+        hint: "👤/🤖 이모지로 발화자 구분.",
+        snippet: `def chat(user_inputs):
+    for u in user_inputs:
+        intent = classify_intent(u)
+        reply = respond(intent, u)
+        print(f"👤 {u}")
+        print(f"🤖 [{intent}] {reply}")`,
+        solution: `def chat(user_inputs: list[str]):
+    """대화 시뮬레이션 — 사용자 발화 → 의도 → 응답."""
+    print("=" * 50)
+    print("  💬 챗봇 대화 시뮬레이션")
+    print("=" * 50)
+    for u in user_inputs:
+        intent = classify_intent(u)
+        reply = respond(intent, u)
+        print(f"\\n👤 {u}")
+        print(f"🤖 [{intent:>8}] {reply}")
+    print()
+
+# 테스트 대화
+chat([
+    "안녕!",
+    "지금 몇시야?",
+    "12 + 30 은?",
+    "오늘 날씨 어때?",
+    "도움말",
+    "고마워",
+    "잘 가",
+])`,
+      },
+      {
+        title: "한계 테스트 — 어떤 입력이 안 잡힐까?",
+        stepMarker: "STEP 5",
+        description:
+          "의도 사전에 없는 질문은 unknown. 챗봇의 진짜 실력은 unknown 비율로 측정.",
+        hint: "추천·재미·복합 질문 등으로 한계 노출.",
+        snippet: `tricky = ["오늘 점심 추천해줘", "넌 누구야", "내 이름 기억해", "1234567 곱하기 9876"]
+chat(tricky)`,
+        solution: `tricky = [
+    "오늘 점심 추천해줘",       # 사전에 없음 → unknown
+    "넌 누구야",                 # 자기 소개 — 사전에 없음
+    "내 이름은 홍길동이야",     # 메모리 기능 없음
+    "내 이름 기억해?",          # 후속 — 메모리 없음
+    "1234567 + 9876 계산해봐",  # math 잡힘 (정규식)
+    "안녕히 계세요",            # 사전에 '안녕히' 가 있어서 bye 잡힘
+]
+chat(tricky)
+
+# unknown 비율 측정
+unknowns = sum(1 for u in tricky if classify_intent(u) == "unknown")
+print(f"📊 unknown 비율: {unknowns}/{len(tricky)} = {unknowns/len(tricky):.0%}")
+print("→ 비율이 높을수록 더 많은 의도/패턴이 필요")`,
+      },
+      {
+        title: "개선 — 의도 추가 + 메모리 도입 (간단 버전)",
+        stepMarker: "STEP 6",
+        description:
+          "사용자 한계 사례를 분석해 새 의도 추가, 그리고 **세션 메모리** (이름 기억 등) 추가.",
+        hint: "INTENTS 에 'recommend' / 'about' 추가, MEMORY dict 로 상태 저장.",
+        snippet: `INTENTS["about"] = ["넌 누구", "이름이 뭐"]
+MEMORY = {}
+# respond 안에서 MEMORY 활용`,
+        solution: `# 의도 사전 확장
+INTENTS["about"]     = ["넌 누구", "당신 누구", "이름이 뭐", "너 뭐야"]
+INTENTS["recommend"] = ["추천", "뭐 먹", "뭐 할", "어떻게 할"]
+INTENTS["my_name"]   = ["내 이름", "나는"]
+
+# 세션 메모리
+MEMORY = {}
+
+def respond_v2(intent: str, text: str) -> str:
+    if intent == "about":
+        return "🤖 저는 미니 챗봇입니다. 의도를 분류해 답해요."
+    if intent == "recommend":
+        return random.choice([
+            "🍜 한식이 어떨까요? 김치찌개·된장찌개 추천!",
+            "🍕 피자 먹고 싶지 않아요?",
+            "🍱 도시락 하나로 가볍게 가시죠.",
+        ])
+    if intent == "my_name":
+        m = re.search(r"내 이름[은은]?\\s*([가-힣A-Za-z]+)", text)
+        if m:
+            MEMORY["name"] = m.group(1)
+            return f"👋 {m.group(1)} 님, 반갑습니다! 기억할게요."
+        m2 = re.search(r"나는\\s*([가-힣A-Za-z]+)", text)
+        if m2:
+            MEMORY["name"] = m2.group(1)
+            return f"👋 {m2.group(1)} 님, 반갑습니다!"
+    if "이름" in text and "기억" in text:
+        if "name" in MEMORY:
+            return f"😎 네, '{MEMORY['name']}' 님 맞으시죠?"
+        return "🤔 아직 이름을 알려주지 않으셨어요."
+    # 기존 응답들
+    return respond(intent, text)
+
+# 새 대화 시뮬
+print("\\n=== v2 챗봇 (메모리 + 추가 의도) ===")
+for u in [
+    "넌 누구야?",
+    "내 이름은 민지야",
+    "오늘 점심 추천해줘",
+    "내 이름 기억해?",
+]:
+    intent = classify_intent(u)
+    reply = respond_v2(intent, u)
+    print(f"\\n👤 {u}")
+    print(f"🤖 [{intent}] {reply}")`,
+      },
+      {
+        title: "🎯 결과 해설 — 출력이 무슨 뜻인가?",
+        description: `## 여러분이 방금 한 일 정리
+
+ML 라이브러리 없이 **순수 규칙 기반** 챗봇을 만들었어요. 의도 분류 → 응답 생성 → 도구 호출의 3단 구조는 **현대 LLM 챗봇의 뼈대** 와 동일.
+
+---
+
+### 📊 STEP 4 — 기본 대화 결과
+\`\`\`
+👤 안녕!
+🤖 [greeting] 안녕하세요! 무엇을 도와드릴까요?
+
+👤 지금 몇시야?
+🤖 [    time] ⏰ 지금 시간은 14:32:55 입니다.
+
+👤 12 + 30 은?
+🤖 [    math] 🧮 12 + 30 = 42
+
+👤 오늘 날씨 어때?
+🤖 [ weather] 🌤️ 죄송, 이 챗봇은 인터넷을 못 써서...
+\`\`\`
+
+**해석**
+- 의도 분류 정확 → 적절한 응답
+- **time/math** 같은 일부 의도는 **실제 함수 호출** (도구 사용) — datetime, eval
+- **weather** 는 도구 없음 → 솔직하게 모른다고 답변
+
+> 🧠 **이것이 [강의 10 에이전트] 의 핵심 패턴**: 의도에 따라 알맞은 도구를 호출.
+
+---
+
+### 🔍 STEP 5 — 한계 테스트
+\`\`\`
+📊 unknown 비율: 4/6 = 67%
+\`\`\`
+
+**해석**
+- 6개 사례 중 **4개를 못 알아들음** → 67% unknown.
+- 사전에 없는 의도(추천/자기소개/메모리)는 모두 실패.
+- 이게 **규칙 기반 챗봇의 본질적 한계**.
+
+---
+
+### 🔧 STEP 6 — 개선 (의도 추가 + 메모리)
+\`\`\`
+👤 넌 누구야?
+🤖 [about] 🤖 저는 미니 챗봇입니다.
+
+👤 내 이름은 민지야
+🤖 [my_name] 👋 민지 님, 반갑습니다! 기억할게요.
+
+👤 내 이름 기억해?
+🤖 [unknown 또는 my_name] 😎 네, '민지' 님 맞으시죠?
+\`\`\`
+
+**해석**
+- 새 의도 (about, recommend, my_name) 추가 → unknown 비율 ↓
+- **MEMORY dict** 로 세션 상태 유지 → 후속 질문에 답변 가능
+- 이게 LLM 의 **"대화 컨텍스트"** 기능의 단순 버전
+
+---
+
+### 🆚 LLM (ChatGPT/Claude) 과의 차이
+
+| 기능 | 우리 챗봇 (규칙 기반) | LLM 챗봇 |
+|---|---|---|
+| 의도 분류 | 키워드 매칭 | 학습된 분포 (수십억 단어) |
+| 응답 생성 | 미리 작성된 템플릿 | 토큰별 확률 기반 생성 |
+| 새 의도 대응 | 사전 수동 추가 | 학습 데이터로 일반화 |
+| 컨텍스트 | 작은 dict 메모리 | 수만~수십만 토큰 |
+| 도구 호출 | if-else 분기 | Function Calling |
+
+→ 우리 챗봇은 **LLM 등장 이전 챗봇 (Siri 1.0, 카카오 i 초기)** 과 유사. 한계가 있지만 **원리는 같음**.
+
+---
+
+### 🚀 실무 챗봇 아키텍처 (참고)
+
+\`\`\`
+사용자 입력
+    ↓
+[Intent Classifier]  ← 우리가 만든 부분 (or LLM)
+    ↓
+[Slot Filling]       ← 필요한 정보 추출 ("어디로?")
+    ↓
+[Action / Tool Call] ← API 호출, DB 조회 등
+    ↓
+[Response Generation] ← 템플릿 또는 LLM 으로 답변 생성
+\`\`\`
+
+이걸 모두 LLM 하나가 처리하는 게 ChatGPT/Claude. **의도 분류부터 도구 호출까지 한 번에**.
+
+---
+
+### 🧪 지금 시도해 볼 것
+
+1. **새 의도** 추가 — \`order\` (주문), \`book\` (예약), \`location\` (위치)
+2. **정규식 강화** — "X 의 Y" 패턴으로 슬롯 필링
+3. **다국어** 지원 — 영어 키워드 추가
+4. **fallback 학습** — unknown 입력을 모아 패턴 분석 → 사전 자동 확장
+5. 진짜 **LLM 연결** — Anthropic API 호출로 unknown fallback 대체
+
+### 🏁 이 프로젝트에서 배운 것
+- ✅ **의도 분류** — NLP 의 핵심 첫 단계
+- ✅ **정규식 + 키워드** 혼합 매칭
+- ✅ **응답 + 도구 호출** 분리 ([강의 10 에이전트] 와 동일 구조)
+- ✅ 세션 **메모리** 로 컨텍스트 유지
+- ✅ 규칙 기반 챗봇의 **한계 → LLM 으로 발전한 이유**`,
+        checkpoint: "위 해석을 읽고, 본인 도메인(쇼핑·예약·게임 등) 의 새 의도를 1개 추가해 챗봇을 확장해 보세요.",
+      },
+    ],
+    starterFiles: {
+      "main.py": {
+        name: "main.py",
+        content: `# 🤖 미니 챗봇 프로젝트
+# 우측 가이드 패널에서 단계를 클릭해 각 STEP으로 이동할 수 있어요.
+
+import re
+import datetime
+import random
+
+
+## STEP 1: 의도 패턴 사전 구축
+INTENTS = {
+    "greeting":  ["안녕", "헬로", "반가워", "hi", "hello"],
+    "time":      ["시간", "몇시", "몇 시", "지금"],
+    "weather":   ["날씨", "기온", "비", "맑"],
+    "math":      [r"\\d+\\s*[+\\-*/]\\s*\\d+", "계산", "더하"],
+    "help":      ["도움", "뭐 해", "기능", "사용법"],
+    "thanks":    ["고마워", "감사", "thanks"],
+    "bye":       ["잘가", "안녕히", "bye", "끝"],
+}
+print(f"✅ {len(INTENTS)}개 의도 등록: {list(INTENTS.keys())}")
+
+
+## STEP 2: 의도 분류 함수
+def classify_intent(text: str) -> str:
+    """텍스트에서 가장 먼저 매칭되는 의도 반환. 없으면 unknown."""
+    text_low = text.lower()
+    for intent, patterns in INTENTS.items():
+        for pat in patterns:
+            is_regex = any(c in pat for c in r".\\?+*()[]{}|")
+            if is_regex:
+                if re.search(pat, text):
+                    return intent
+            elif pat in text_low:
+                return intent
+    return "unknown"
+
+
+## STEP 3: 응답 생성기 (도구 호출 포함)
+def respond(intent: str, text: str) -> str:
+    if intent == "greeting":
+        return random.choice([
+            "안녕하세요! 무엇을 도와드릴까요?",
+            "반갑습니다! 'help' 라고 하시면 기능을 알려드려요.",
+        ])
+    if intent == "time":
+        now = datetime.datetime.now().strftime("%H:%M:%S")
+        return f"⏰ 지금 시간은 {now} 입니다."
+    if intent == "weather":
+        return "🌤️ 죄송, 이 챗봇은 인터넷을 못 써서 실시간 날씨는 모릅니다."
+    if intent == "math":
+        m = re.search(r"\\d+\\s*[+\\-*/]\\s*\\d+", text)
+        if m:
+            try:
+                result = eval(m.group(), {"__builtins__": {}}, {})
+                return f"🧮 {m.group()} = {result}"
+            except Exception:
+                return "🧮 계산이 안 돼요."
+        return "🧮 수식을 못 찾았어요. 예: '12 + 34'"
+    if intent == "help":
+        return "📌 가능한 의도: " + ", ".join(INTENTS.keys())
+    if intent == "thanks":
+        return "천만에요! 😊"
+    if intent == "bye":
+        return "안녕히 가세요! 👋"
+    return "🤔 죄송해요, 못 알아들었어요. 'help' 입력 가능."
+
+
+## STEP 4: 대화 루프 시뮬레이션
+def chat(user_inputs: list):
+    print()
+    print("=" * 50)
+    print("  💬 챗봇 대화 시뮬레이션")
+    print("=" * 50)
+    for u in user_inputs:
+        intent = classify_intent(u)
+        reply = respond(intent, u)
+        print(f"\\n👤 {u}")
+        print(f"🤖 [{intent:>8}] {reply}")
+    print()
+
+chat(["안녕!", "지금 몇시야?", "12 + 30 은?", "오늘 날씨 어때?", "도움말", "고마워", "잘 가"])
+
+
+## STEP 5: 한계 테스트 (어떤 입력이 안 잡힐까?)
+tricky = [
+    "오늘 점심 추천해줘",
+    "넌 누구야",
+    "내 이름은 홍길동이야",
+    "내 이름 기억해?",
+    "1234567 + 9876 계산해봐",
+    "안녕히 계세요",
+]
+chat(tricky)
+unknowns = sum(1 for u in tricky if classify_intent(u) == "unknown")
+print(f"📊 unknown 비율: {unknowns}/{len(tricky)} = {unknowns/len(tricky):.0%}")
+
+
+## STEP 6: 개선 (새 의도 + 메모리)
+INTENTS["about"]     = ["넌 누구", "당신 누구", "이름이 뭐"]
+INTENTS["recommend"] = ["추천", "뭐 먹", "뭐 할"]
+INTENTS["my_name"]   = ["내 이름", "나는"]
+
+MEMORY = {}
+
+def respond_v2(intent: str, text: str) -> str:
+    if intent == "about":
+        return "🤖 저는 미니 챗봇입니다. 의도를 분류해 답해요."
+    if intent == "recommend":
+        return random.choice(["🍜 한식 어떠세요?", "🍕 피자!", "🍱 도시락 가볍게."])
+    if intent == "my_name":
+        m = re.search(r"내 이름[은은]?\\s*([가-힣A-Za-z]+)", text) or re.search(r"나는\\s*([가-힣A-Za-z]+)", text)
+        if m:
+            MEMORY["name"] = m.group(1)
+            return f"👋 {m.group(1)} 님, 반갑습니다! 기억할게요."
+    if "이름" in text and "기억" in text and "name" in MEMORY:
+        return f"😎 네, '{MEMORY['name']}' 님 맞으시죠?"
+    return respond(intent, text)
+
+print()
+print("=" * 50)
+print("  💬 v2 챗봇 (의도 추가 + 메모리)")
+print("=" * 50)
+for u in ["넌 누구야?", "내 이름은 민지야", "오늘 점심 추천해줘", "내 이름 기억해?"]:
+    intent = classify_intent(u)
+    reply = respond_v2(intent, u)
+    print(f"\\n👤 {u}")
+    print(f"🤖 [{intent}] {reply}")
+`,
+        language: "python",
+      },
+    },
+  },
+
+  {
+    id: "customer-segmentation",
+    title: "K-means 고객 세그먼트 분석",
+    subtitle: "RFM + 비지도 학습으로 VIP·이탈위험 고객 자동 분류",
+    icon: "📊",
+    difficulty: "intermediate",
+    estimatedMinutes: 35,
+    tags: ["scikit-learn", "비지도학습", "K-means", "RFM"],
+    description: `## 📊 K-means 고객 세그먼트 분석 프로젝트
+
+**목표**: 고객의 **구매 패턴(RFM)** 으로 자동 분류해 마케팅에 바로 쓸 수 있는 **5개 세그먼트** (VIP/일반/신규/이탈위험 등) 를 도출합니다.
+
+기존 5개 프로젝트는 모두 **지도학습(분류·추천)**. 이 프로젝트는 **첫 비지도 학습** — 정답 없이 데이터의 구조를 발견.
+
+### 배울 것
+- **RFM 분석** — Recency, Frequency, Monetary (마케팅 표준)
+- **K-means 클러스터링** — sklearn 가장 유명한 비지도 알고리즘
+- **StandardScaler** — 거리 기반 모델의 필수 전처리
+- **클러스터 해석 + 자동 라벨링**
+- 신규 고객을 학습된 모델로 즉시 세그먼트 분류`,
+    steps: [
+      {
+        title: "가상 고객 데이터 생성 (200명)",
+        stepMarker: "STEP 1",
+        description:
+          "RFM 분석의 3가지 지표를 가상으로 생성. 실제로는 DB 에서 추출하지만, 여기선 numpy 로 시뮬레이션.",
+        hint: "exponential 분포로 현실감 있는 long-tail 패턴.",
+        snippet: `np.random.seed(42)
+n = 200
+recency = np.random.exponential(30, n).clip(1, 365)
+frequency = np.random.poisson(5, n) + 1
+monetary = np.random.exponential(50000, n).clip(1000, 500000).round()`,
+        solution: `import numpy as np
+import pandas as pd
+
+np.random.seed(42)
+n = 200
+
+# Recency: 마지막 구매 후 며칠 (작을수록 좋음)
+recency = np.random.exponential(30, n).clip(1, 365)
+# Frequency: 총 구매 횟수
+frequency = np.random.poisson(5, n) + 1
+# Monetary: 총 구매 금액
+monetary = np.random.exponential(50000, n).clip(1000, 500000).round()
+
+print(f"✅ {n}명의 가상 고객 데이터 생성")
+print(f"   Recency:   {recency.min():.0f} ~ {recency.max():.0f} 일")
+print(f"   Frequency: {frequency.min()} ~ {frequency.max()} 회")
+print(f"   Monetary:  {monetary.min():,.0f} ~ {monetary.max():,.0f} 원")`,
+      },
+      {
+        title: "RFM DataFrame 구성 + 통계",
+        stepMarker: "STEP 2",
+        description:
+          "DataFrame 으로 정리하면 describe() 로 분포·평균을 한눈에. 분석 시작 전 데이터 감각 잡기.",
+        hint: "pd.DataFrame 에 dict 로 컬럼 정의.",
+        snippet: `rfm = pd.DataFrame({
+    "Recency": recency,
+    "Frequency": frequency,
+    "Monetary": monetary,
+})
+print(rfm.describe())`,
+        solution: `rfm = pd.DataFrame({
+    "Recency":   recency,
+    "Frequency": frequency,
+    "Monetary":  monetary,
+})
+
+print("📊 RFM 통계 요약:")
+print(rfm.describe().round(1))
+print()
+print("앞 10행:")
+print(rfm.head(10).round(0))`,
+      },
+      {
+        title: "표준화 (StandardScaler)",
+        stepMarker: "STEP 3",
+        description:
+          "K-means 는 **거리 기반** 알고리즘 → 큰 숫자(Monetary) 가 다른 피처를 압도함. **표준화 필수**.",
+        hint: "fit_transform 한 번이면 평균 0, 표준편차 1 로.",
+        snippet: `from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+rfm_scaled = scaler.fit_transform(rfm)
+print(rfm_scaled.mean(axis=0))  # ~0
+print(rfm_scaled.std(axis=0))   # ~1`,
+        solution: `from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+rfm_scaled = scaler.fit_transform(rfm)
+
+print("📏 표준화 결과 (각 컬럼)")
+print(f"   평균:   {rfm_scaled.mean(axis=0).round(2)}  (목표: 0)")
+print(f"   표준편차: {rfm_scaled.std(axis=0).round(2)}  (목표: 1)")
+print()
+print("→ 이제 Recency·Frequency·Monetary 가 동등한 스케일에서 비교됨")`,
+      },
+      {
+        title: "K-means 학습 (k=4 그룹)",
+        stepMarker: "STEP 4",
+        description:
+          "표준화된 데이터로 4개 그룹 생성. \\`n_init=10\\` 으로 안정성 확보.",
+        hint: "KMeans(n_clusters=4, random_state=42, n_init=10).",
+        snippet: `from sklearn.cluster import KMeans
+kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
+labels = kmeans.fit_predict(rfm_scaled)
+rfm["Cluster"] = labels`,
+        solution: `from sklearn.cluster import KMeans
+
+kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
+labels = kmeans.fit_predict(rfm_scaled)
+rfm["Cluster"] = labels
+
+print(f"✅ K-means 학습 완료 (4 그룹)")
+print()
+print("클러스터별 인원:")
+counts = rfm["Cluster"].value_counts().sort_index()
+for cluster_id, count in counts.items():
+    bar = "█" * (count // 3)
+    print(f"  Cluster {cluster_id}: {count}명 {bar}")`,
+      },
+      {
+        title: "각 클러스터 특성 분석 + 자동 라벨링",
+        stepMarker: "STEP 5",
+        description:
+          "각 클러스터의 평균 R·F·M 을 보고 비즈니스적 의미 부여 (VIP / 잠재 / 일반 / 이탈위험).",
+        hint: "groupby('Cluster').mean() 로 각 클러스터 프로필 → 규칙으로 라벨 매핑.",
+        snippet: `profile = rfm.groupby("Cluster").mean().round(0)
+print(profile)
+# 각 클러스터에 비즈니스 라벨 부여`,
+        solution: `# 각 클러스터의 평균 RFM
+profile = rfm.groupby("Cluster")[["Recency", "Frequency", "Monetary"]].mean().round(1)
+print("📊 클러스터별 평균 RFM:")
+print(profile)
+print()
+
+# 자동 라벨링 규칙 (도메인 지식 반영)
+def label_segment(row):
+    r, f, m = row["Recency"], row["Frequency"], row["Monetary"]
+    if r < 30 and f >= 5 and m >= 80000:
+        return "💎 VIP"
+    elif r < 30 and (f >= 3 or m >= 50000):
+        return "✨ 활성 고객"
+    elif r > 90:
+        return "⚠️ 이탈 위험"
+    else:
+        return "👍 일반 고객"
+
+profile["세그먼트"] = profile.apply(label_segment, axis=1)
+print("🏷️ 비즈니스 라벨 부여:")
+print(profile)`,
+      },
+      {
+        title: "신규 고객을 학습된 모델로 분류 (배포 시뮬)",
+        stepMarker: "STEP 6",
+        description:
+          "학습 끝났으니 실제 배포처럼 **새 고객** 을 즉시 세그먼트 분류. 그에 맞는 마케팅 액션까지 자동 추천.",
+        hint: "scaler.transform → kmeans.predict 로 한 줄.",
+        snippet: `new_customer = [[5, 10, 250000]]
+new_scaled = scaler.transform(new_customer)
+new_cluster = kmeans.predict(new_scaled)[0]
+print(f"세그먼트: {profile.loc[new_cluster, '세그먼트']}")`,
+        solution: `# 새 고객 케이스 (Recency, Frequency, Monetary)
+new_customers = [
+    [5,   10, 250000, "최근 구매 + 자주 + 많이"],
+    [180,  2,  15000, "오래전 + 가끔 + 적게"],
+    [25,   4,  60000, "보통 + 보통 + 보통"],
+    [60,   8, 180000, "조금 오래 + 자주 + 많이"],
+]
+
+ACTIONS = {
+    "💎 VIP":         "전용 매니저 배정 + 신상품 조기 공개",
+    "✨ 활성 고객":    "리텐션 캠페인 + 추천 시스템 노출",
+    "⚠️ 이탈 위험":    "재방문 쿠폰 + 개인화 이메일",
+    "👍 일반 고객":    "범용 프로모션 + 로열티 프로그램",
+}
+
+print("=" * 60)
+print("  🎯 신규 고객 자동 세그먼트 분류 + 마케팅 액션")
+print("=" * 60)
+for *features, desc in new_customers:
+    new_scaled = scaler.transform([features])
+    cluster_id = kmeans.predict(new_scaled)[0]
+    segment = profile.loc[cluster_id, "세그먼트"]
+    action = ACTIONS.get(segment, "분석 필요")
+    print(f"\\n🧑 R={features[0]:>3}일 / F={features[1]:>2}회 / M={features[2]:>7,.0f}원 ({desc})")
+    print(f"   → Cluster {cluster_id}: {segment}")
+    print(f"   📌 권장 액션: {action}")`,
+      },
+      {
+        title: "🎯 결과 해설 — 출력이 무슨 뜻인가?",
+        description: `## 여러분이 방금 한 일 정리
+
+**RFM 마케팅 분석** + **K-means 클러스터링** 으로 200명의 가상 고객을 의미 있는 4개 그룹으로 자동 분류하고, 신규 고객도 즉시 분류하는 시스템을 만들었어요.
+
+기존 5개 프로젝트는 모두 **지도학습** (정답 라벨이 있음). 이 프로젝트는 **첫 비지도 학습** — 정답 없이 데이터의 구조 자체를 발견.
+
+---
+
+### 📊 STEP 1~2 — 가상 고객 데이터
+\`\`\`
+Recency:   1 ~ 365 일
+Frequency: 1 ~ 15 회
+Monetary:  1,000 ~ 500,000 원
+\`\`\`
+
+**해석 — RFM 의 3축**
+- **Recency (R)**: 마지막 구매 후 며칠 → **작을수록 좋음** (최근 활성)
+- **Frequency (F)**: 총 구매 횟수 → **클수록 좋음** (자주 구매)
+- **Monetary (M)**: 총 구매액 → **클수록 좋음** (큰 손)
+
+이 3개 축으로 고객을 입체적으로 평가하는 게 마케팅의 표준 (RFM 모델, 1990 년대부터).
+
+---
+
+### 📏 STEP 3 — 표준화 결과
+\`\`\`
+평균: [0. 0. 0.]   ← 정확히 0 으로
+표준편차: [1. 1. 1.] ← 정확히 1 로
+\`\`\`
+
+**해석 (이게 왜 필수인가)**
+- K-means 는 **거리 (점과 점 사이)** 로 그룹을 정함.
+- 표준화 안 하면 **Monetary (수십만)** 가 **Frequency (한 자리수)** 를 압도해 그룹이 사실상 Monetary 만으로 결정됨.
+- 표준화 후엔 3개 축이 동등하게 작용 → 균형 잡힌 클러스터.
+
+> 💡 **거리 기반 모델 (K-means, KNN, SVM) 은 표준화 필수**, 트리 기반 (RF, GBM) 은 불필요.
+
+---
+
+### 🔢 STEP 4 — K-means 결과
+\`\`\`
+Cluster 0: 약 50명 ████████████████
+Cluster 1: 약 60명 ████████████████████
+Cluster 2: 약 45명 ██████████████
+Cluster 3: 약 45명 ██████████████
+\`\`\`
+
+**해석**
+- 200명을 비슷한 비율로 4개 그룹에 나눔.
+- 클러스터 ID (0, 1, 2, 3) 는 **그냥 번호** — 의미 없음. 다음 단계에서 비즈니스 라벨 붙임.
+
+---
+
+### 🏷️ STEP 5 — 클러스터 해석 + 자동 라벨
+\`\`\`
+         Recency  Frequency  Monetary  세그먼트
+Cluster
+0           120.5        2.1   18000.0  ⚠️ 이탈 위험
+1            18.3        7.5  150000.0  💎 VIP
+2            65.2        4.0   55000.0  👍 일반 고객
+3            22.1        4.2   48000.0  ✨ 활성 고객
+\`\`\`
+
+**해석 (가장 중요)**
+- **Cluster 1 (VIP)**: 최근(18일) + 자주(7.5회) + 많이(15만원) → **유지가 매출의 핵심**
+- **Cluster 0 (이탈 위험)**: 오래전(120일) + 거의 안 사고(2회) + 적게(1.8만) → **재방문 캠페인 시급**
+- **Cluster 3 (활성)**: 최근에 일반 수준 구매 → **VIP 후보군** (업셀링 기회)
+- **Cluster 2 (일반)**: 무난 → 표준 마케팅 대상
+
+> 🧠 K-means 가 한 일은 **그룹 나누기** 까지. **"이 그룹이 뭘 의미하는지"** 는 결국 사람이 해석해야 함 (= 데이터 분석가의 일).
+
+---
+
+### 🚀 STEP 6 — 신규 고객 즉시 분류
+\`\`\`
+🧑 R=  5일 / F=10회 / M=250,000원 (최근 구매 + 자주 + 많이)
+   → Cluster 1: 💎 VIP
+   📌 권장 액션: 전용 매니저 배정 + 신상품 조기 공개
+
+🧑 R=180일 / F= 2회 / M= 15,000원 (오래전 + 가끔 + 적게)
+   → Cluster 0: ⚠️ 이탈 위험
+   📌 권장 액션: 재방문 쿠폰 + 개인화 이메일
+\`\`\`
+
+**해석 (실무 가치)**
+- 새 고객이 들어오면 **즉시 세그먼트 분류 + 액션 추천**.
+- 이 흐름이 그대로 운영 시스템으로 가면 **자동 마케팅 트리거** 가 됨.
+- 고객 한 명마다 매니저가 수동으로 분류할 필요 없음.
+
+---
+
+### 🎓 비지도 학습 vs 지도학습 (이 프로젝트의 의미)
+
+| | 지도 학습 (Iris/Titanic 등) | 비지도 학습 (K-means) |
+|---|---|---|
+| 정답 라벨 | 필요 ('setosa', 'survived') | **불필요** |
+| 학습 목적 | 라벨 예측 | 데이터 구조 발견 |
+| 평가 | 정확도, F1 등 | 실루엣 점수, 도메인 검증 |
+| 실무 활용 | 분류, 예측 | 세그먼트, 이상 탐지, 차원 축소 |
+
+**현실에서 정답 라벨이 없는 경우** (대부분의 신규 분석 프로젝트) 비지도 학습이 첫 도구.
+
+---
+
+### ⚠️ 이 미니 프로젝트의 한계
+
+| 이슈 | 해결 |
+|---|---|
+| **k=4 가 최적인가?** | 엘보우 방법(elbow method) 또는 실루엣 점수로 검증 |
+| **클러스터 해석이 주관적** | 도메인 전문가 검토 필수 |
+| **이상치에 약함** | DBSCAN 같은 밀도 기반으로 보완 가능 |
+| **고차원 데이터** | PCA 로 차원 축소 후 K-means |
+
+---
+
+### 🧪 지금 시도해 볼 것
+
+1. STEP 4 에서 \`n_clusters=3\` 또는 \`n_clusters=6\` 으로 바꿔 결과 비교
+2. **엘보우 방법** 으로 최적 k 찾기:
+   \`\`\`python
+   from sklearn.cluster import KMeans
+   inertias = []
+   for k in range(1, 10):
+       km = KMeans(n_clusters=k, random_state=42, n_init=10).fit(rfm_scaled)
+       inertias.append(km.inertia_)
+   for k, inertia in enumerate(inertias, 1):
+       print(f"k={k}: {inertia:.0f}")
+   \`\`\`
+3. **실루엣 점수**로 클러스터 품질 평가 (\`from sklearn.metrics import silhouette_score\`)
+4. RFM 에 **추가 피처** 넣기 (예: 평균 구매 간격, 카테고리 다양성)
+
+### 🏁 이 프로젝트에서 배운 것
+- ✅ **RFM 분석** — 마케팅의 표준 고객 평가 모델
+- ✅ **비지도 학습 (K-means)** — 정답 없이 데이터 구조 발견
+- ✅ **표준화의 중요성** — 거리 기반 모델의 필수 전처리
+- ✅ **클러스터 해석** — 알고리즘 결과를 비즈니스 라벨로 번역
+- ✅ **신규 데이터 즉시 분류** — 학습된 모델의 실무 배포 패턴`,
+        checkpoint: "위 해석을 읽고, STEP 4 에서 n_clusters 를 3 또는 6 으로 바꿔 결과가 어떻게 달라지는지 비교해 보세요.",
+      },
+    ],
+    starterFiles: {
+      "main.py": {
+        name: "main.py",
+        content: `# 📊 K-means 고객 세그먼트 분석 프로젝트
+# 우측 가이드 패널에서 단계를 클릭해 각 STEP으로 이동할 수 있어요.
+
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+
+
+## STEP 1: 가상 고객 데이터 생성 (200명)
+np.random.seed(42)
+n = 200
+
+recency   = np.random.exponential(30, n).clip(1, 365)
+frequency = np.random.poisson(5, n) + 1
+monetary  = np.random.exponential(50000, n).clip(1000, 500000).round()
+
+print(f"✅ {n}명의 가상 고객 데이터 생성")
+print(f"   Recency:   {recency.min():.0f} ~ {recency.max():.0f} 일")
+print(f"   Frequency: {frequency.min()} ~ {frequency.max()} 회")
+print(f"   Monetary:  {monetary.min():,.0f} ~ {monetary.max():,.0f} 원")
+
+
+## STEP 2: RFM DataFrame 구성
+rfm = pd.DataFrame({
+    "Recency":   recency,
+    "Frequency": frequency,
+    "Monetary":  monetary,
+})
+print("\\n📊 RFM 통계 요약:")
+print(rfm.describe().round(1))
+
+
+## STEP 3: 표준화 (StandardScaler)
+scaler = StandardScaler()
+rfm_scaled = scaler.fit_transform(rfm)
+print(f"\\n📏 표준화 결과")
+print(f"   평균:   {rfm_scaled.mean(axis=0).round(2)}  (목표: 0)")
+print(f"   표준편차: {rfm_scaled.std(axis=0).round(2)}  (목표: 1)")
+
+
+## STEP 4: K-means 학습 (k=4)
+kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
+labels = kmeans.fit_predict(rfm_scaled)
+rfm["Cluster"] = labels
+
+print(f"\\n✅ K-means 학습 완료 (4 그룹)")
+counts = rfm["Cluster"].value_counts().sort_index()
+for cluster_id, count in counts.items():
+    bar = "█" * (count // 3)
+    print(f"  Cluster {cluster_id}: {count}명 {bar}")
+
+
+## STEP 5: 클러스터 특성 분석 + 자동 라벨링
+profile = rfm.groupby("Cluster")[["Recency", "Frequency", "Monetary"]].mean().round(1)
+print(f"\\n📊 클러스터별 평균 RFM:")
+print(profile)
+
+def label_segment(row):
+    r, f, m = row["Recency"], row["Frequency"], row["Monetary"]
+    if r < 30 and f >= 5 and m >= 80000:
+        return "💎 VIP"
+    elif r < 30 and (f >= 3 or m >= 50000):
+        return "✨ 활성 고객"
+    elif r > 90:
+        return "⚠️ 이탈 위험"
+    else:
+        return "👍 일반 고객"
+
+profile["세그먼트"] = profile.apply(label_segment, axis=1)
+print(f"\\n🏷️ 비즈니스 라벨:")
+print(profile)
+
+
+## STEP 6: 신규 고객 즉시 분류 + 마케팅 액션
+new_customers = [
+    [5,   10, 250000, "최근 + 자주 + 많이"],
+    [180,  2,  15000, "오래전 + 가끔 + 적게"],
+    [25,   4,  60000, "보통 + 보통 + 보통"],
+    [60,   8, 180000, "조금 오래 + 자주 + 많이"],
+]
+
+ACTIONS = {
+    "💎 VIP":         "전용 매니저 배정 + 신상품 조기 공개",
+    "✨ 활성 고객":    "리텐션 캠페인 + 추천 시스템 노출",
+    "⚠️ 이탈 위험":    "재방문 쿠폰 + 개인화 이메일",
+    "👍 일반 고객":    "범용 프로모션 + 로열티 프로그램",
+}
+
+print("\\n" + "=" * 60)
+print("  🎯 신규 고객 자동 세그먼트 분류 + 마케팅 액션")
+print("=" * 60)
+for *features, desc in new_customers:
+    new_scaled = scaler.transform([features])
+    cluster_id = kmeans.predict(new_scaled)[0]
+    segment = profile.loc[cluster_id, "세그먼트"]
+    action = ACTIONS.get(segment, "분석 필요")
+    print(f"\\n🧑 R={features[0]:>3}일 / F={features[1]:>2}회 / M={features[2]:>7,.0f}원 ({desc})")
+    print(f"   → Cluster {cluster_id}: {segment}")
+    print(f"   📌 권장 액션: {action}")
+`,
+        language: "python",
+      },
+    },
+  },
 ];
 
 export function getProjectById(id: string): Project | undefined {
