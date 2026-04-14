@@ -26,10 +26,16 @@ const debug = (...args: unknown[]) => {
   }
 };
 
-export function useAutoSave(notebookId: string | null, enabled: boolean) {
+export function useAutoSave(
+  notebookId: string | null,
+  enabled: boolean,
+  lessonHash?: string
+) {
   const saveTimer = useRef<number | null>(null);
   const pendingCellsRef = useRef<StoredCell[] | null>(null);
   const lastSavedNotebookId = useRef<string | null>(null);
+  const lessonHashRef = useRef<string | undefined>(lessonHash);
+  lessonHashRef.current = lessonHash;
   const setStatus = useAutoSaveStore((s) => s.setStatus);
 
   const cells = useNotebookStore((s) => s.cells);
@@ -46,7 +52,7 @@ export function useAutoSave(notebookId: string | null, enabled: boolean) {
       debug("flush → save", id, `${pending.length} cells`);
       setStatus("saving");
       try {
-        await saveNotebook(id, pending);
+        await saveNotebook(id, pending, lessonHashRef.current);
         pendingCellsRef.current = null;
         setStatus("saved");
       } catch (err) {
@@ -100,7 +106,7 @@ export function useAutoSave(notebookId: string | null, enabled: boolean) {
       debug("debounce fire → save", notebookId);
       setStatus("saving");
       try {
-        await saveNotebook(notebookId, storedCells);
+        await saveNotebook(notebookId, storedCells, lessonHashRef.current);
         pendingCellsRef.current = null;
         saveTimer.current = null;
         setStatus("saved");
@@ -133,7 +139,7 @@ export function useAutoSave(notebookId: string | null, enabled: boolean) {
       const pending = pendingCellsRef.current;
       const id = lastSavedNotebookId.current;
       if (pending && id) {
-        void saveNotebook(id, pending);
+        void saveNotebook(id, pending, lessonHashRef.current);
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);

@@ -22,6 +22,12 @@ export interface StoredNotebook {
   id: string;
   cells: StoredCell[];
   updatedAt: number;
+  /**
+   * 저장 시점의 lesson 콘텐츠 해시 (v3.18.5+).
+   * 로드 시 현재 lesson 의 해시와 비교해 다르면 무효화.
+   * Playground 등 lesson 이 없는 노트북은 undefined.
+   */
+  lessonHash?: string;
 }
 
 export interface StoredProgress {

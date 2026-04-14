@@ -11,7 +11,11 @@ import { useLanguageRuntime } from "../hooks/useLanguageRuntime";
 import { getRuntime } from "../runtime/registry";
 import { useAutoSave } from "../hooks/useAutoSave";
 import { useStudyTimeTracking } from "../hooks/useStudyTimeTracking";
-import { loadNotebook, deleteNotebook } from "../storage/notebookRepo";
+import {
+  loadNotebook,
+  deleteNotebook,
+  computeLessonHash,
+} from "../storage/notebookRepo";
 import { downloadIpynb } from "../utils/exportNotebook";
 import type { Language, Lesson, Track } from "../types/lesson";
 
@@ -63,7 +67,8 @@ export function LessonPage() {
   }, [menuOpen]);
 
   // 자동 저장 — loadState가 ready일 때만 활성화
-  useAutoSave(lesson?.id ?? null, loadState === "ready");
+  const lessonHash = lesson ? computeLessonHash(lesson.cells) : undefined;
+  useAutoSave(lesson?.id ?? null, loadState === "ready", lessonHash);
 
   // 학습 시간 추적 (로그인 사용자만)
   useStudyTimeTracking(!!lesson);
@@ -115,9 +120,15 @@ export function LessonPage() {
             .join("\n---\n")
         : "";
 
+      // v3.18.5: lesson 콘텐츠 해시 비교가 가장 강력한 검증.
+      // saved.lessonHash 가 없으면 (legacy 데이터) 무조건 무효화.
+      // 있어도 현재 lesson 해시와 다르면 무효화 — 콘텐츠 변경 정확 감지.
+      const currentLessonHash = computeLessonHash(lesson.cells);
       const useOriginal =
         !saved ||
         saved.cells.length === 0 ||
+        !saved.lessonHash ||
+        saved.lessonHash !== currentLessonHash ||
         savedCodeCells.length !== lessonCodeCells.length ||
         savedMdSignature !== lessonMdSignature;
 

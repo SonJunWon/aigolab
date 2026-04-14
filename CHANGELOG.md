@@ -13,6 +13,28 @@
 
 ---
 
+## [3.18.5] - 2026-04-15
+
+### Fixed — lesson 콘텐츠 해시로 잘못된 IndexedDB 자동 무효화 (최종)
+v3.18.4 의 markdown 시그니처 검증으로도 부족했던 이유: v3.18.1 머지가 옛 saved 의 markdown 도 새 lesson 의 markdown 으로 교체해서 IndexedDB 에 저장 → 시그니처가 이미 일치.
+
+**근본 해결:**
+1. `StoredNotebook` 에 `lessonHash?: string` 필드 추가 (`db.ts`)
+2. `notebookRepo.computeLessonHash()` djb2 hash 함수 추가 — lesson 의 모든 셀 source 합쳐 32-bit hex 생성
+3. `useAutoSave` 가 `lessonHash` 받아서 저장 시 함께 기록
+4. `LessonPage` 에서 lesson hash 계산해 useAutoSave 에 전달
+5. 머지 검증에 `saved.lessonHash !== currentLessonHash` 추가
+
+**효과:**
+- ✅ saved 에 `lessonHash` 없으면 (legacy 데이터) 무조건 무효화
+- ✅ lesson 콘텐츠가 한 글자라도 바뀌면 hash 다름 → 자동 무효화
+- ✅ 향후 콘텐츠 변경 시 동일 보호
+
+### 기존 사용자에게
+**새로고침 (Cmd/Ctrl+Shift+R)** → saved 에 lessonHash 없음 → lesson 원본 재로드 → 다음 저장 시 hash 함께 기록 → 정상 운영.
+
+---
+
 ## [3.18.4] - 2026-04-15
 
 ### Fixed — v3.18.1~3.18.2 동안 잘못 매칭된 IndexedDB 데이터 자동 무효화
