@@ -6,6 +6,7 @@ const streamColor: Record<string, string> = {
   error: "text-colab-red",
   result: "text-colab-green",
   system: "text-colab-textDim italic",
+  figure: "text-colab-text",
 };
 
 interface Props {
@@ -62,16 +63,45 @@ export function OutputPanel({ collapsed, onToggle }: Props) {
               ▶ Run 을 누르면 결과가 여기에 표시됩니다. (F5 또는 ⌘+Enter)
             </span>
           ) : (
-            output.map((line, i) => (
-              <pre
-                key={i}
-                className={`m-0 whitespace-pre-wrap break-words ${
-                  streamColor[line.stream] ?? "text-colab-text"
-                }`}
-              >
-                {line.text}
-              </pre>
-            ))
+            output.map((line, i) => {
+              if (line.stream === "figure" && line.dataUrl) {
+                return (
+                  <div key={i} className="my-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-colab-textDim uppercase tracking-wider">
+                        📊 Figure
+                      </span>
+                      <a
+                        href={line.dataUrl}
+                        download={`figure-${i + 1}.png`}
+                        className="text-[10px] text-colab-textDim hover:text-colab-accent transition-colors"
+                        title="PNG 다운로드"
+                      >
+                        ↓ PNG
+                      </a>
+                    </div>
+                    <div className="rounded border border-colab-subtle bg-white p-2 inline-block max-w-full">
+                      <img
+                        src={line.dataUrl}
+                        alt={`matplotlib figure ${i + 1}`}
+                        className="max-w-full h-auto"
+                        loading="lazy"
+                      />
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <pre
+                  key={i}
+                  className={`m-0 whitespace-pre-wrap break-words ${
+                    streamColor[line.stream] ?? "text-colab-text"
+                  }`}
+                >
+                  {line.text}
+                </pre>
+              );
+            })
           )}
         </div>
       )}

@@ -174,6 +174,7 @@ class PythonRunner implements LanguageRuntime {
     message?: string;
     name?: string;
     timeMs?: number;
+    dataUrl?: string;
   }) {
     // 스트리밍 출력 (어느 실행에 속하는지는 cellId로 구분)
     if (msg.type === "stdout" || msg.type === "stderr") {
@@ -181,6 +182,15 @@ class PythonRunner implements LanguageRuntime {
       if (pending && msg.text) {
         if (msg.type === "stdout") pending.callbacks.onStdout?.(msg.text);
         else pending.callbacks.onStderr?.(msg.text);
+      }
+      return;
+    }
+
+    // matplotlib figure (PNG data URL)
+    if (msg.type === "figure") {
+      const pending = [...this.pending.values()].find((p) => p.cellId === msg.cellId);
+      if (pending && msg.dataUrl) {
+        pending.callbacks.onFigure?.(msg.dataUrl);
       }
       return;
     }

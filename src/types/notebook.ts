@@ -15,12 +15,24 @@ export interface TableData {
 }
 
 export interface OutputChunk {
-  /** stdout / stderr / result / error / warning(선제 경고) / table(SQL 결과) */
-  stream: "stdout" | "stderr" | "result" | "error" | "warning" | "table";
-  /** 텍스트 출력 — table 일 때는 사용 안 함 */
+  /**
+   * stdout / stderr / result / error / warning(선제 경고) / table(SQL 결과) /
+   * figure(matplotlib 그래프 PNG)
+   */
+  stream:
+    | "stdout"
+    | "stderr"
+    | "result"
+    | "error"
+    | "warning"
+    | "table"
+    | "figure";
+  /** 텍스트 출력 — table·figure 일 때는 사용 안 함 */
   text: string;
   /** table 일 때만 사용 */
   table?: TableData;
+  /** figure 일 때만 사용 — `data:image/png;base64,...` */
+  dataUrl?: string;
 }
 
 export interface Cell {

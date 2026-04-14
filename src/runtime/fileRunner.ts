@@ -134,6 +134,12 @@ del __result
         useFileStore.getState().appendOutput({ stream: "stdout", text }),
       onStderr: (text) =>
         useFileStore.getState().appendOutput({ stream: "stderr", text }),
+      onFigure: (dataUrl) =>
+        useFileStore.getState().appendOutput({
+          stream: "figure",
+          text: "",
+          dataUrl,
+        }),
     });
 
     if (result.value !== undefined && result.value !== "None") {

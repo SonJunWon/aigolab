@@ -13,6 +13,56 @@
 
 ---
 
+## [3.17.0] - 2026-04-15
+
+### Added — 🎨 matplotlib 그래프 브라우저 내 자동 표시
+브라우저 안에서 matplotlib 그래프가 PNG 이미지로 셀 출력에 자동 렌더링됩니다. `plt.show()` 호출 안 해도 되고, Jupyter/Colab 으로 안 가도 됨.
+
+### 동작 원리
+1. 사용자 코드 실행 직후 워커가 Python 스니펫으로 `plt.get_fignums()` 호출
+2. 열린 figure 들을 각각 `fig.savefig(BytesIO, format="png", dpi=100)` 로 PNG 캡처
+3. base64 로 인코딩 → `postMessage({ type: "figure", cellId, dataUrl })`
+4. 메인 스레드가 `<img src="data:image/png;base64,...">` 로 셀 출력에 추가
+5. `plt.close("all")` 로 다음 셀에 figure 잔재 안 남김
+
+### 적용 범위 (3개 출력 컴포넌트 모두)
+- 📓 **노트북 레슨** (`CellOutput`) — Python 트랙 모든 챕터
+- 📚 **AI 강의 인라인 코드** (`InlineCodeRunner`) — 코드 셀 있는 강의
+- 🖥️ **프로젝트 IDE** (`OutputPanel`) — IDE 모드 프로젝트
+
+### 새 기능
+- 그래프 옆 **↓ PNG 다운로드** 버튼
+- 흰색 배경 보더 + 라이트/다크 모드 모두 가독성 OK
+- `OutputChunk.stream = "figure"` + `OutputLine.stream = "figure"` + `dataUrl` 필드
+- `RunCallbacks.onFigure` 콜백 추가 (Python 런타임 전용)
+
+### 변경 파일
+- `public/pyodide-worker.js` — figure 자동 캡처 스니펫
+- `src/types/notebook.ts` — `OutputChunk` 에 `figure` stream + `dataUrl` 필드
+- `src/store/fileStore.ts` — `OutputLine` 에 동일 추가
+- `src/runtime/types.ts` — `RunCallbacks.onFigure`
+- `src/runtime/pythonRunner.ts` — figure 메시지 핸들러
+- `src/runtime/runCell.ts`, `src/runtime/fileRunner.ts` — onFigure 콜백 연결
+- `src/components/notebook/CellOutput.tsx` — `FigureBlock` 추가
+- `src/components/course/InlineCodeRunner.tsx` — figure 렌더 추가
+- `src/components/ide/OutputPanel.tsx` — figure 렌더 추가
+- `src/content/python/data-science/04-matplotlib.ts` — 안내 텍스트 업데이트
+
+### 데이터 과학 04강 안내 변경
+- 이전: "이 환경에서는 그래프가 직접 렌더링되지 않습니다. Jupyter/Colab 가서 보세요."
+- 이후: "🎉 이제 브라우저에서 그래프가 바로 표시됩니다! plt.show() 안 해도 자동 렌더링."
+- 한국어 글자 폰트 부재 안내 추가 (□ 로 보일 수 있음, 영어 라벨 권장)
+
+### 알려진 제약
+- **한국어 폰트 없음** — DejaVu Sans 기본. 한글 글자는 □ 로 표시됨. 영어 또는 숫자 라벨 사용 권장. 한국어 폰트 추가는 별도 작업.
+- **인터랙티브 위젯 없음** — `plt.ion()`, 마우스 이벤트, 슬라이더 등은 미지원 (정적 PNG)
+- **3D plot, animation** — savefig 로 단일 프레임만 캡처됨
+
+### 기타
+v3.16.1 의 `MPLBACKEND=Agg` 강제는 그대로 유지 — Agg 백엔드가 PNG 캡처에 가장 잘 맞음.
+
+---
+
 ## [3.16.1] - 2026-04-15
 
 ### Fixed — matplotlib `import matplotlib.pyplot as plt` 시 ModuleNotFoundError

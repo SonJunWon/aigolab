@@ -76,6 +76,8 @@ export function InlineCodeRunner({
         onStdout: (text) => pushChunk({ stream: "stdout", text }),
         onStderr: (text) => pushChunk({ stream: "stderr", text }),
         onTable: (table) => pushChunk({ stream: "table", text: "", table }),
+        onFigure: (dataUrl) =>
+          pushChunk({ stream: "figure", text: "", dataUrl }),
       });
       if (result.value) {
         pushChunk({ stream: "result", text: result.value });
@@ -247,8 +249,10 @@ function InlineCellOutput({
   executionTime?: number;
 }) {
   const errorChunks = outputs.filter((c) => c.stream === "error");
+  const figureChunks = outputs.filter((c) => c.stream === "figure");
   const textChunks = outputs.filter(
-    (c) => c.stream !== "error" && c.stream !== "table"
+    (c) =>
+      c.stream !== "error" && c.stream !== "table" && c.stream !== "figure"
   );
   const errorText = errorChunks.map((c) => c.text).join("\n");
   const translated = errorText ? translateError(errorText) : null;
@@ -260,6 +264,7 @@ function InlineCellOutput({
     result: "text-brand-text",
     warning: "text-brand-yellow",
     table: "text-brand-text",
+    figure: "text-brand-text",
   };
 
   return (
@@ -275,6 +280,38 @@ function InlineCellOutput({
             </pre>
           ))}
         </div>
+      )}
+
+      {/* matplotlib 그래프 */}
+      {figureChunks.map((chunk, i) =>
+        chunk.dataUrl ? (
+          <div
+            key={`fig-${i}`}
+            className="px-4 py-3 border-t border-brand-subtle/50 first:border-t-0"
+          >
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10.5px] text-brand-textDim uppercase tracking-wider">
+                📊 Figure {i + 1}
+              </span>
+              <a
+                href={chunk.dataUrl}
+                download={`figure-${i + 1}.png`}
+                className="text-[10.5px] text-brand-textDim hover:text-brand-primary transition-colors"
+                title="PNG 다운로드"
+              >
+                ↓ PNG
+              </a>
+            </div>
+            <div className="rounded border border-brand-subtle bg-white p-2 inline-block max-w-full">
+              <img
+                src={chunk.dataUrl}
+                alt={`matplotlib figure ${i + 1}`}
+                className="max-w-full h-auto"
+                loading="lazy"
+              />
+            </div>
+          </div>
+        ) : null
       )}
 
       {errorChunks.length > 0 && (

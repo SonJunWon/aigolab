@@ -150,6 +150,60 @@ self.onmessage = async (event) => {
             result.destroy();
           }
         }
+
+        // ── matplotlib figure 자동 캡처 (v3.17.0) ──
+        // 사용자가 matplotlib 을 썼고 열린 figure 가 있으면 PNG 로 저장해
+        // base64 dataUrl 로 메인 스레드에 전송. 셀별 출력에 <img> 로 표시됨.
+        // - plt.show() 호출 안 해도 자동 캡처 (Pyodide 는 GUI 가 없어 show() 가 no-op)
+        // - 캡처 후 모든 figure close → 다음 셀에 잔재 안 남음
+        try {
+          const figuresJson = py.runPython(`
+def __collect_mpl_figures():
+    import sys
+    if "matplotlib" not in sys.modules:
+        return "[]"
+    try:
+        import matplotlib.pyplot as _plt
+        import io as _io
+        import base64 as _b64
+        import json as _json
+        nums = _plt.get_fignums()
+        if not nums:
+            return "[]"
+        out = []
+        for n in nums:
+            try:
+                fig = _plt.figure(n)
+                buf = _io.BytesIO()
+                fig.savefig(buf, format="png", bbox_inches="tight", dpi=100)
+                buf.seek(0)
+                out.append(_b64.b64encode(buf.read()).decode("ascii"))
+            except Exception:
+                continue
+        _plt.close("all")
+        return _json.dumps(out)
+    except Exception:
+        return "[]"
+
+__collect_mpl_figures()
+          `);
+          if (typeof figuresJson === "string" && figuresJson !== "[]") {
+            try {
+              const arr = JSON.parse(figuresJson);
+              for (const b64 of arr) {
+                self.postMessage({
+                  type: "figure",
+                  cellId,
+                  dataUrl: `data:image/png;base64,${b64}`,
+                });
+              }
+            } catch {
+              // JSON 파싱 실패 시 무시
+            }
+          }
+        } catch {
+          // figure 캡처 자체가 실패해도 사용자 코드 실행 결과는 정상 보고
+        }
       } catch (err) {
         const timeMs = performance.now() - start;
         self.postMessage({

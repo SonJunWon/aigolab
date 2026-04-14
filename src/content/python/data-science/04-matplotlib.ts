@@ -23,17 +23,19 @@ export const lesson04: Lesson = {
 - **산점도** — 두 변수의 관계
 - **히스토그램** — 분포 확인
 
-> ⚠️ **주의**: 이 브라우저 환경에서는 그래프가 직접 렌더링되지 않습니다.
-> 코드를 학습한 뒤 **Jupyter Notebook** 또는 **Google Colab**에서 실행하면 그래프를 확인할 수 있어요.
-> 여기서는 코드 구조와 문법을 익히는 데 집중합시다!`,
+> 🎉 **이제 브라우저에서 그래프가 바로 표시됩니다!** (v3.17.0 부터)
+> \`plt.show()\` 호출 안 해도 자동으로 셀 출력에 PNG 로 렌더링돼요.
+> 우측의 **↓ PNG** 버튼으로 그림 파일 다운로드도 가능합니다.
+>
+> ⚠️ 한국어 글자(\`월별\` 등) 는 폰트 부재로 □ 로 보일 수 있어요. 영어 라벨로 바꾸면 깨끗하게 보입니다.`,
     },
     {
       type: "code",
       source: `import matplotlib
-# matplotlib 버전 확인 (그래프 렌더링은 Jupyter/Colab에서!)
+# matplotlib 버전 확인 — 이 환경에서는 그래프가 셀 출력에 PNG 로 자동 표시됨
 print("Matplotlib 버전:", matplotlib.__version__)
-print("이 환경에서는 그래프가 표시되지 않지만,")
-print("코드 문법을 익힌 뒤 Jupyter/Colab에서 실행해보세요!")`,
+print("백엔드:", matplotlib.get_backend())
+print("→ 다음 셀들을 실행하면 그래프가 바로 보입니다!")`,
     },
     {
       type: "markdown",
@@ -46,11 +48,10 @@ Matplotlib의 pyplot 모듈을 \`plt\`로 불러오는 것이 관례입니다.`,
       source: `import matplotlib.pyplot as plt
 import numpy as np
 
-# Jupyter에서는 이 줄을 추가하면 셀 안에 그래프가 표시됩니다
-# %matplotlib inline
+# 이 환경에서는 plt.show() 안 해도 자동으로 그래프가 셀에 표시돼요.
+# (Jupyter 의 %matplotlib inline 과 비슷한 동작)
 
-print("plt 준비 완료!")
-print("아래 코드들은 Jupyter/Colab에서 실행하면 그래프가 나옵니다.")`,
+print("plt 준비 완료! 아래 셀들을 실행하면 그래프가 바로 나옵니다 🎨")`,
     },
     {
       type: "markdown",

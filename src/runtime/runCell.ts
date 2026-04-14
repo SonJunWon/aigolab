@@ -78,6 +78,13 @@ export async function runCell(cellId: string): Promise<void> {
           text: "",
           table,
         }),
+      // matplotlib PNG (Python 한정)
+      onFigure: (dataUrl) =>
+        useNotebookStore.getState().appendOutput(cellId, {
+          stream: "figure",
+          text: "",
+          dataUrl,
+        }),
     });
 
     if (result.value !== undefined && result.value !== "None") {

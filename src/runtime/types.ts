@@ -21,6 +21,8 @@ export interface RunCallbacks {
   onStderr?: (text: string) => void;
   /** SQL SELECT 등 표 형식 결과 (해당 런타임만 호출) */
   onTable?: (table: TableData) => void;
+  /** matplotlib 그래프 PNG (data URL 형식). Python 런타임만 호출 */
+  onFigure?: (dataUrl: string) => void;
 }
 
 export interface RunResult {

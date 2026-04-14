@@ -17,8 +17,10 @@ export interface FileEntry {
 }
 
 export interface OutputLine {
-  stream: "stdout" | "stderr" | "error" | "result" | "system";
+  stream: "stdout" | "stderr" | "error" | "result" | "system" | "figure";
   text: string;
+  /** stream === "figure" 일 때만 사용 — `data:image/png;base64,...` */
+  dataUrl?: string;
 }
 
 /** 프로젝트 저장 상태 */

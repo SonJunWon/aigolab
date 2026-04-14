@@ -17,6 +17,7 @@ const streamColor: Record<OutputChunk["stream"], string> = {
   result: "text-colab-text",
   warning: "text-colab-yellow",
   table: "text-colab-text",  // table은 SqlTable 컴포넌트로 따로 렌더, 색은 사용 안 함
+  figure: "text-colab-text", // figure 도 별도 렌더, 색 미사용
 };
 
 export function CellOutput({ outputs, executionTime }: Props) {
@@ -24,9 +25,11 @@ export function CellOutput({ outputs, executionTime }: Props) {
 
   // 종류별 분리
   const tableChunks = outputs.filter((c) => c.stream === "table");
+  const figureChunks = outputs.filter((c) => c.stream === "figure");
   const errorChunks = outputs.filter((c) => c.stream === "error");
   const textChunks = outputs.filter(
-    (c) => c.stream !== "error" && c.stream !== "table"
+    (c) =>
+      c.stream !== "error" && c.stream !== "table" && c.stream !== "figure"
   );
   const errorText = errorChunks.map((c) => c.text).join("\n");
   const translated = errorText ? translateError(errorText) : null;
@@ -52,6 +55,13 @@ export function CellOutput({ outputs, executionTime }: Props) {
         chunk.table ? <SqlTable key={`table-${i}`} table={chunk.table} /> : null
       )}
 
+      {/* matplotlib 그래프 */}
+      {figureChunks.map((chunk, i) =>
+        chunk.dataUrl ? (
+          <FigureBlock key={`fig-${i}`} dataUrl={chunk.dataUrl} index={i} />
+        ) : null
+      )}
+
       {/* 에러 */}
       {errorChunks.length > 0 && (
         translated ? (
@@ -66,6 +76,38 @@ export function CellOutput({ outputs, executionTime }: Props) {
           실행 시간: {executionTime.toFixed(0)}ms
         </div>
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// matplotlib 그래프 렌더링
+// ─────────────────────────────────────────────────────────
+
+function FigureBlock({ dataUrl, index }: { dataUrl: string; index: number }) {
+  return (
+    <div className="px-4 py-3 border-t border-colab-subtle/50 first:border-t-0">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[11px] text-colab-textDim uppercase tracking-wider">
+          📊 Figure {index + 1}
+        </span>
+        <a
+          href={dataUrl}
+          download={`figure-${index + 1}.png`}
+          className="text-[11px] text-colab-textDim hover:text-colab-accent transition-colors"
+          title="PNG 다운로드"
+        >
+          ↓ PNG
+        </a>
+      </div>
+      <div className="rounded border border-colab-subtle bg-white p-2 inline-block max-w-full">
+        <img
+          src={dataUrl}
+          alt={`matplotlib figure ${index + 1}`}
+          className="max-w-full h-auto"
+          loading="lazy"
+        />
+      </div>
     </div>
   );
 }
