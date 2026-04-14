@@ -2,12 +2,21 @@ import Editor, { type OnMount } from "@monaco-editor/react";
 import { useFileStore } from "../../store/fileStore";
 import { runActiveFile } from "../../runtime/fileRunner";
 import { saveProject } from "../../storage/projectRepo";
+import type { editor as MonacoEditor } from "monaco-editor";
+
+interface Props {
+  /**
+   * 에디터 인스턴스 노출 콜백 — 프로젝트 모드에서 Monaco API
+   * (revealLine, decorations) 를 외부에서 조작할 때 사용.
+   */
+  onEditorReady?: (editor: MonacoEditor.IStandaloneCodeEditor) => void;
+}
 
 /**
  * IDE의 메인 에디터 영역.
  * Monaco 에디터에 IDE 단축키를 직접 등록.
  */
-export function IdeEditor() {
+export function IdeEditor({ onEditorReady }: Props = {}) {
   const activeFile = useFileStore((s) => s.activeFile);
   const files = useFileStore((s) => s.files);
   const updateContent = useFileStore((s) => s.updateContent);
@@ -15,6 +24,8 @@ export function IdeEditor() {
   const entry = activeFile ? files[activeFile] : null;
 
   const handleMount: OnMount = (editor, monaco) => {
+    onEditorReady?.(editor);
+
     // Cmd/Ctrl + Enter → 실행
     editor.addAction({
       id: "ide.run",

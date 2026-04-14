@@ -25,6 +25,7 @@ import { useUIStore } from "./store/uiStore";
 import { MyPage } from "./pages/MyPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { ProjectDetailPage } from "./pages/ProjectDetailPage";
+import { ProjectWorkPage } from "./pages/ProjectWorkPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { TermsPage } from "./pages/TermsPage";
 import { useProgressStore } from "./store/progressStore";
@@ -42,6 +43,7 @@ function Layout({ children }: { children: React.ReactNode }) {
     location.pathname.startsWith("/coding/ide") ||
     location.pathname.startsWith("/coding/playground") ||
     location.pathname.startsWith("/auth") ||
+    !!location.pathname.match(/\/projects\/[^/]+\/work/) || // 프로젝트 모드 IDE
     !!location.pathname.match(/\/coding\/learn\/[^/]+\/[^/]+\/[^/]+/); // 레슨 상세
 
   return (
@@ -109,6 +111,7 @@ function AppInner() {
         <Route path="/courses" element={<CoursesPage />} />
         <Route path="/courses/:courseId" element={<CourseDetailPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/projects/:projectId/work" element={<ProjectWorkPage />} />
         <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
         <Route path="/my" element={<MyPage />} />
 
