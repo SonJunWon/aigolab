@@ -1,7 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { PROJECTS } from "../content/projects";
+import { PROJECTS, type ProjectCategory } from "../content/projects";
 import { Markdown } from "../components/Markdown";
+
+const CATEGORIES: { id: ProjectCategory | "all"; label: string; icon: string }[] = [
+  { id: "all",            label: "전체",        icon: "🧪" },
+  { id: "classification", label: "분류",        icon: "🏷️" },
+  { id: "nlp",            label: "NLP",         icon: "💬" },
+  { id: "unsupervised",   label: "추천·군집",   icon: "🎯" },
+  { id: "timeseries",     label: "시계열",      icon: "📈" },
+  { id: "anomaly",        label: "이상 탐지",   icon: "🔍" },
+  { id: "generative",     label: "생성 모델",   icon: "✨" },
+];
 
 /**
  * AI 프로젝트 목록 — 아코디언 방식.
@@ -13,12 +23,40 @@ import { Markdown } from "../components/Markdown";
 export function ProjectsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const openFromUrl = searchParams.get("open");
+  const catFromUrl = (searchParams.get("cat") || "all") as ProjectCategory | "all";
   const [openId, setOpenId] = useState<string | null>(openFromUrl);
+  const [activeCat, setActiveCat] = useState<ProjectCategory | "all">(catFromUrl);
 
   // URL → state 동기화 (뒤로가기 등)
   useEffect(() => {
     setOpenId(openFromUrl);
   }, [openFromUrl]);
+  useEffect(() => {
+    setActiveCat(catFromUrl);
+  }, [catFromUrl]);
+
+  // 카테고리 필터 적용
+  const visibleProjects = useMemo(() => {
+    if (activeCat === "all") return PROJECTS;
+    return PROJECTS.filter((p) => p.category === activeCat);
+  }, [activeCat]);
+
+  // 카테고리별 프로젝트 수 (배지 표시용)
+  const countsByCat = useMemo(() => {
+    const map: Record<string, number> = { all: PROJECTS.length };
+    for (const p of PROJECTS) {
+      if (p.category) map[p.category] = (map[p.category] ?? 0) + 1;
+    }
+    return map;
+  }, []);
+
+  const selectCategory = (cat: ProjectCategory | "all") => {
+    setActiveCat(cat);
+    const next = new URLSearchParams(searchParams);
+    if (cat === "all") next.delete("cat");
+    else next.set("cat", cat);
+    setSearchParams(next, { replace: true });
+  };
 
   const toggle = (id: string) => {
     const next = openId === id ? null : id;
@@ -42,8 +80,36 @@ export function ProjectsPage() {
           </p>
         </header>
 
+        {/* 카테고리 필터 */}
+        <div className="mb-6 flex flex-wrap gap-2">
+          {CATEGORIES.map((c) => {
+            const count = countsByCat[c.id] ?? 0;
+            const isActive = activeCat === c.id;
+            return (
+              <button
+                key={c.id}
+                onClick={() => selectCategory(c.id)}
+                disabled={count === 0}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                  isActive
+                    ? "border-brand-primary bg-brand-primary/15 text-brand-primary"
+                    : "border-brand-subtle text-brand-textDim hover:text-brand-text hover:border-brand-primary/50"
+                } ${count === 0 ? "opacity-40 cursor-not-allowed" : ""}`}
+              >
+                {c.icon} {c.label}
+                <span className="ml-1 opacity-70">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+
         <div className="space-y-3">
-          {PROJECTS.map((p) => {
+          {visibleProjects.length === 0 && (
+            <div className="text-center py-12 text-brand-textDim text-sm border border-dashed border-brand-subtle rounded-xl">
+              이 카테고리에는 아직 프로젝트가 없어요.
+            </div>
+          )}
+          {visibleProjects.map((p) => {
             const isOpen = openId === p.id;
             return (
               <div

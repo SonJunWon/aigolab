@@ -13,6 +13,17 @@
 
 ---
 
+## [3.10.0] - 2026-04-14
+
+### Added — C1: AI 프로젝트 카테고리 필터 + C5: Open Graph 보강
+- **`ProjectCategory` 타입** 신설 (classification / nlp / unsupervised / timeseries / anomaly / generative)
+- 11개 프로젝트 모두 카테고리 할당
+- `ProjectsPage` 상단에 **카테고리 필터 버튼** (6 카테고리 + 전체, 각 개수 배지)
+- URL `?cat=nlp` 지원 (딥링크·뒤로가기 동기화)
+- `index.html` OG 메타 업데이트: og:image 추가, description 에 11개 프로젝트/10강 반영, twitter:image 추가
+
+---
+
 ## [3.9.1] - 2026-04-14
 
 ### Fixed — multi-line import 로 인한 SyntaxError (카드 이상 탐지 등)
