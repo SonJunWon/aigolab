@@ -276,20 +276,37 @@ print("dpi 가 높을수록 PNG 파일 크기도 커집니다 (다운로드 시 
     {
       type: "code",
       source: `import matplotlib.pyplot as plt
-import numpy as np
 
-x = np.linspace(0, 10, 100)    # 100개
-y = np.linspace(100, 120, 101) # 101개  ← 의도치 않은 +1!
+# 의도적으로 길이가 다른 두 리스트
+x = [1, 2, 3, 4, 5]                 # 5개
+y = [10, 20, 30, 40, 50, 60]        # 6개  ← 한 개 더 많음!
+
+print(f"x 길이: {len(x)}개")
+print(f"y 길이: {len(y)}개")
+print()
 
 try:
     plt.plot(x, y)
-    print("그래프 그려짐")
+    print("✅ 그래프가 그려졌어요. (이 줄이 보이면 길이가 같다는 뜻)")
 except ValueError as e:
-    print("⚠️ 에러 발생:")
-    print(f"   {e}")
+    print("⚠️  ValueError 발생!")
+    print(f"   메시지: {e}")
     print()
-    print("💡 해결: x 와 y 의 길이를 맞추세요.")
-    print(f"   x: {len(x)}개 / y: {len(y)}개")`,
+    print("💡 해결법:")
+    print("   x 와 y 의 원소 개수를 동일하게 맞추세요.")
+    print("   예: y = [10, 20, 30, 40, 50]   ← 5개로")
+finally:
+    # try 안에서 plt.plot 이 figure 를 만들었을 수 있으니 정리
+    plt.close("all")
+
+# ── 길이 맞춰서 다시 그려보기 ──
+print()
+print("─" * 30)
+print("길이 맞춰서 정상 실행:")
+y_fixed = [10, 20, 30, 40, 50]      # 이제 5개
+plt.plot(x, y_fixed, marker="o")
+plt.title("정상적으로 그려진 그래프")
+plt.grid(True, alpha=0.3)`,
     },
     {
       type: "markdown",
@@ -314,27 +331,56 @@ except ValueError as e:
       source: `import matplotlib.pyplot as plt
 import numpy as np
 
-x = np.linspace(0, 4, 100)
+x = np.linspace(0, 4, 50)
 y = -x**3 + 4*x**2 - 5
 
-plt.figure(figsize=(8, 4))
-plt.plot(
-    x, y,
-    color='r',           # 빨강
-    linestyle='-',       # 직선
-    lw=3,                # 굵기 3
-    marker='*',          # 별 모양 마커
-    ms=20,               # 마커 크기 20
-    markevery=10,        # 10개마다 1번 (전부 표시는 너무 빽빽)
-    mfc='y',             # 마커 안 노랑
-    mec='g',             # 마커 테두리 초록
-    mew=2,               # 테두리 굵기 2
-)
-plt.title("상세 옵션 총동원")
+# ── 옵션 단계별 누적 비교 ──
+
+# (1) 기본
+plt.figure(figsize=(7, 3))
+plt.plot(x, y)
+plt.title("(1) 기본 plt.plot(x, y)")
 plt.grid(True, alpha=0.3)
 
-print("100개 점이 직선으로 이어지고, 10개마다 별 마커가 찍힙니다.")
-print("markevery 를 1 로 바꾸면 모든 점에 마커, 50 으로 바꾸면 듬성듬성.")`,
+# (2) 색상 + 굵기
+plt.figure(figsize=(7, 3))
+plt.plot(x, y, color="red", lw=3)
+plt.title("(2) color='red', lw=3 — 색·굵기")
+plt.grid(True, alpha=0.3)
+
+# (3) + 라인 스타일 (점선)
+plt.figure(figsize=(7, 3))
+plt.plot(x, y, color="red", lw=3, linestyle="--")
+plt.title("(3) + linestyle='--' — 점선")
+plt.grid(True, alpha=0.3)
+
+# (4) + 마커 (모든 점에)
+plt.figure(figsize=(7, 3))
+plt.plot(x, y, color="red", lw=2, linestyle="-", marker="o", ms=8)
+plt.title("(4) + marker='o', ms=8 — 모든 점에 마커")
+plt.grid(True, alpha=0.3)
+
+# (5) + markevery — 5개마다 한 번
+plt.figure(figsize=(7, 3))
+plt.plot(x, y, color="red", lw=2, marker="*", ms=14, markevery=5)
+plt.title("(5) + markevery=5 — 5개마다 별 마커")
+plt.grid(True, alpha=0.3)
+
+# (6) + 마커 색·테두리 세부 (mfc / mec / mew)
+plt.figure(figsize=(7, 3))
+plt.plot(
+    x, y,
+    color="navy",    lw=2,
+    marker="o",      ms=12, markevery=5,
+    mfc="orange",    # 마커 안쪽 색 (face)
+    mec="navy",      # 마커 테두리 색 (edge)
+    mew=2,           # 테두리 굵기
+)
+plt.title("(6) + mfc='orange', mec='navy', mew=2")
+plt.grid(True, alpha=0.3)
+
+print("위 6개 그래프를 차례로 비교해 보세요 — 옵션이 하나씩 추가될 때마다")
+print("그래프가 어떻게 변하는지 보면 옵션 이름이 자연스럽게 와닿아요.")`,
     },
     {
       type: "markdown",
