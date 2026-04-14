@@ -81,6 +81,46 @@ self.onmessage = async (event) => {
       let value = undefined;
 
       try {
+        // ── 패키지 자동 로드 ──
+        // runPythonAsync 는 자체적으로 패키지를 로드하지 않는다.
+        // `import sklearn` / `import pandas` 같이 외부 패키지를 쓰는 코드의
+        // ModuleNotFoundError 를 사전에 방지하기 위해 imports 를 스캔해
+        // 필요한 패키지를 먼저 fetch 한다. Pyodide repodata 에 등록된
+        // 패키지(numpy, pandas, scipy, scikit-learn, matplotlib 등) 는
+        // 자동 처리. 미등록 패키지는 그대로 ModuleNotFoundError 로 나감.
+        //
+        // 첫 로드는 느리지만(특히 sklearn ~10MB) Pyodide 내부에 캐싱되므로
+        // 이후 실행에선 즉시 사용 가능.
+        try {
+          const loaded = await py.loadPackagesFromImports(code, {
+            messageCallback: (msg) => {
+              // 진행 메시지를 stdout 으로 보여줘 "멈춘 것 같은" 느낌 제거
+              self.postMessage({
+                type: "stdout",
+                cellId,
+                text: `📦 ${msg}\n`,
+              });
+            },
+            errorCallback: () => {
+              // 개별 패키지 로드 실패는 무시하고, 본 실행에서 에러로 표면화
+            },
+          });
+          // 로드된 패키지가 있으면 stdout 으로 요약 (선택)
+          if (Array.isArray(loaded) && loaded.length > 0) {
+            const names = loaded.map((p) => (typeof p === "string" ? p : p?.name)).filter(Boolean);
+            if (names.length > 0) {
+              self.postMessage({
+                type: "stdout",
+                cellId,
+                text: `✓ 패키지 로드 완료: ${names.join(", ")}\n`,
+              });
+            }
+          }
+        } catch {
+          // loadPackagesFromImports 자체가 실패해도 본 실행으로 넘어감
+          // (어차피 import 에서 에러가 나면 사용자에게 명확히 표시됨)
+        }
+
         // runPythonAsync는 top-level await도 지원
         const result = await py.runPythonAsync(code);
         // 마지막 표현식의 값을 문자열로 변환 (None이 아닐 때만)

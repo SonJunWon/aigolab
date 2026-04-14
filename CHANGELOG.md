@@ -13,6 +13,22 @@
 
 ---
 
+## [3.6.1] - 2026-04-14
+
+### Fixed — sklearn / pandas / matplotlib 자동 로드 (핫픽스)
+- **pyodide-worker.js**: `runPythonAsync` 전에 `loadPackagesFromImports(code)` 호출 추가
+  - 증상: 아이리스·타이타닉 등 ML 프로젝트 실행 시 `ModuleNotFoundError: No module named 'sklearn'` 발생
+  - 원인: Pyodide 의 `runPythonAsync` 는 패키지 자동 로드를 수행하지 않음. 별도 호출 필요.
+  - 수정: 코드의 import 를 스캔해 Pyodide repodata 에 등록된 패키지(numpy, pandas, scipy, scikit-learn, matplotlib 등) 를 선로드.
+  - UX: 로딩 중 진행 메시지를 stdout 으로 노출 ("📦 Loading scikit-learn..." 등)
+
+### Changed — 에러 힌트 개선
+- `errorTranslator.ts`: \`ModuleNotFoundError\` 의 힌트를 Pyodide 내장 패키지인지 여부에 따라 분기
+  - 내장 패키지 (sklearn, pandas 등) 는 "한 번 더 ▶ 실행" / "🔄 런타임 재시작" 가이드
+  - 기타 패키지는 기존 micropip 설치 안내
+
+---
+
 ## [3.6.0] - 2026-04-14
 
 ### Added — AI 프로젝트 교육 구조 전면 개편 ("보면서 코딩" 모드)

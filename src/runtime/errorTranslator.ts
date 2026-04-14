@@ -301,17 +301,37 @@ export function translateError(errorText: string): TranslatedError | null {
     case "ImportError": {
       const modMatch = errorMessage.match(/No module named '([^']+)'/);
       const mod = modMatch?.[1] ?? "";
+      const rootMod = mod.split(".")[0]; // sklearn.datasets → sklearn
+
+      // Pyodide repodata 에 있는 대표 패키지
+      const pyodideBundled = new Set([
+        "numpy", "pandas", "scipy", "scikit-learn", "sklearn",
+        "matplotlib", "sympy", "statsmodels", "pillow", "PIL",
+        "lxml", "beautifulsoup4", "bs4", "networkx",
+      ]);
+      const isBundled = pyodideBundled.has(rootMod);
+
+      const baseExpl = mod
+        ? `\`${mod}\` 모듈이 현재 환경에서 사용 가능하지 않아요.`
+        : "불러오려는 모듈을 찾을 수 없어요.";
+
       return {
         emoji: "📦",
         title: "모듈을 찾을 수 없어요",
-        explanation: mod
-          ? `\`${mod}\` 모듈이 설치되어 있지 않거나, 이름에 오타가 있어요.`
-          : "불러오려는 모듈을 찾을 수 없어요.",
-        hints: [
-          "모듈 이름에 오타가 없는지 확인하세요 (대소문자 포함)",
-          "브라우저 Python에는 일부 모듈만 기본 내장돼 있어요",
-          `필요하면 \`import micropip; await micropip.install("패키지이름")\` 으로 설치할 수 있어요`,
-        ],
+        explanation: isBundled
+          ? `${baseExpl} 이 모듈은 Pyodide에서 지원되지만, 자동 로드에 실패한 것 같아요. 한 번 더 ▶ 실행을 눌러 보세요.`
+          : `${baseExpl} 브라우저 Python(Pyodide)에는 일부 모듈만 포함돼 있어요.`,
+        hints: isBundled
+          ? [
+              "한 번 더 **▶ 실행** 눌러 보세요 — 패키지 다운로드가 완료됐다면 이번엔 성공할 수 있어요",
+              "네트워크 연결을 확인하세요 (Pyodide가 CDN에서 패키지를 받아옵니다)",
+              `같은 코드가 계속 실패하면 헤더의 **🔄 런타임** 버튼으로 초기화 후 재시도`,
+            ]
+          : [
+              "모듈 이름에 오타가 없는지 확인하세요 (대소문자 포함)",
+              "브라우저 Python에는 일부 모듈만 내장돼 있어요",
+              `필요하면 \`import micropip; await micropip.install("패키지이름")\` 으로 설치할 수 있어요`,
+            ],
         originalLine: lastLine,
       };
     }
