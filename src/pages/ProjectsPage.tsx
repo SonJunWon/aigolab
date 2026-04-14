@@ -4,13 +4,14 @@ import { PROJECTS, type ProjectCategory } from "../content/projects";
 import { Markdown } from "../components/Markdown";
 
 const CATEGORIES: { id: ProjectCategory | "all"; label: string; icon: string }[] = [
-  { id: "all",            label: "전체",        icon: "🧪" },
-  { id: "classification", label: "분류",        icon: "🏷️" },
-  { id: "nlp",            label: "NLP",         icon: "💬" },
-  { id: "unsupervised",   label: "추천·군집",   icon: "🎯" },
-  { id: "timeseries",     label: "시계열",      icon: "📈" },
-  { id: "anomaly",        label: "이상 탐지",   icon: "🔍" },
-  { id: "generative",     label: "생성 모델",   icon: "✨" },
+  { id: "all",             label: "전체",        icon: "🧪" },
+  { id: "classification",  label: "분류",        icon: "🏷️" },
+  { id: "nlp",             label: "NLP",         icon: "💬" },
+  { id: "unsupervised",    label: "추천·군집",   icon: "🎯" },
+  { id: "timeseries",      label: "시계열",      icon: "📈" },
+  { id: "anomaly",         label: "이상 탐지",   icon: "🔍" },
+  { id: "generative",      label: "생성 모델",   icon: "✨" },
+  { id: "data-analysis",   label: "데이터 분석", icon: "📊" },
 ];
 
 /**

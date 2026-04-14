@@ -13,6 +13,37 @@
 
 ---
 
+## [3.12.0] - 2026-04-14
+
+### Added — B1: e-commerce EDA 프로젝트 (12번째 AI 프로젝트)
+데이터 과학 트랙 Ch10 (3-테이블 e-commerce EDA) 을 프로젝트 IDE 모드로 이식.
+
+**새 프로젝트**: `ecommerce-eda`
+- 시나리오: 신규 분석가로 입사 → CEO 에게 인사이트 3가지 브리핑
+- 7 STEP + 🎯 결과 해설
+  - STEP 1: 3개 가상 테이블 (users/products/orders) 생성, 결측 섞기
+  - STEP 2: 결측 정제 + 3-way merge + 파생 컬럼 (amount/month/dow)
+  - STEP 3: 전체·지역별 기초 지표 (groupby + agg)
+  - STEP 4: 💎 카테고리 인사이트 (점유율 + 객단가)
+  - STEP 5: 🗺️ 지역 × 카테고리 피벗 테이블
+  - STEP 6: 🏆 VIP 고객 파레토 분석 (cumsum 누적 비율)
+  - STEP 7: 📝 CEO 용 최종 보고서 조립 (f-string)
+  - 🎯 결과 해설: 출력 해석 + 한계 + 5가지 시도 변형
+
+**데이터 분석 도구 총출동**: `fillna` / `merge` / `pivot_table` / `groupby.agg()` / `cumsum` / `nunique` / `.dt` accessor
+
+### Added — 신규 카테고리 "data-analysis" (📊)
+- `ProjectCategory` 유니온에 `"data-analysis"` 추가
+- `ProjectsPage` 카테고리 필터에 "데이터 분석" 버튼 추가 (📊)
+- 기존 분류/NLP/추천·군집/시계열/이상탐지/생성모델 6개 + 데이터 분석 = 7개 카테고리
+
+### Why
+- 기존 레슨(Ch10) 은 **이론·순서 중심의 노트북** — 한 번에 읽기 좋지만 **직접 손으로 짜는 체감** 은 떨어짐
+- IDE 모드 프로젝트로 이식하면 STEP 단위 힌트→스니펫→정답 점진 공개 + 결과 해설까지 제공 가능
+- 레슨 파일은 **유지** (이론용) 하고 프로젝트는 **실습 강화용** — 두 가지 학습 경로 제공
+
+---
+
 ## [3.11.0] - 2026-04-14
 
 ### Added — AI 강의 인라인 코드 셀 "🎯 결과 해설" 6개

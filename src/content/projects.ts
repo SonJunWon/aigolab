@@ -39,7 +39,8 @@ export type ProjectCategory =
   | "unsupervised"    // 비지도 (추천·군집)
   | "timeseries"      // 시계열
   | "anomaly"         // 이상 탐지
-  | "generative";     // 생성 모델
+  | "generative"      // 생성 모델
+  | "data-analysis";  // 데이터 분석 / EDA
 
 export interface Project {
   id: string;
@@ -4581,6 +4582,630 @@ for start in ["오늘", "나는", "어제", "그녀는"]:
         print(f"  길이 {length:>2}: {generate_bigram(start, length=length, seed=42)}")
 `,
         language: "python",
+      },
+    },
+  },
+  {
+    id: "ecommerce-eda",
+    category: "data-analysis",
+    title: "e-commerce 데이터 분석",
+    subtitle: "신규 분석가의 첫 주 — CEO 에게 인사이트 3가지 브리핑",
+    icon: "📊",
+    difficulty: "intermediate",
+    estimatedMinutes: 45,
+    tags: ["pandas", "EDA", "groupby", "merge", "pivot"],
+    description: `## 📊 e-commerce 3-테이블 EDA 프로젝트
+
+**시나리오**: 여러분은 e-commerce 스타트업의 **신규 데이터 분석가** 로 출근했습니다. 월요일 아침, CEO 가 말합니다.
+
+> *"투자자 미팅이 다음 주야. 지난 한 달 데이터로 **인사이트 3가지** 만 뽑아줘.
+> 어느 카테고리를 밀지, 어느 지역 마케팅을 늘릴지, 어떤 고객을 VIP 로 대접할지 — 데이터는 세 파일로 보냈어."*
+
+이 프로젝트에서 **pandas 로 현실 EDA 전 과정을 체험** 합니다.
+
+### 🧰 쓸 것
+- **정제** — \`fillna\`, \`astype\`
+- **결합** — 3-way \`merge\`
+- **파생 컬럼** — 금액·월·요일
+- **집계** — \`groupby\`, \`pivot_table\`, 누적합, 순위
+- **보고서 조립** — f-string 으로 브리핑 본문 자동 생성
+
+### 📦 데이터
+- \`users\` — 고객 10명 (지역·가입일 포함)
+- \`products\` — 상품 8개 (카테고리·가격)
+- \`orders\` — 주문 60건 (한 달치, 결측 일부 포함)
+
+### 🎯 목표
+1. **정제 → 결합 → 분석** 의 실무 EDA 흐름 체득
+2. **숫자에 해석과 제안을 붙이는 습관** — 보고서까지 완성
+3. **파레토 법칙**(80/20) 을 데이터로 직접 확인`,
+    steps: [
+      {
+        title: "3개 가상 테이블 생성",
+        stepMarker: "STEP 1",
+        description:
+          "실무에서는 이 부분이 '**DB 에서 SQL 로 쿼리**' 이지만, 학습용으로 **세 개의 DataFrame** 을 직접 만듭니다. \`users\`(고객), \`products\`(상품), \`orders\`(주문) — 이 3-테이블 구조는 실제 e-commerce 의 축소판이에요. 주문 60건 중 **일부러 3건의 \`quantity\` 를 결측** 으로 넣어 현실성을 확보합니다.",
+        hint: "`pd.DataFrame({...})` 으로 딕셔너리에서 만들기. 날짜는 `pd.to_datetime([...])`. `np.random.seed(42)` 로 재현성 확보.",
+        snippet: `users = pd.DataFrame({
+    "user_id": [1, 2, 3, ...],
+    "region":  ["서울", ...],
+    "joined":  pd.to_datetime([...]),
+})`,
+        solution: `import pandas as pd
+import numpy as np
+
+users = pd.DataFrame({
+    "user_id": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    "name":    ["김민지", "박철수", "이영희", "정수진", "최지훈",
+                "강서연", "윤도현", "한수아", "장민재", "서유나"],
+    "region":  ["서울", "서울", "부산", "서울", "제주",
+                "부산", "서울", "대구", "서울", "제주"],
+    "joined":  pd.to_datetime([
+        "2023-02-11", "2023-08-22", "2024-01-05", "2024-05-18", "2024-06-30",
+        "2024-07-10", "2024-07-20", "2024-07-28", "2024-08-01", "2024-08-05",
+    ]),
+})
+
+products = pd.DataFrame({
+    "product_id": [100, 101, 102, 103, 104, 105, 106, 107],
+    "item":       ["티셔츠", "청바지", "노트북", "에어팟", "콜라",
+                   "샌드위치", "키보드", "원피스"],
+    "category":   ["의류", "의류", "전자", "전자", "식품",
+                   "식품", "전자", "의류"],
+    "price":      [29000, 52000, 1200000, 280000, 1500,
+                   4500, 89000, 68000],
+})
+
+np.random.seed(42)
+n = 60
+orders = pd.DataFrame({
+    "order_id":   range(1001, 1001 + n),
+    "user_id":    np.random.choice(users["user_id"], size=n),
+    "product_id": np.random.choice(products["product_id"], size=n),
+    "quantity":   np.random.randint(1, 5, size=n),
+    "ordered_at": pd.to_datetime(np.random.choice(
+        pd.date_range("2024-07-15", "2024-08-14"), size=n
+    )),
+})
+orders.loc[[5, 20, 35], "quantity"] = np.nan
+
+print(f"✅ users: {len(users)}행 / products: {len(products)}행 / orders: {len(orders)}행")`,
+        checkpoint: "각 테이블의 행 수가 10 / 8 / 60 으로 출력되면 OK.",
+      },
+      {
+        title: "결측 정제 + 3-way merge + 파생 컬럼",
+        stepMarker: "STEP 2",
+        description:
+          "분석의 뿌리가 될 통합 \`df\` 를 만듭니다. 핵심 3단계: ① \`quantity\` 결측을 **평균값으로 fillna**, ② \`orders\` 기준으로 \`users\`·\`products\` 를 순차 **merge**, ③ \`amount\`·\`month\`·\`dow\`(요일) 같은 **파생 컬럼** 추가. 파생 컬럼은 이후 모든 집계의 재료가 됩니다.",
+        hint: "merge 는 `on='user_id'`, `on='product_id'` 로 두 번 연결. 파생 컬럼은 `df['amount'] = df['quantity'] * df['price']` 처럼 한 줄.",
+        snippet: `orders["quantity"] = orders["quantity"].fillna(...).astype(int)
+
+df = (orders
+      .merge(users,    on="user_id")
+      .merge(products, on="product_id"))
+
+df["amount"] = df["quantity"] * df["price"]`,
+        solution: `mean_q = orders["quantity"].mean()
+orders["quantity"] = orders["quantity"].fillna(round(mean_q)).astype(int)
+print(f"✅ quantity 결측 3건 → 평균 {round(mean_q)} 로 보정")
+
+df = (orders
+      .merge(users,    on="user_id")
+      .merge(products, on="product_id"))
+
+df["amount"] = df["quantity"] * df["price"]
+df["month"]  = df["ordered_at"].dt.to_period("M").astype(str)
+df["dow"]    = df["ordered_at"].dt.day_name()
+
+print(f"✅ 통합 df: {df.shape[0]}행 × {df.shape[1]}열")
+print(df[["name", "region", "item", "category", "quantity", "amount"]].head())`,
+        checkpoint: "60행 × 12열 전후, amount 컬럼이 올바르게 계산되어 있으면 OK.",
+      },
+      {
+        title: "전체·지역별 기초 지표",
+        stepMarker: "STEP 3",
+        description:
+          "EDA 의 첫 걸음은 **'그래서 숫자가 몇이야?'** 에 답하는 것. 총 매출·주문 수·객단가·고객 수를 뽑고, 그다음 \`groupby('region')\` 으로 **지역별로 쪼개** 봅니다. 이 단계에서 '어느 지역이 큰 시장인지' 의 감을 잡아요.",
+        hint: "`.agg(이름=(컬럼, '함수'))` 문법으로 여러 집계를 한 번에. `nunique` 는 고유값 수(중복 제거).",
+        snippet: `region_summary = df.groupby("region").agg(
+    users_active = ("user_id", "nunique"),
+    orders       = ("order_id", "count"),
+    total_sales  = ("amount", "sum"),
+)`,
+        solution: `print("📦 전체 요약")
+print(f"   기간:    {df['ordered_at'].min().date()} ~ {df['ordered_at'].max().date()}")
+print(f"   총 매출: {df['amount'].sum():>12,}원")
+print(f"   주문 수: {len(df):>12}건")
+print(f"   객단가:  {df['amount'].mean():>12,.0f}원")
+print(f"   고객 수: {df['user_id'].nunique():>12}명")
+
+region_summary = df.groupby("region").agg(
+    users_active = ("user_id", "nunique"),
+    orders       = ("order_id", "count"),
+    total_sales  = ("amount", "sum"),
+    avg_order    = ("amount", "mean"),
+).round(0).astype({"total_sales": int, "avg_order": int})
+
+print("\\n📍 지역별 요약")
+print(region_summary)`,
+        checkpoint: "서울이 가장 큰 시장으로 나와야 합니다 (고객 수 4명).",
+      },
+      {
+        title: "💎 인사이트 1 — 어느 카테고리를 밀지",
+        stepMarker: "STEP 4",
+        description:
+          "카테고리 3개(의류/전자/식품) 중 **어느 쪽이 매출을 주도** 하는지 \`groupby('category')\` 로 확인. 단순 합계뿐 아니라 **점유율(share_pct)** 과 **평균 객단가** 까지 같이 보는 게 핵심. 숫자 하나에 **해석** 과 **제안** 을 붙이는 습관을 들입니다.",
+        hint: "점유율 = 자기 합 / 전체 합 × 100. `.sort_values('total_sales', ascending=False)` 로 내림차순.",
+        snippet: `category_view = df.groupby("category").agg(
+    total_sales = ("amount", "sum"),
+    order_count = ("order_id", "count"),
+    avg_amount  = ("amount", "mean"),
+)
+category_view["share_pct"] = ...`,
+        solution: `category_view = df.groupby("category").agg(
+    total_sales = ("amount", "sum"),
+    order_count = ("order_id", "count"),
+    avg_amount  = ("amount", "mean"),
+)
+category_view["share_pct"] = (
+    category_view["total_sales"] / category_view["total_sales"].sum() * 100
+).round(1)
+category_view = category_view.sort_values("total_sales", ascending=False)
+
+print("💎 카테고리별 기여")
+print(category_view.astype({"total_sales": int, "avg_amount": int}))
+
+top = category_view.iloc[0]
+print(f"\\n🧠 인사이트 1: '{category_view.index[0]}' 카테고리가 전체의 {top['share_pct']}% 차지")
+print(f"   객단가 {top['avg_amount']:,.0f}원 — 단일 구매 규모가 큼")
+print(f"   → 제안: 재고 확충 + 프리미엄 라인 확장")`,
+        checkpoint: "'전자' 카테고리가 1위로 나오면서 점유율 80% 내외를 차지해야 정상.",
+      },
+      {
+        title: "🗺️ 인사이트 2 — 지역 × 카테고리 피벗",
+        stepMarker: "STEP 5",
+        description:
+          "'지역마다 선호 카테고리가 다른가?' 를 확인. \`pivot_table\` 로 **행=지역 / 열=카테고리 / 값=매출합** 의 교차표를 만들고, 지역별 1위 카테고리를 뽑아냅니다. 이 표 한 장이면 **지역별 타깃 광고 전략** 이 바로 나와요.",
+        hint: "`pivot_table(index='region', columns='category', values='amount', aggfunc='sum', fill_value=0)`.",
+        snippet: `pivot = df.pivot_table(
+    index="region",
+    columns="category",
+    values="amount",
+    aggfunc="sum",
+    fill_value=0,
+).astype(int)`,
+        solution: `pivot = df.pivot_table(
+    index="region",
+    columns="category",
+    values="amount",
+    aggfunc="sum",
+    fill_value=0,
+).astype(int)
+pivot["합계"] = pivot.sum(axis=1)
+pivot = pivot.sort_values("합계", ascending=False)
+
+print("🗺️ 지역 × 카테고리 매출")
+print(pivot)
+
+top_cat_per_region = (df.groupby(["region", "category"])["amount"].sum()
+                        .reset_index()
+                        .sort_values(["region", "amount"], ascending=[True, False])
+                        .groupby("region")
+                        .head(1))
+
+print("\\n📌 지역별 베스트 카테고리:")
+for _, row in top_cat_per_region.iterrows():
+    print(f"   {row['region']}: {row['category']} ({row['amount']:,}원)")
+
+print("\\n🧠 인사이트 2: 지역마다 '끌리는 카테고리' 가 다름")
+print("   → 제안: 지역별 타깃 광고 분리 (서울·부산·제주·대구 각각)")`,
+        checkpoint: "피벗 표에서 지역 × 카테고리 교차 매출이 보이고, 지역별 1위 카테고리가 각각 출력되면 OK.",
+      },
+      {
+        title: "🏆 인사이트 3 — VIP 고객 (파레토 법칙)",
+        stepMarker: "STEP 6",
+        description:
+          "**상위 20% 고객이 전체 매출의 몇 % 를 만들까?** 고객별 지출 합을 내림차순으로 정렬 → 누적 비율(\`cumsum\`) 계산 → 상위 20% 컷오프. 이 분석이 **파레토 법칙**(80/20) 을 데이터로 직접 확인하는 가장 고전적 방법이에요.",
+        hint: "`cumsum() / total * 100` 이 누적 비율. `int(len(...) * 0.2)` 로 상위 20% 인원 수.",
+        snippet: `customer_view = df.groupby(["user_id", "name", "region"]).agg(
+    total_spent = ("amount", "sum"),
+    order_count = ("order_id", "count"),
+).reset_index().sort_values("total_spent", ascending=False)`,
+        solution: `customer_view = df.groupby(["user_id", "name", "region"]).agg(
+    total_spent = ("amount", "sum"),
+    order_count = ("order_id", "count"),
+    avg_order   = ("amount", "mean"),
+).reset_index()
+
+customer_view = customer_view.sort_values("total_spent", ascending=False).reset_index(drop=True)
+customer_view["rank"]    = customer_view.index + 1
+customer_view["pct_cum"] = (
+    customer_view["total_spent"].cumsum() / customer_view["total_spent"].sum() * 100
+).round(1)
+
+top_n = max(1, int(len(customer_view) * 0.2))
+vip = customer_view.head(top_n).copy()
+vip_share = vip["total_spent"].sum() / customer_view["total_spent"].sum() * 100
+
+print("🏆 전체 고객 순위:")
+print(customer_view[["rank", "name", "region", "total_spent", "order_count", "pct_cum"]]
+      .to_string(index=False))
+print(f"\\n💎 상위 {top_n}명 ({top_n/len(customer_view):.0%}) 이 전체 매출의 {vip_share:.1f}% 차지")
+print("\\n🧠 인사이트 3: 파레토 가까운 구조 — VIP 케어가 매출 방어의 핵심")
+print("   → 제안: 조기 신상품 공개, 전용 쿠폰, 생일 선물, 전담 담당자")`,
+        checkpoint: "상위 2명(20%)이 전체 매출의 상당 부분을 차지하는 구조가 보이면 OK.",
+      },
+      {
+        title: "📝 CEO 용 최종 보고서 브리핑",
+        stepMarker: "STEP 7",
+        description:
+          "위 3가지 인사이트를 **실제 보고서 본문** 으로 조립합니다. f-string + \`.to_string()\` 으로 숫자·표·제안을 한 덩어리 텍스트로 만들어, 복사만 하면 이메일·슬랙에 그대로 붙여넣을 수 있는 형태로 완성해요. **분석의 가치는 '숫자' 가 아니라 '의사결정으로 이어지는 제안'** 이라는 마무리.",
+        hint: "`f'''...'''` 로 여러 줄 f-string. `{변수}` 로 직접 숫자 삽입, `{df_obj.to_string()}` 로 표 삽입.",
+        snippet: `report = f"""
+══════════════════════════════
+  📊 한 달 데이터 분석 브리핑
+  ...
+══════════════════════════════
+
+[핵심 지표]
+  ...
+"""`,
+        solution: `report = f"""
+════════════════════════════════════════════════════════
+  📊 지난 한 달 데이터 분석 브리핑
+  기간: {df['ordered_at'].min().date()} ~ {df['ordered_at'].max().date()}
+════════════════════════════════════════════════════════
+
+[핵심 지표]
+  총 매출   {df['amount'].sum():>12,}원
+  주문 수   {len(df):>12}건
+  객단가    {df['amount'].mean():>12,.0f}원
+  활성 고객 {df['user_id'].nunique():>12}명
+
+[인사이트 1 — 카테고리]
+  '{category_view.index[0]}' 가 전체 매출의 {category_view.iloc[0]['share_pct']}% 차지
+  → 제안: 해당 카테고리 재고 확충 + 가격 실험
+
+[인사이트 2 — 지역 × 카테고리]
+{pivot.to_string()}
+  → 제안: 지역별 타깃 광고 분리
+
+[인사이트 3 — VIP 고객]
+  상위 {len(vip)}명이 전체의 {vip['total_spent'].sum() / customer_view['total_spent'].sum() * 100:.1f}% 매출 기여
+  TOP 3: {', '.join(vip['name'].head(3).tolist())}
+  → 제안: VIP 프로그램 설계 (조기 신상품 공개 / 전용 쿠폰 / 전담 담당자)
+════════════════════════════════════════════════════════
+"""
+print(report)`,
+        checkpoint: "보고서 전체가 깔끔히 출력되면 프로젝트 완료.",
+      },
+      {
+        title: "🎯 결과 해설 — 출력이 무슨 뜻인가?",
+        description: `## 여러분이 방금 한 일 정리
+
+### 📦 STEP 1~2 — 데이터 준비 & 정제
+\`\`\`
+✅ users: 10행 / products: 8행 / orders: 60행
+✅ quantity 결측 3건 → 평균 2 로 보정
+✅ 통합 df: 60행 × 12열
+\`\`\`
+
+**해석**
+- 현실 데이터는 **거의 항상 결측** 이 있음. \`fillna(평균)\` 은 가장 단순한 보정법 — 실무에선 **중앙값·KNN·모델 예측** 등 더 정교한 방법도 씀.
+- \`merge\` 3번 = **"사건(orders) 에 맥락(users, products) 붙이기"**. 이게 현업 분석의 출발점 — 한 테이블만 보고는 답을 못 냄.
+
+---
+
+### 📍 STEP 3 — 기초 지표
+\`\`\`
+📦 전체 요약
+   총 매출: 수천만원 규모
+   주문 수: 60건
+   객단가:  수십만원~백만원대
+   고객 수: 10명
+📍 지역별 요약 (서울이 가장 큼)
+\`\`\`
+
+**해석**
+- **객단가가 높은 이유** — 상품에 노트북(120만원) 이 섞여 있어 평균이 올라감. 중앙값을 따로 봐야 할 수도 있다는 신호.
+- **서울 4명·부산 2명·제주 2명·대구 1명** — 지역 편중 → 마케팅 예산 배분에 직접 영향.
+
+---
+
+### 💎 STEP 4 — 카테고리 인사이트
+\`\`\`
+💎 카테고리별 기여
+            total_sales  order_count  avg_amount  share_pct
+category
+전자            (가장 큼)     ~25건     (압도적)    80% 내외
+의류              ...         ~25건       ...       ~15%
+식품              ...         ~10건       ...       ~1~2%
+\`\`\`
+
+**왜 전자가 압도적인가?**
+- \`amount = quantity × price\` 인데 노트북·에어팟·키보드는 **price 자체가 크다**.
+- **점유율 80% 내외** = 파레토 법칙이 카테고리에도 적용. 재고·마케팅·고객 서비스를 전자에 집중할 가치.
+
+⚠️ **주의**: 이 숫자는 "전자가 중요" 라고 말하지만, **"의류·식품을 버려라"** 는 아님. 고객 충성도는 저가 반복 구매에서도 나옴.
+
+---
+
+### 🗺️ STEP 5 — 지역 × 카테고리
+\`\`\`
+🗺️ 지역 × 카테고리 매출
+category    식품    의류       전자        합계
+region
+서울          ...    ...   수천만원   수천만원
+부산          ...    ...       ...       ...
+...
+\`\`\`
+
+**해석**
+- 지역마다 **'가장 잘 팔리는 카테고리' 가 다름** → 광고 크리에이티브를 지역별로 분리해야 함.
+- 데이터 규모가 작아 우연의 영향이 큼 — 실무에선 **통계 유의성 검정**(χ² test 등) 으로 재확인.
+
+---
+
+### 🏆 STEP 6 — VIP 파레토
+\`\`\`
+🏆 전체 고객 순위
+  rank  name    region  total_spent  order_count  pct_cum
+     1  ...     서울       가장 큼          ~10        30% 내외
+     2  ...     ...         ...            ...       50%+
+     ...
+
+💎 상위 2명(20%) 이 전체 매출의 상당 부분 차지
+\`\`\`
+
+**파레토 법칙의 생생한 증거**
+- **\`pct_cum\`** (누적 비율) 이 핵심 열. 1~2등만 봐도 전체의 반 이상.
+- 이 구조가 의미하는 것: **상위 고객을 잃으면 매출 구멍이 크다** → VIP 이탈 방지 = 생존 전략.
+
+⚠️ **현실적 주의**: 10명짜리 데이터는 **우연이 결정적**. 진짜 분석은 수천 명 이상에서만 신뢰 가능. 여기선 패턴을 **체험** 한 것.
+
+---
+
+### 📝 STEP 7 — 보고서 완성
+\`\`\`
+════════════════════════════════════════
+  📊 지난 한 달 데이터 분석 브리핑
+  ...
+[인사이트 1 — 카테고리]
+  '전자' 가 전체 매출의 ~80% 차지
+  → 제안: 해당 카테고리 재고 확충 + 가격 실험
+...
+════════════════════════════════════════
+\`\`\`
+
+**왜 이 형식인가?**
+- CEO 는 **'숫자 + 해석 + 제안'** 을 원함. 숫자만 보내면 "그래서 어쩌라고?" 가 됨.
+- f-string 으로 보고서 조립 = **분석 결과의 자동 리포팅** 패턴. 매주 같은 포맷으로 돌릴 수 있음.
+
+---
+
+### ⚠️ 이 프로젝트의 한계
+
+| 한계 | 실무에선 어떻게? |
+|------|----------------|
+| **데이터 60건** | 수만~수백만 행 |
+| **랜덤 생성 데이터** | 실제 DB / 로그 |
+| **\`groupby\` 만 사용** | 시계열·코호트·퍼널 분석 추가 |
+| **시각화 없음** | matplotlib·seaborn·plotly 필수 |
+| **고정 시드 42** | A/B 테스트·통계 검정 필요 |
+
+---
+
+### 🧪 지금 시도해 볼 것
+
+1. **데이터 크기 10배**: \`n = 600\` 으로 바꾸고 파레토가 얼마나 더 뚜렷해지는지.
+2. **새 인사이트**: \`df["hour"] = df["ordered_at"].dt.hour\` 로 **시간대별 매출** 분석.
+3. **요일 패턴**: \`df.groupby("dow")["amount"].sum()\` + 요일 재정렬(Mon~Sun). 주말이 평일보다 높은지?
+4. **이탈 위험 고객**: \`joined\` 날짜가 오래된 vs 최근 고객의 구매 패턴 차이.
+5. **가장 자주 함께 팔리는 상품 페어** (장바구니 분석 시작점).
+
+### 🏁 이 프로젝트에서 배운 것
+- ✅ **실무 EDA 전 과정**: 수집 → 정제 → 결합 → 집계 → 해석 → 제안
+- ✅ **3-way merge**: 한 테이블 분석의 한계를 넘어서는 핵심 도구
+- ✅ **\`groupby\` + \`.agg()\` + \`pivot_table\`**: 보고서 수준의 자동화 가능
+- ✅ **파레토 법칙의 실체**: 추상 개념이 누적 비율 계산으로 손에 잡힘
+- ✅ **숫자에 해석·제안을 붙이는 습관**: 분석의 가치는 의사결정에서 나옴
+
+> 💡 "**데이터로 질문을 던지는 근육**" 이 분석가의 가장 중요한 자산. 숫자 하나를 보면 **"왜?" 와 "그래서?" 를 다섯 번 묻는 습관** 을 들이세요.`,
+        checkpoint: "위 해설을 읽고, 🧪 시도해 볼 것 중 최소 하나를 직접 실행해 보세요.",
+      },
+    ],
+    starterFiles: {
+      "main.py": {
+        name: "main.py",
+        language: "python",
+        content: `# 📊 e-commerce 3-테이블 EDA 프로젝트
+# 우측 가이드 패널에서 단계를 클릭해 각 STEP 으로 이동할 수 있어요.
+# 시나리오: 신규 분석가로 입사 → CEO 에게 한 달 데이터로 인사이트 3가지 브리핑
+
+import pandas as pd
+import numpy as np
+
+
+## STEP 1: 3개 가상 테이블 만들기 (users / products / orders)
+# 실무에서는 DB 에서 SQL 로 가져오지만, 학습용으로 직접 생성.
+# orders 의 quantity 일부는 일부러 결측 — 현실성 확보.
+users = pd.DataFrame({
+    "user_id": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    "name":    ["김민지", "박철수", "이영희", "정수진", "최지훈",
+                "강서연", "윤도현", "한수아", "장민재", "서유나"],
+    "region":  ["서울", "서울", "부산", "서울", "제주",
+                "부산", "서울", "대구", "서울", "제주"],
+    "joined":  pd.to_datetime([
+        "2023-02-11", "2023-08-22", "2024-01-05", "2024-05-18", "2024-06-30",
+        "2024-07-10", "2024-07-20", "2024-07-28", "2024-08-01", "2024-08-05",
+    ]),
+})
+
+products = pd.DataFrame({
+    "product_id": [100, 101, 102, 103, 104, 105, 106, 107],
+    "item":       ["티셔츠", "청바지", "노트북", "에어팟", "콜라",
+                   "샌드위치", "키보드", "원피스"],
+    "category":   ["의류", "의류", "전자", "전자", "식품",
+                   "식품", "전자", "의류"],
+    "price":      [29000, 52000, 1200000, 280000, 1500,
+                   4500, 89000, 68000],
+})
+
+np.random.seed(42)
+n = 60
+orders = pd.DataFrame({
+    "order_id":   range(1001, 1001 + n),
+    "user_id":    np.random.choice(users["user_id"], size=n),
+    "product_id": np.random.choice(products["product_id"], size=n),
+    "quantity":   np.random.randint(1, 5, size=n),
+    "ordered_at": pd.to_datetime(np.random.choice(
+        pd.date_range("2024-07-15", "2024-08-14"), size=n
+    )),
+})
+orders.loc[[5, 20, 35], "quantity"] = np.nan
+
+print(f"✅ users: {len(users)}행 / products: {len(products)}행 / orders: {len(orders)}행")
+
+
+## STEP 2: 결측 정제 + 3-way merge + 파생 컬럼
+# 결측 보정 → 테이블 결합 → amount/month/dow 파생
+mean_q = orders["quantity"].mean()
+orders["quantity"] = orders["quantity"].fillna(round(mean_q)).astype(int)
+print(f"✅ quantity 결측 3건 → 평균 {round(mean_q)} 로 보정")
+
+df = (orders
+      .merge(users,    on="user_id")
+      .merge(products, on="product_id"))
+
+df["amount"] = df["quantity"] * df["price"]
+df["month"]  = df["ordered_at"].dt.to_period("M").astype(str)
+df["dow"]    = df["ordered_at"].dt.day_name()
+
+print(f"✅ 통합 df: {df.shape[0]}행 × {df.shape[1]}열")
+print(df[["name", "region", "item", "category", "quantity", "amount"]].head())
+
+
+## STEP 3: 전체·지역별 기초 지표
+print("\\n📦 전체 요약")
+print(f"   기간:    {df['ordered_at'].min().date()} ~ {df['ordered_at'].max().date()}")
+print(f"   총 매출: {df['amount'].sum():>12,}원")
+print(f"   주문 수: {len(df):>12}건")
+print(f"   객단가:  {df['amount'].mean():>12,.0f}원")
+print(f"   고객 수: {df['user_id'].nunique():>12}명")
+
+region_summary = df.groupby("region").agg(
+    users_active = ("user_id", "nunique"),
+    orders       = ("order_id", "count"),
+    total_sales  = ("amount", "sum"),
+    avg_order    = ("amount", "mean"),
+).round(0).astype({"total_sales": int, "avg_order": int})
+
+print("\\n📍 지역별 요약")
+print(region_summary)
+
+
+## STEP 4: 💎 인사이트 1 — 어느 카테고리를 밀지
+category_view = df.groupby("category").agg(
+    total_sales = ("amount", "sum"),
+    order_count = ("order_id", "count"),
+    avg_amount  = ("amount", "mean"),
+)
+category_view["share_pct"] = (
+    category_view["total_sales"] / category_view["total_sales"].sum() * 100
+).round(1)
+category_view = category_view.sort_values("total_sales", ascending=False)
+
+print("\\n💎 카테고리별 기여")
+print(category_view.astype({"total_sales": int, "avg_amount": int}))
+
+top = category_view.iloc[0]
+print(f"\\n🧠 인사이트 1: '{category_view.index[0]}' 카테고리가 전체의 {top['share_pct']}% 차지")
+print(f"   객단가 {top['avg_amount']:,.0f}원 — 단일 구매 규모가 큼")
+print(f"   → 제안: 재고 확충 + 프리미엄 라인 확장")
+
+
+## STEP 5: 🗺️ 인사이트 2 — 지역 × 카테고리 피벗
+pivot = df.pivot_table(
+    index="region",
+    columns="category",
+    values="amount",
+    aggfunc="sum",
+    fill_value=0,
+).astype(int)
+pivot["합계"] = pivot.sum(axis=1)
+pivot = pivot.sort_values("합계", ascending=False)
+
+print("\\n🗺️ 지역 × 카테고리 매출")
+print(pivot)
+
+top_cat_per_region = (df.groupby(["region", "category"])["amount"].sum()
+                        .reset_index()
+                        .sort_values(["region", "amount"], ascending=[True, False])
+                        .groupby("region")
+                        .head(1))
+
+print("\\n📌 지역별 베스트 카테고리:")
+for _, row in top_cat_per_region.iterrows():
+    print(f"   {row['region']}: {row['category']} ({row['amount']:,}원)")
+
+print("\\n🧠 인사이트 2: 지역마다 '끌리는 카테고리' 가 다름")
+print("   → 제안: 지역별 타깃 광고 분리")
+
+
+## STEP 6: 🏆 인사이트 3 — VIP 고객 (파레토 법칙)
+customer_view = df.groupby(["user_id", "name", "region"]).agg(
+    total_spent = ("amount", "sum"),
+    order_count = ("order_id", "count"),
+    avg_order   = ("amount", "mean"),
+).reset_index()
+
+customer_view = customer_view.sort_values("total_spent", ascending=False).reset_index(drop=True)
+customer_view["rank"]    = customer_view.index + 1
+customer_view["pct_cum"] = (
+    customer_view["total_spent"].cumsum() / customer_view["total_spent"].sum() * 100
+).round(1)
+
+top_n = max(1, int(len(customer_view) * 0.2))
+vip = customer_view.head(top_n).copy()
+vip_share = vip["total_spent"].sum() / customer_view["total_spent"].sum() * 100
+
+print("\\n🏆 전체 고객 순위:")
+print(customer_view[["rank", "name", "region", "total_spent", "order_count", "pct_cum"]]
+      .to_string(index=False))
+print(f"\\n💎 상위 {top_n}명 ({top_n/len(customer_view):.0%}) 이 전체 매출의 {vip_share:.1f}% 차지")
+print("\\n🧠 인사이트 3: 파레토 가까운 구조 — VIP 케어가 매출 방어의 핵심")
+print("   → 제안: 조기 신상품 공개, 전용 쿠폰, 생일 선물")
+
+
+## STEP 7: 📝 CEO 용 최종 보고서 브리핑
+report = f"""
+════════════════════════════════════════════════════════
+  📊 지난 한 달 데이터 분석 브리핑
+  기간: {df['ordered_at'].min().date()} ~ {df['ordered_at'].max().date()}
+════════════════════════════════════════════════════════
+
+[핵심 지표]
+  총 매출   {df['amount'].sum():>12,}원
+  주문 수   {len(df):>12}건
+  객단가    {df['amount'].mean():>12,.0f}원
+  활성 고객 {df['user_id'].nunique():>12}명
+
+[인사이트 1 — 카테고리]
+  '{category_view.index[0]}' 가 전체 매출의 {category_view.iloc[0]['share_pct']}% 차지
+  → 제안: 해당 카테고리 재고 확충 + 가격 실험
+
+[인사이트 2 — 지역 × 카테고리]
+{pivot.to_string()}
+  → 제안: 지역별 타깃 광고 분리
+
+[인사이트 3 — VIP 고객]
+  상위 {len(vip)}명이 전체의 {vip['total_spent'].sum() / customer_view['total_spent'].sum() * 100:.1f}% 매출 기여
+  TOP 3: {', '.join(vip['name'].head(3).tolist())}
+  → 제안: VIP 프로그램 설계 (조기 신상품 공개 / 전용 쿠폰 / 전담 담당자)
+════════════════════════════════════════════════════════
+"""
+print(report)
+`,
       },
     },
   },
