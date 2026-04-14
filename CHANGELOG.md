@@ -13,6 +13,46 @@
 
 ---
 
+## [3.18.1] - 2026-04-15
+
+### Fixed — 레슨 콘텐츠 업데이트가 기존 사용자에게 반영 안 되던 문제
+**증상:** v3.18.0 에서 04강 (Matplotlib) 에 9개 신규 섹션을 추가했지만, 한 번이라도 그 챕터를 열어본 사용자는 옛 콘텐츠만 계속 표시. "추가된 내용이 안 보인다" 사용자 보고.
+
+**원인 (LessonPage 머지 로직):**
+이전 로직은 두 분기였음:
+- 셀 개수 일치 → 사용자 source 그대로 (markdown 텍스트 변경 무시)
+- 셀 개수 불일치 → 저장본만 표시 (신규 셀·힌트 모두 누락)
+
+→ 콘텐츠 업데이트가 **어느 경우에도 반영 안 됨**.
+
+**수정 (v3.18.1):**
+새 머지 전략 — **markdown 은 항상 lesson 의 최신 콘텐츠 사용, code 셀 source 만 사용자 저장본에서 복원**.
+
+```ts
+// saved 의 code 셀들을 큐로 만들고
+const savedCodeQueue = saved.cells.filter((c) => c.type === "code").map((c) => c.source);
+let qIdx = 0;
+
+// lesson 을 base 로 순회하며 code 셀이면 큐에서 source 가져옴
+const merged = lesson.cells.map((lessonCell) => {
+  if (lessonCell.type === "code" && qIdx < savedCodeQueue.length) {
+    return { ...lessonCell, source: savedCodeQueue[qIdx++] };
+  }
+  return lessonCell;  // markdown 또는 신규 code 셀 → lesson 원본
+});
+```
+
+**효과:**
+- ✅ 콘텐츠 업데이트(markdown 텍스트, 신규 섹션) 가 즉시 반영됨
+- ✅ 사용자가 작성한 code 셀은 그대로 보존
+- ✅ 셀 개수가 늘어도 신규 셀이 정상 추가됨
+- ✅ 힌트·정답 항상 최신 (lesson 원본 사용)
+
+### 기존 사용자에게
+v3.18.0 의 신규 섹션 (Figure 구조, OO API 등) 이 이번 릴리즈부터 자동으로 보입니다. 새로고침 (Cmd/Ctrl+Shift+R) 한 번만 하면 됨.
+
+---
+
 ## [3.18.0] - 2026-04-15
 
 ### Added — 데이터 과학 04강 (Matplotlib) 보완 (아주대 강의 자료 참고)
