@@ -13,6 +13,56 @@
 
 ---
 
+## [3.15.0] - 2026-04-14
+
+### Added — 구독 모델 Phase 1: 콘텐츠 티어링 + Paywall UI
+AIGoLab 을 부분 구독 모델로 전환하는 첫 단계. **결제 연동 없이 UI 구분만 먼저** — 어떤 콘텐츠가 PRO 인지 사용자에게 명시하고, 출시 전 피드백을 수집합니다.
+
+**분류 기준 (`src/content/tier.ts`)**
+
+FREE (무료):
+- AI 강의 01~06 (what-is-ai / ml-basics / data-and-ai / deep-learning-basics / nlp-basics / generative-ai — 생성형 AI·LLM 원리까지)
+- Python 입문 트랙 전체
+- JavaScript 입문 / SQL 입문 전체
+- AI 프로젝트 2개: `iris-classification`, `titanic-survival`
+- 마이페이지 / Playground / Python IDE / 홈 / 약관 / 로그인
+
+PRO (곧 오픈 예정):
+- AI 강의 07~10 (prompt-engineering / computer-vision / ai-ethics / ai-agents)
+- Python 중급 · 데이터 과학 · ML 실습 트랙 전체
+- AI 프로젝트 11개 (iris·titanic 제외)
+
+### 새 컴포넌트
+- `src/content/tier.ts` — 유일한 분류 기준 (isLessonPro / isCoursePro / isProjectPro / isTrackPro)
+- `src/components/paywall/ProBadge.tsx` — 🔒 PRO 배지 (sm/md/lg, outline/solid)
+- `src/components/paywall/PaywallModal.tsx` — 바텀시트/센터 모달, 모바일 대응, 혜택 3줄 + CTA
+- `src/components/paywall/usePaywall.tsx` — 페이지 레벨 훅 (`showPaywall`, `modal`)
+
+### 통합 지점 (5개 페이지)
+- **HomePage**: 트랙 선택 버튼에 🔒 배지 + 클릭 시 paywall 인터셉트. "이어서 학습" 배너도 PRO 트랙이면 인터셉트
+- **CoursesPage**: AI 강의 07~10 에 🔒 배지 + 전체 카드를 button 으로 변경해 paywall 인터셉트
+- **CurriculumPage**: PRO 트랙 URL 직접 접근 시 상단에 설명 배너, 개별 챕터 Link → button 으로 교체, 🔒 표시
+- **ProjectsPage**: 11개 PRO 프로젝트에 🔒 배지, "프로젝트 시작하기" CTA 를 PRO 면 "🔒 PRO 전용 — 곧 오픈 예정" 버튼으로 교체
+
+### UX 원칙 (Phase 1)
+- **콘텐츠 접근은 여전히 가능** — 직접 URL 치면 LessonPage / CourseDetailPage / ProjectWorkPage 열림. Phase 1 은 "표시만" 하는 단계 (Phase 2 에서 enforce)
+- **이유**: 결제 전에 사용자가 "이 분류가 납득되는지" 피드백을 관찰하기 위함
+- **배지 스타일**: 🔒 PRO 아이콘 + amber/yellow 그라디언트 — 기존 브랜드 violet 과 대비되어 눈에 띔
+- **모바일 대응**: PaywallModal 은 모바일에서 바텀시트, 데스크탑에서는 센터 모달
+- **접근성**: `role="dialog"`, `aria-modal`, `aria-labelledby`
+
+### Why (비즈니스)
+- Python 입문 / JS / SQL / AI 기초는 계속 무료로 유지해 **온보딩 깔때기 폭을 넓게**
+- 중·고급 콘텐츠 (ML 실습·데이터 과학·고급 AI 강의·프로젝트) 를 PRO 로 묶어 **수익화 전환 지점 확보**
+- 13개 프로젝트 중 2개 (iris·titanic) 만 무료로 둔 것은 **"맛보기 충분, 실무 깊이는 PRO"** 공식
+
+### 다음 단계 (Phase 2~3)
+- Phase 2: Supabase `subscriptions` 테이블 + `useSubscription()` 훅 + 관리자 수동 pro 지정
+- Phase 3: 포트원/토스페이먼츠 결제 연동 + 웹훅 + 가격 페이지
+- Phase 3: 이용약관·환불·정기결제 동의 UI
+
+---
+
 ## [3.14.0] - 2026-04-14
 
 ### Improved — C3: 모바일 UX 정밀화

@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LANGUAGES, TRACKS, getLanguage, getTrack } from "../content/languages";
 import { getLessonById } from "../content";
+import { isTrackPro } from "../content/tier";
+import { ProBadge } from "../components/paywall/ProBadge";
+import { usePaywall } from "../components/paywall/usePaywall";
 import { listAllProgress } from "../storage/progressRepo";
 import { loadAllProgressFromSupabase } from "../storage/supabaseProgressRepo";
 import { useAuthStore } from "../store/authStore";
@@ -44,8 +47,23 @@ export function HomePage() {
     return () => { cancelled = true; };
   }, [user]);
 
+  const { showPaywall, modal } = usePaywall();
+
   const handleTrackSelect = (track: Track) => {
     if (!selectedLang) return;
+    // PRO 트랙이면 paywall — 실제 이동 차단
+    if (isTrackPro(selectedLang, track)) {
+      const trk = getTrack(track);
+      const lang = getLanguage(selectedLang);
+      if (trk && lang) {
+        showPaywall({
+          title: `${lang.name} · ${trk.name}`,
+          kind: "코딩 실습 트랙",
+          icon: lang.icon,
+        });
+      }
+      return;
+    }
     navigate(`/coding/learn/${selectedLang}/${track}`);
   };
 
@@ -82,43 +100,75 @@ export function HomePage() {
         </header>
 
         {/* ─── 이어서 학습 배너 (진도 있을 때만) ─── */}
-        {resumeInfo && (
-          <section className="mb-10">
-            <Link
-              to={`/coding/learn/${resumeInfo.lang.id}/${resumeInfo.track.id}/${resumeInfo.lesson.id}`}
-              className="block p-6 rounded-xl border border-colab-accent/40 bg-gradient-to-r from-colab-panel to-colab-panel/60
-                         hover:border-colab-accent hover:from-colab-panel hover:shadow-lg hover:shadow-colab-accent/10
-                         transition-all group"
-            >
-              <div className="flex items-center gap-5">
-                <div className="shrink-0 text-5xl">{resumeInfo.lang.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-colab-accent/15 text-colab-accent font-medium uppercase tracking-wider">
-                      📖 이어서 학습
-                    </span>
-                    <span className="text-xs text-colab-textDim">
-                      {resumeInfo.lang.name} · {resumeInfo.track.name} · 챕터{" "}
-                      {resumeInfo.lesson.order}
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-medium text-colab-text truncate">
-                    {resumeInfo.lesson.title}
-                  </h3>
-                  {resumeInfo.lesson.subtitle && (
-                    <p className="mt-0.5 text-sm text-colab-textDim truncate">
-                      {resumeInfo.lesson.subtitle}
-                    </p>
-                  )}
+        {resumeInfo && (() => {
+          const resumePro = isTrackPro(
+            resumeInfo.lang.id,
+            resumeInfo.track.id as Track
+          );
+          const innerContent = (
+            <div className="flex items-center gap-5">
+              <div className="shrink-0 text-5xl">{resumeInfo.lang.icon}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-colab-accent/15 text-colab-accent font-medium uppercase tracking-wider">
+                    📖 이어서 학습
+                  </span>
+                  {resumePro && <ProBadge size="sm" />}
+                  <span className="text-xs text-colab-textDim">
+                    {resumeInfo.lang.name} · {resumeInfo.track.name} · 챕터{" "}
+                    {resumeInfo.lesson.order}
+                  </span>
                 </div>
-                <div className="shrink-0 flex items-center gap-2 text-colab-accent group-hover:translate-x-1 transition-transform">
-                  <span className="text-sm font-medium">계속하기</span>
-                  <span className="text-xl">→</span>
-                </div>
+                <h3 className="text-xl font-medium text-colab-text truncate">
+                  {resumeInfo.lesson.title}
+                </h3>
+                {resumeInfo.lesson.subtitle && (
+                  <p className="mt-0.5 text-sm text-colab-textDim truncate">
+                    {resumeInfo.lesson.subtitle}
+                  </p>
+                )}
               </div>
-            </Link>
-          </section>
-        )}
+              <div className={`shrink-0 flex items-center gap-2 transition-transform ${
+                resumePro ? "text-amber-400" : "text-colab-accent group-hover:translate-x-1"
+              }`}>
+                <span className="text-sm font-medium">
+                  {resumePro ? "PRO 오픈 예정" : "계속하기"}
+                </span>
+                <span className="text-xl">{resumePro ? "🔒" : "→"}</span>
+              </div>
+            </div>
+          );
+
+          return (
+            <section className="mb-10">
+              {resumePro ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    showPaywall({
+                      title: `${resumeInfo.lang.name} · ${resumeInfo.track.name}`,
+                      kind: "코딩 실습 트랙",
+                      icon: resumeInfo.lang.icon,
+                    })
+                  }
+                  className="block w-full text-left p-6 rounded-xl border border-amber-400/30 bg-gradient-to-r from-colab-panel to-amber-400/5
+                             hover:border-amber-400/60 hover:shadow-lg hover:shadow-amber-400/10 transition-all group"
+                >
+                  {innerContent}
+                </button>
+              ) : (
+                <Link
+                  to={`/coding/learn/${resumeInfo.lang.id}/${resumeInfo.track.id}/${resumeInfo.lesson.id}`}
+                  className="block p-6 rounded-xl border border-colab-accent/40 bg-gradient-to-r from-colab-panel to-colab-panel/60
+                             hover:border-colab-accent hover:from-colab-panel hover:shadow-lg hover:shadow-colab-accent/10
+                             transition-all group"
+                >
+                  {innerContent}
+                </Link>
+              )}
+            </section>
+          );
+        })()}
 
         {/* Playground + IDE 바로가기 */}
         <section className="mb-10 grid md:grid-cols-2 gap-4">
@@ -238,31 +288,44 @@ export function HomePage() {
                 트랙을 선택하세요
               </h2>
               <div className="grid md:grid-cols-2 gap-4">
-                {TRACKS.map((track) => (
-                  <button
-                    key={track.id}
-                    onClick={() => handleTrackSelect(track.id)}
-                    className="group p-6 rounded-lg border border-colab-subtle bg-colab-panel text-left
-                               hover:border-colab-accent hover:bg-colab-panel/80 hover:shadow-lg hover:shadow-colab-accent/5 transition-all"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-xl font-medium text-colab-text">
-                        {track.name}
-                      </h3>
-                      <span className="text-colab-textDim group-hover:text-colab-accent group-hover:translate-x-1 transition-all">
-                        →
-                      </span>
-                    </div>
-                    <p className="text-sm text-colab-textDim leading-relaxed">
-                      {track.description}
-                    </p>
-                    {track.estimatedHours && (
-                      <p className="mt-3 text-xs text-colab-textDim">
-                        예상 학습 시간: 약 {track.estimatedHours}시간
+                {TRACKS.map((track) => {
+                  const pro = isTrackPro(selectedLang, track.id);
+                  return (
+                    <button
+                      key={track.id}
+                      onClick={() => handleTrackSelect(track.id)}
+                      className={`group p-6 rounded-lg border text-left transition-all ${
+                        pro
+                          ? "border-colab-subtle/80 bg-colab-panel hover:border-amber-400/50 hover:shadow-lg hover:shadow-amber-400/5"
+                          : "border-colab-subtle bg-colab-panel hover:border-colab-accent hover:bg-colab-panel/80 hover:shadow-lg hover:shadow-colab-accent/5"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-2 gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-xl font-medium text-colab-text">
+                            {track.name}
+                          </h3>
+                          {pro && <ProBadge size="sm" />}
+                        </div>
+                        <span className={`shrink-0 transition-all ${
+                          pro
+                            ? "text-colab-textDim group-hover:text-amber-400"
+                            : "text-colab-textDim group-hover:text-colab-accent group-hover:translate-x-1"
+                        }`}>
+                          {pro ? "🔒" : "→"}
+                        </span>
+                      </div>
+                      <p className="text-sm text-colab-textDim leading-relaxed">
+                        {track.description}
                       </p>
-                    )}
-                  </button>
-                ))}
+                      {track.estimatedHours && (
+                        <p className="mt-3 text-xs text-colab-textDim">
+                          예상 학습 시간: 약 {track.estimatedHours}시간
+                        </p>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </section>
           );
@@ -287,6 +350,7 @@ export function HomePage() {
           </p>
         </footer>
       </div>
+      {modal}
     </div>
   );
 }

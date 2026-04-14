@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PROJECTS, type ProjectCategory } from "../content/projects";
+import { isProjectPro } from "../content/tier";
 import { Markdown } from "../components/Markdown";
+import { ProBadge } from "../components/paywall/ProBadge";
+import { usePaywall } from "../components/paywall/usePaywall";
 
 const CATEGORIES: { id: ProjectCategory | "all"; label: string; icon: string }[] = [
   { id: "all",             label: "전체",        icon: "🧪" },
@@ -72,6 +75,9 @@ export function ProjectsPage() {
     setSearchParams(nextParams, { replace: true });
   };
 
+  // ── Paywall ──
+  const { showPaywall, modal } = usePaywall();
+
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-12">
@@ -119,13 +125,16 @@ export function ProjectsPage() {
           )}
           {visibleProjects.map((p) => {
             const isOpen = openId === p.id;
+            const isPro = isProjectPro(p.id);
             return (
               <div
                 key={p.id}
                 className={`rounded-xl border overflow-hidden transition-all ${
                   isOpen
                     ? "border-brand-primary/50 bg-brand-panel shadow-lg shadow-brand-primary/5"
-                    : "border-brand-subtle bg-brand-panel hover:border-brand-primary/30"
+                    : isPro
+                      ? "border-brand-subtle/80 bg-brand-panel hover:border-amber-400/40"
+                      : "border-brand-subtle bg-brand-panel hover:border-brand-primary/30"
                 }`}
               >
                 {/* 헤더 — 클릭 시 아코디언 토글 */}
@@ -134,9 +143,12 @@ export function ProjectsPage() {
                   className="w-full text-left p-4 sm:p-5 flex items-center gap-3 sm:gap-5 group"
                   aria-expanded={isOpen}
                 >
-                  <div className="text-3xl sm:text-4xl shrink-0">{p.icon}</div>
+                  <div className={`text-3xl sm:text-4xl shrink-0 ${isPro ? "grayscale opacity-70" : ""}`}>
+                    {p.icon}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                      {isPro && <ProBadge size="sm" />}
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-primary/15 text-brand-primary">
                         {p.difficulty === "beginner" ? "입문" : "중급"}
                       </span>
@@ -189,13 +201,28 @@ export function ProjectsPage() {
                 {/* 펼친 본문 — 상단 CTA + 브리핑 */}
                 {isOpen && (
                   <div className="border-t border-brand-subtle px-4 sm:px-5 py-4 sm:py-5 bg-brand-bg/40 space-y-4 sm:space-y-5">
-                    {/* 🚀 CTA — 펼친 후 즉시 보이도록 맨 위 */}
-                    <Link
-                      to={`/projects/${p.id}/work`}
-                      className="block w-full text-center py-3.5 rounded-xl bg-brand-primary text-white font-medium text-sm hover:bg-brand-primaryDim transition-colors shadow-lg shadow-brand-primary/20"
-                    >
-                      🚀 프로젝트 시작하기
-                    </Link>
+                    {/* 🚀 CTA — 펼친 후 즉시 보이도록 맨 위. pro 면 paywall 모달. */}
+                    {isPro ? (
+                      <button
+                        onClick={() =>
+                          showPaywall({
+                            title: p.title,
+                            kind: "AI 프로젝트",
+                            icon: p.icon,
+                          })
+                        }
+                        className="block w-full text-center py-3.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-950 font-semibold text-sm hover:brightness-110 transition-all shadow-lg shadow-amber-400/20"
+                      >
+                        🔒 PRO 전용 — 곧 오픈 예정
+                      </button>
+                    ) : (
+                      <Link
+                        to={`/projects/${p.id}/work`}
+                        className="block w-full text-center py-3.5 rounded-xl bg-brand-primary text-white font-medium text-sm hover:bg-brand-primaryDim transition-colors shadow-lg shadow-brand-primary/20"
+                      >
+                        🚀 프로젝트 시작하기
+                      </Link>
+                    )}
 
                     {/* 설명 마크다운 */}
                     <div className="prose prose-invert max-w-none">
@@ -236,6 +263,7 @@ export function ProjectsPage() {
           </p>
         </div>
       </div>
+      {modal}
     </div>
   );
 }
