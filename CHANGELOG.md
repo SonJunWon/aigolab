@@ -13,6 +13,15 @@
 
 ---
 
+## [3.9.1] - 2026-04-14
+
+### Fixed — multi-line import 로 인한 SyntaxError (카드 이상 탐지 등)
+- 증상: `from sklearn.metrics import (\n ... \n)` 같은 multi-line import 가 있는 프로젝트 실행 시 `SyntaxError: '(' was never closed`
+- 원인: fileRunner 가 패키지 선로드 마커용 import 를 **한 줄씩** 추출해 prepend — multi-line 의 첫 줄만 가져가 괄호 안 닫힘
+- 수정: `extractImportBlocks()` 함수로 **괄호 균형 + 백슬래시 줄잇기** 모두 인식해 블록 단위로 추출
+
+---
+
 ## [3.9.0] - 2026-04-14
 
 ### Added — 부족한 패러다임 채우는 신규 AI 프로젝트 3개 (총 8 → 11개)

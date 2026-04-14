@@ -65,12 +65,47 @@ export async function runActiveFile(): Promise<void> {
     //    안 보여 sklearn 이 로드되지 않는 문제를 해결.
     //    (한 번 import 되면 sys.modules 캐시에 남아 runpy 내부 실행 시
     //    재로드 없이 즉시 사용됨)
+    //
+    // Multi-line import (괄호·백슬래시) 를 한 블록으로 묶어 추출해야
+    // `from sklearn.metrics import (\n ... \n)` 같은 코드가 깨지지 않는다.
+    function extractImportBlocks(content: string): string[] {
+      const lines = content.split(/\r?\n/);
+      const blocks: string[] = [];
+      let i = 0;
+      while (i < lines.length) {
+        const line = lines[i];
+        if (/^\s*(?:import|from)\s+\S/.test(line)) {
+          let block = line;
+          // 괄호 균형 맞을 때까지 이어 붙임
+          const count = (s: string, ch: string) =>
+            (s.match(new RegExp(`\\${ch}`, "g")) || []).length;
+          let open = count(block, "(") - count(block, ")");
+          let j = i + 1;
+          while (open > 0 && j < lines.length) {
+            block += "\n" + lines[j];
+            open += count(lines[j], "(") - count(lines[j], ")");
+            j++;
+          }
+          // 백슬래시 줄 이음 처리
+          while (block.endsWith("\\") && j < lines.length) {
+            block += "\n" + lines[j];
+            j++;
+          }
+          blocks.push(block);
+          i = j;
+        } else {
+          i++;
+        }
+      }
+      return blocks;
+    }
+
     const importLines = pyFiles
-      .flatMap((f) => f.content.split(/\r?\n/))
-      .filter((line) => /^\s*(?:import|from)\s+\S/.test(line))
+      .flatMap((f) => extractImportBlocks(f.content))
       // 사용자 모듈(본 프로젝트 내 .py) 의 import 는 제외 — 아직 sys.path 설정 전이라 실패할 수 있음
-      .filter((line) => {
-        const m = line.match(/^\s*(?:from\s+(\S+)|import\s+(\S+))/);
+      .filter((block) => {
+        const firstLine = block.split(/\r?\n/)[0];
+        const m = firstLine.match(/^\s*(?:from\s+(\S+)|import\s+(\S+))/);
         const top = (m?.[1] ?? m?.[2] ?? "").split(".")[0];
         return !moduleNames.includes(top);
       });
