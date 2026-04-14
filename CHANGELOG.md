@@ -13,6 +13,27 @@
 
 ---
 
+## [3.5.0] - 2026-04-14
+
+### Added — AI 프로젝트 스캐폴딩 (단계별 가이드 강화)
+- \`ProjectStep\` 타입 신설 — title / description(md) / hint / solution(code) / checkpoint
+- \`Project.steps\` 을 \`(string | ProjectStep)[]\` 로 확장 (하위 호환)
+- **\`ProjectStepCard\` 컴포넌트** 신규 — 펼침 카드, 완료 체크박스, 💡 힌트 / 👀 정답 토글
+- \`ProjectDetailPage\` 개편
+  - 진행률 바 (n/total + %)
+  - localStorage 기반 단계별 진행도 저장 (\`project_progress_<id>\`)
+  - 완주 축하 배너 (100% 도달 시)
+  - ↺ 진행도 초기화 버튼
+
+### Changed — 기존 5개 프로젝트 리치화
+- 🌸 아이리스 꽃 분류 — 6단계 × (설명 + 힌트 + 정답 코드)
+- 🚢 타이타닉 생존자 예측 — 6단계, 모델 2종 비교 + 특성 중요도
+- 🎬 영화 추천 시스템 — 6단계, 원핫 → 코사인 유사도 → 추천
+- 🔢 손글씨 숫자 인식 — 6단계, SVM + 혼동 행렬 + 오분류 분석
+- 💬 감성 분석기 — 6단계, 부정어 처리 + 정답 레이블 평가
+
+---
+
 ## [3.4.0] - 2026-04-14
 
 ### Added — Python ML 실습 트랙 10강 체제 완성 (5강 신규)
