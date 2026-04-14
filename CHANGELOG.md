@@ -13,6 +13,20 @@
 
 ---
 
+## [3.6.2] - 2026-04-14
+
+### Fixed — IDE 모드에서 sklearn 여전히 로드 안 되던 문제 (v3.6.1 후속)
+- v3.6.1 에서 worker 가 `loadPackagesFromImports(code)` 를 호출하도록 고쳤지만,
+  IDE 모드에선 worker 에 전달되는 `code` 가 `runpy.run_path(...)` 래퍼였기 때문에
+  사용자 파일 내부의 `import sklearn` 을 감지 못해 여전히 로드 실패했음.
+- **수정**: `fileRunner` 가 모든 .py 파일의 **top-level import 문** 을 스캔해
+  worker 로 보내는 runCode 맨 앞에 prepend. 이제 worker 의 AST 스캔이 사용자
+  코드의 외부 패키지(sklearn, pandas, numpy, matplotlib 등) 를 감지해 선로드.
+- 프로젝트 파일 내 상호 import (예: `from utils import X`) 는 제외 — sys.path
+  설정 전이라 선로드 대상이 아님.
+
+---
+
 ## [3.6.1] - 2026-04-14
 
 ### Fixed — sklearn / pandas / matplotlib 자동 로드 (핫픽스)

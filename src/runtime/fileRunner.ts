@@ -59,7 +59,29 @@ export async function runActiveFile(): Promise<void> {
       .map((f) => f.name.replace(".py", ""))
       .filter((n) => n !== "__init__");
 
+    // 3. Pyodide 자동 패키지 로드가 동작하도록 사용자 파일의 top-level import
+    //    들을 runCode 맨 앞에 모음. worker 는 이 `code` 를 AST 로 스캔해
+    //    sklearn/pandas 등을 감지·로드한다. runpy 래퍼만 넘기면 import 가
+    //    안 보여 sklearn 이 로드되지 않는 문제를 해결.
+    //    (한 번 import 되면 sys.modules 캐시에 남아 runpy 내부 실행 시
+    //    재로드 없이 즉시 사용됨)
+    const importLines = pyFiles
+      .flatMap((f) => f.content.split(/\r?\n/))
+      .filter((line) => /^\s*(?:import|from)\s+\S/.test(line))
+      // 사용자 모듈(본 프로젝트 내 .py) 의 import 는 제외 — 아직 sys.path 설정 전이라 실패할 수 있음
+      .filter((line) => {
+        const m = line.match(/^\s*(?:from\s+(\S+)|import\s+(\S+))/);
+        const top = (m?.[1] ?? m?.[2] ?? "").split(".")[0];
+        return !moduleNames.includes(top);
+      });
+
+    // 중복 제거
+    const uniqueImports = [...new Set(importLines)].join("\n");
+
     const runCode = `
+# ── 패키지 선로드 마커 (실행에도 무해) ──
+${uniqueImports}
+
 import sys as __sys
 
 # 사용자 모듈 캐시 제거
