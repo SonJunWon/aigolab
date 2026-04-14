@@ -18,20 +18,62 @@
     color: #e8eaed;
   }
 
-  /* 라이트 테마 오버라이드 */
+  /* ───────────────────────────────────────────────────
+   * 라이트 테마 오버라이드
+   *
+   * 패턴 매칭 ([class*="bg-brand-bg"]) 으로 단일 클래스뿐 아니라
+   * 투명도 변형 (bg-brand-bg/95, bg-brand-panel/80 등) 까지 한 번에 처리.
+   * 그라디언트도 라이트 모드에선 단색으로 평탄화.
+   * ─────────────────────────────────────────────────── */
   [data-theme="light"] body {
     background: #f8f9fa;
     color: #1f2937;
   }
-  [data-theme="light"] .bg-brand-bg { background: #ffffff !important; }
-  [data-theme="light"] .bg-brand-panel { background: #f3f4f6 !important; }
-  [data-theme="light"] .bg-colab-bg { background: #ffffff !important; }
-  [data-theme="light"] .bg-colab-panel { background: #f3f4f6 !important; }
-  [data-theme="light"] .text-brand-text, [data-theme="light"] .text-colab-text { color: #1f2937 !important; }
-  [data-theme="light"] .text-brand-textDim, [data-theme="light"] .text-colab-textDim { color: #6b7280 !important; }
-  [data-theme="light"] .border-brand-subtle, [data-theme="light"] .border-colab-subtle { border-color: #e5e7eb !important; }
-  [data-theme="light"] .bg-brand-subtle, [data-theme="light"] .bg-colab-subtle { background: #e5e7eb !important; }
-  [data-theme="light"] .bg-brand-hover, [data-theme="light"] .bg-colab-hover { background: #e5e7eb !important; }
+
+  /* 어두운 페이지 배경 → 흰색 (모든 투명도 변형 포함) */
+  [data-theme="light"] [class*="bg-brand-bg"],
+  [data-theme="light"] [class*="bg-colab-bg"] {
+    background-color: #ffffff !important;
+  }
+
+  /* 카드/패널 배경 → 옅은 회색 */
+  [data-theme="light"] [class*="bg-brand-panel"],
+  [data-theme="light"] [class*="bg-colab-panel"] {
+    background-color: #f3f4f6 !important;
+  }
+
+  /* 보더·구분선·hover 배경 → 중간 회색 */
+  [data-theme="light"] [class*="bg-brand-subtle"],
+  [data-theme="light"] [class*="bg-colab-subtle"],
+  [data-theme="light"] [class*="bg-brand-hover"],
+  [data-theme="light"] [class*="bg-colab-hover"] {
+    background-color: #e5e7eb !important;
+  }
+
+  /* 어두운 색 그라디언트 평탄화 (이어서학습 배너 등) */
+  [data-theme="light"] [class*="bg-gradient"][class*="colab-panel"],
+  [data-theme="light"] [class*="bg-gradient"][class*="colab-bg"],
+  [data-theme="light"] [class*="bg-gradient"][class*="brand-panel"],
+  [data-theme="light"] [class*="bg-gradient"][class*="brand-bg"] {
+    background-image: none !important;
+    background-color: #f3f4f6 !important;
+  }
+
+  /* 텍스트 — Dim 이 일반 text 패턴에 매칭되지 않도록 :not 사용 */
+  [data-theme="light"] [class*="text-brand-text"]:not([class*="text-brand-textDim"]),
+  [data-theme="light"] [class*="text-colab-text"]:not([class*="text-colab-textDim"]) {
+    color: #1f2937 !important;
+  }
+  [data-theme="light"] [class*="text-brand-textDim"],
+  [data-theme="light"] [class*="text-colab-textDim"] {
+    color: #6b7280 !important;
+  }
+
+  /* 보더 (모든 투명도 변형 포함) */
+  [data-theme="light"] [class*="border-brand-subtle"],
+  [data-theme="light"] [class*="border-colab-subtle"] {
+    border-color: #e5e7eb !important;
+  }
   [data-theme="light"] .md-prose { color: #1f2937; }
   [data-theme="light"] .md-prose h1, [data-theme="light"] .md-prose h2, [data-theme="light"] .md-prose h3 { color: #111827; }
   [data-theme="light"] .md-prose strong { color: #111827; }
