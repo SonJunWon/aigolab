@@ -6257,6 +6257,346 @@ for n, p in zip(iris.target_names, probs):
       },
     },
   },
+  {
+    id: "diabetes-regression-tree",
+    category: "data-analysis",
+    title: "당뇨병 진행도 예측 — 회귀 트리",
+    subtitle: "분류 트리와 똑같은 공식으로 '숫자' 를 예측한다",
+    icon: "🩺",
+    difficulty: "intermediate",
+    estimatedMinutes: 50,
+    tags: ["scikit-learn", "회귀", "Decision Tree", "feature importance", "과적합"],
+    description: `## 🩺 당뇨병 진행도 예측
+
+**목표**: 환자의 기초 검사 수치 10개로 **1년 뒤 당뇨병 진행 정도 (숫자)** 를 예측하는 회귀 모델을 만듭니다.
+
+> "분류 트리와 회귀 트리는 완전히 다른 알고리즘인가?" 라고 생각하기 쉽지만, 답은 **아니오**. 같은 트리 구조에 **잎 노드의 예측 방식만 바꾼 것**. 이 프로젝트로 그 관점을 손으로 체험합니다.
+
+### 이 프로젝트가 중요한 이유
+- ML 문제의 절반은 **회귀** (판매량 예측, 부동산 가격, 수요 예측, 센서 값 등)
+- 선형 회귀로 안 풀리는 **비선형 관계** 를 트리가 자동으로 잡아줌
+- \`feature_importances_\` 로 **의학·비즈니스 의사결정** 에 쓸 수 있는 중요 요인을 뽑아냄
+
+### 배울 것
+- **\`load_diabetes\`** — sklearn 내장 회귀 데이터셋 구조
+- **DecisionTreeRegressor** 의 fit/predict — 분류 트리와 **완전히 같은 인터페이스**
+- **회귀 지표**: R² 와 MSE 의 의미 (정확도가 아닌 '설명력' 과 '오차')
+- **max_depth 별 과적합 곡선** — 회귀에서도 같은 함정
+- **feature_importances_** 로 의료 도메인 인사이트 뽑기
+- LinearRegression vs DecisionTreeRegressor vs RandomForestRegressor **3단 비교**`,
+    steps: [
+      {
+        title: "데이터 로드 + 문제 파악",
+        stepMarker: "STEP 1",
+        description:
+          "\`load_diabetes()\` 는 442명의 환자 데이터. **10개 수치 피처** (나이·성별·BMI·혈압·혈청 지표 6종) 로 **1년 뒤 질병 진행도 (25~346 범위의 숫자)** 를 예측. 타깃이 연속값이므로 **회귀 문제**.",
+        hint: "`diabetes.data.shape`, `diabetes.target.shape`, `diabetes.target.min()/max()/mean()` 을 확인하세요.",
+        snippet: `from sklearn.datasets import load_diabetes
+diabetes = load_diabetes()`,
+        solution: `from sklearn.datasets import load_diabetes
+import numpy as np
+
+diabetes = load_diabetes()
+X, y = diabetes.data, diabetes.target
+
+print(f"샘플 수:    {X.shape[0]}명")
+print(f"피처 수:    {X.shape[1]} ({diabetes.feature_names})")
+print(f"타깃 통계:  min={y.min():.0f}, max={y.max():.0f}, mean={y.mean():.1f}")
+print(f"→ 이 숫자(진행도)가 낮을수록 병이 덜 악화된 것.")`,
+        checkpoint: "442명 · 피처 10개, 타깃 범위 25~346 으로 나오면 정상.",
+      },
+      {
+        title: "EDA — 피처별 통계와 타깃 상관",
+        stepMarker: "STEP 2",
+        description:
+          "sklearn 의 diabetes 피처는 **평균 0, 표준편차 ≈ 0.047 로 표준화된 형태**. 그래서 개별 값 자체는 해석이 어렵고, **어느 피처가 타깃과 상관이 큰지** 가 더 유용한 정보.",
+        hint: "numpy 의 `np.corrcoef` 또는 for 루프로 각 피처와 y 의 상관계수를 계산.",
+        snippet: `for i, name in enumerate(diabetes.feature_names):
+    corr = np.corrcoef(X[:, i], y)[0, 1]
+    print(f"{name:>5}  {corr:+.3f}")`,
+        solution: `print("피처별 타깃(진행도) 상관계수:")
+print(f"{'피처':>5} | {'상관':>7} | {'해석':s}")
+print("-" * 40)
+for i, name in enumerate(diabetes.feature_names):
+    corr = np.corrcoef(X[:, i], y)[0, 1]
+    bar = "█" * int(abs(corr) * 20)
+    print(f"{name:>5} | {corr:+7.3f} | {bar}")
+
+print("\\n→ bmi, s5 가 양의 상관 상위. 이 둘이 예측에 핵심 역할을 할 가능성.")`,
+        checkpoint: "bmi ≈ +0.586, s5 ≈ +0.566 근처가 나오면 정상.",
+      },
+      {
+        title: "train / test 분리",
+        stepMarker: "STEP 3",
+        description:
+          "분류에서 쓴 \`stratify\` 는 **연속값에는 쓸 수 없어요**. 회귀에서는 기본 랜덤 분할 + \`random_state\` 로 재현성 확보.",
+        hint: "`train_test_split(X, y, test_size=0.2, random_state=10)` — lec06 ipynb 와 동일 설정.",
+        snippet: `X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.2, random_state=10
+)`,
+        solution: `from sklearn.model_selection import train_test_split
+
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.2, random_state=10
+)
+print(f"훈련: {X_tr.shape[0]}명  /  테스트: {X_te.shape[0]}명")
+print(f"훈련 타깃 평균: {y_tr.mean():.1f}")
+print(f"테스트 타깃 평균: {y_te.mean():.1f}  ← 비슷하면 분할이 치우치지 않음")`,
+      },
+      {
+        title: "회귀 트리 학습 — 분류와 똑같은 공식",
+        stepMarker: "STEP 4",
+        description:
+          "\`DecisionTreeRegressor\` 의 fit/predict 는 분류 트리와 **코드가 완전히 동일**. 차이는 잎 노드에서 **다수결 대신 평균** 을 낸다는 것 뿐.",
+        hint: "`DecisionTreeRegressor(max_depth=4, random_state=42)` → `.fit(X_tr, y_tr)` → `.predict(X_te)` 세 줄.",
+        snippet: `from sklearn.tree import DecisionTreeRegressor
+reg = DecisionTreeRegressor(max_depth=4, random_state=42)
+reg.fit(X_tr, y_tr)
+y_pred = reg.predict(X_te)`,
+        solution: `from sklearn.tree import DecisionTreeRegressor
+
+reg = DecisionTreeRegressor(max_depth=4, random_state=42)
+reg.fit(X_tr, y_tr)
+y_pred = reg.predict(X_te)
+
+# 처음 5명의 실제값 vs 예측값
+print(f"{'실제':>8} {'예측':>8} {'오차':>8}")
+print("-" * 30)
+for actual, pred in list(zip(y_te, y_pred))[:5]:
+    err = pred - actual
+    print(f"{actual:>8.0f} {pred:>8.1f} {err:>+8.1f}")`,
+      },
+      {
+        title: "회귀 지표 — R² 와 MSE 를 직접 계산",
+        stepMarker: "STEP 5",
+        description: `회귀는 **정확도** 가 아닌 다음 두 지표를 주로 봅니다:
+
+- **R² (결정계수)**: 1 에 가까울수록 좋음. 0 이면 "평균만 찍는 모델과 같은 수준", 음수면 "평균보다 못함".
+- **MSE (평균 제곱 오차)**: 작을수록 좋음. 예측 오차를 제곱해 평균 낸 것.
+
+\`score()\` 가 R² 를 반환한다는 걸 직접 확인하세요.`,
+        hint: "`reg.score(X_te, y_te)` == `r2_score(y_te, y_pred)` 인지, MSE 는 `((y_te - y_pred)**2).mean()` 과 `mean_squared_error()` 를 비교.",
+        snippet: `from sklearn.metrics import r2_score, mean_squared_error`,
+        solution: `from sklearn.metrics import r2_score, mean_squared_error
+
+# R² — 세 가지 방법 모두 같은 값
+manual_r2 = 1 - ((y_te - y_pred) ** 2).sum() / ((y_te - y_te.mean()) ** 2).sum()
+sklearn_r2 = r2_score(y_te, y_pred)
+score_r2  = reg.score(X_te, y_te)
+
+# MSE — 직접 계산 vs 라이브러리
+manual_mse = ((y_te - y_pred) ** 2).mean()
+sklearn_mse = mean_squared_error(y_te, y_pred)
+
+print(f"R² (직접 공식):     {manual_r2:.4f}")
+print(f"R² (r2_score):      {sklearn_r2:.4f}")
+print(f"R² (reg.score):     {score_r2:.4f}")
+print(f"MSE (직접):          {manual_mse:.2f}")
+print(f"MSE (mean_squared):  {sklearn_mse:.2f}")
+print(f"RMSE (√MSE):         {manual_mse**0.5:.1f}   ← 평균적으로 이만큼 빗나감")`,
+        checkpoint: "세 R² 값이 완전히 같고, RMSE 가 타깃 범위(25~346) 대비 감이 잡히면 OK.",
+      },
+      {
+        title: "max_depth 튜닝 — 회귀의 과적합 곡선",
+        stepMarker: "STEP 6",
+        description:
+          "분류에서 본 그 패턴이 회귀에서도 똑같이 나타납니다. \`max_depth=None\` 은 잎 하나에 샘플 1개가 될 때까지 쪼개서 **훈련 R² ≈ 1.0**, 테스트는 처참. 최적 깊이를 찾으세요.",
+        hint: "for d in [2, 3, 4, 6, 8, 12, None]: 반복하고, 테스트 R² 의 최고점을 기록.",
+        snippet: `best_d, best_r2 = None, -1e9
+for d in [2, 3, 4, 6, 8, 12, None]:
+    r = DecisionTreeRegressor(max_depth=d, random_state=42).fit(X_tr, y_tr)`,
+        solution: `best_d, best_r2 = None, -1e9
+print(f"{'max_depth':>10} | {'train R²':>9} | {'test R²':>9} | 진단")
+print("-" * 55)
+for d in [2, 3, 4, 6, 8, 12, None]:
+    r = DecisionTreeRegressor(max_depth=d, random_state=42).fit(X_tr, y_tr)
+    tr = r.score(X_tr, y_tr)
+    te = r.score(X_te, y_te)
+
+    if tr > 0.95 and te < 0.3:
+        diagnosis = "심한 과적합"
+    elif tr - te > 0.3:
+        diagnosis = "과적합 의심"
+    elif tr < 0.5:
+        diagnosis = "과소적합"
+    else:
+        diagnosis = "적합"
+
+    if te > best_r2:
+        best_d, best_r2 = d, te
+
+    label = "None" if d is None else str(d)
+    print(f"{label:>10} | {tr:>9.3f} | {te:>9.3f} | {diagnosis}")
+
+print(f"\\n→ 최적 max_depth = {best_d} (test R² = {best_r2:.3f})")`,
+      },
+      {
+        title: "feature_importances_ + 3단 모델 비교",
+        stepMarker: "STEP 7",
+        description: `**모델이 학습한 의학 인사이트 꺼내기** + 다른 회귀 모델들과 성능 비교.
+
+이 스텝에서 확인할 것:
+1. 최적 깊이의 회귀 트리에서 **어떤 피처가 가장 중요했나**
+2. 같은 문제를 LinearRegression / RandomForestRegressor 로 풀면 성능은?`,
+        hint: "RandomForestRegressor 는 `from sklearn.ensemble` 에서 import. 나머진 공식 동일.",
+        snippet: `from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor`,
+        solution: `from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+
+# 최적 트리 재학습
+best_tree = DecisionTreeRegressor(max_depth=best_d, random_state=42).fit(X_tr, y_tr)
+
+# 피처 중요도
+print("🔍 회귀 트리가 배운 중요 피처 순위:")
+importance = sorted(
+    zip(diabetes.feature_names, best_tree.feature_importances_),
+    key=lambda x: -x[1]
+)
+mx = max(v for _, v in importance) or 1
+for name, val in importance:
+    bar = "█" * int(val / mx * 25)
+    print(f"  {name:>5}  {val:.3f}  {bar}")
+
+# 3단 비교
+print("\\n🆚 같은 문제, 다른 모델:")
+print(f"{'모델':<30} {'train R²':>10} {'test R²':>10}")
+print("-" * 55)
+for name, model in [
+    ("LinearRegression",               LinearRegression()),
+    (f"DecisionTreeReg (d={best_d})",  DecisionTreeRegressor(max_depth=best_d, random_state=42)),
+    ("RandomForestReg (n=200, d=6)",   RandomForestRegressor(n_estimators=200, max_depth=6, random_state=42, n_jobs=-1)),
+]:
+    model.fit(X_tr, y_tr)
+    print(f"{name:<30} {model.score(X_tr, y_tr):>10.3f} {model.score(X_te, y_te):>10.3f}")`,
+        checkpoint: "bmi 와 s5 가 상위에 오고, RandomForest 가 단일 트리보다 test R² 가 높게 나오면 정상.",
+      },
+      {
+        title: "🎯 정리 — 분류·회귀는 같은 공식의 두 얼굴",
+        description: `## 이 프로젝트에서 확인한 것
+
+### ✅ '하나의 공식' 의 완성판
+| 문제 | 모델 클래스 | score() | 잎 노드 예측 방식 |
+|---|---|---|---|
+| 분류 | \`DecisionTreeClassifier\` | 정확도 | 다수결 |
+| 회귀 | \`DecisionTreeRegressor\` | R² | 평균값 |
+
+코드 골격은 **단 한 글자도 다르지 않아요**. \`fit\` → \`predict\` → \`score\`.
+
+### ✅ 회귀 지표의 의미
+- **R²** = 1 - (모델 오차) / (평균만 찍었을 때 오차). 1 에 가까우면 설명력 ↑, 0 이면 평균만큼, 음수면 평균보다 못함.
+- **MSE/RMSE** = 평균적으로 얼마나 빗나가는지의 절대 크기. 타깃 단위로 해석 가능.
+
+### ✅ 과적합은 분류·회귀 공통 함정
+\`max_depth=None\` 회귀 트리는 훈련 R² ≈ 1.0 을 찍지만 테스트는 처참. 깊이 제한은 회귀에서도 최우선 방어.
+
+### ✅ feature_importances_ 로 도메인 인사이트
+의학 데이터에서 **bmi 와 s5** 가 상위로 나오는 건 1년 뒤 진행도 예측에서 **체질량지수와 혈청 지표** 가 핵심이라는 뜻. 연구 논문에도 자주 등장하는 결과.
+
+### ✅ 언제 트리·포레스트·선형을 고를까?
+| 상황 | 추천 |
+|---|---|
+| 관계가 단순·선형 | LinearRegression (해석 최고) |
+| 비선형 + 해석 필요 | DecisionTreeRegressor (작은 깊이) |
+| **성능이 가장 중요** | RandomForestRegressor (거의 항상 상위) |
+
+### 🧪 더 해볼 것
+1. \`DecisionTreeRegressor(criterion="absolute_error")\` 로 바꿔 보기 — 이상치에 강해짐
+2. \`min_samples_leaf=10\` 을 넣어 잎이 너무 잘게 쪼개지는 걸 막기
+3. 다른 회귀 데이터 (\`fetch_california_housing\` — 샘플이 많아 Pyodide 에선 무거움 주의) 로 같은 흐름 재현
+4. RandomForestRegressor 의 \`n_estimators\` 를 50 → 500 으로 바꾸며 test R² 변화 관찰`,
+        checkpoint: "정리 표에서 '분류·회귀가 같은 공식' 이라는 문장을 직접 말로 설명할 수 있으면 이 챕터 완성.",
+      },
+    ],
+    starterFiles: {
+      "main.py": {
+        name: "main.py",
+        content: `# 🩺 당뇨병 진행도 예측 — 회귀 트리
+# 우측 가이드 패널에서 STEP 을 클릭하면 해당 섹션으로 이동합니다.
+
+import numpy as np
+from sklearn.datasets import load_diabetes
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import r2_score, mean_squared_error
+
+
+## STEP 1: 데이터 로드 + 문제 파악
+diabetes = load_diabetes()
+X, y = diabetes.data, diabetes.target
+print(f"샘플: {X.shape[0]}명, 피처: {X.shape[1]}개 ({diabetes.feature_names})")
+print(f"타깃 범위: {y.min():.0f} ~ {y.max():.0f}, 평균 {y.mean():.1f}")
+
+
+## STEP 2: EDA — 피처 vs 타깃 상관계수
+print("\\n피처별 타깃 상관:")
+for i, name in enumerate(diabetes.feature_names):
+    corr = np.corrcoef(X[:, i], y)[0, 1]
+    bar = "█" * int(abs(corr) * 20)
+    print(f"  {name:>5} {corr:+.3f} {bar}")
+
+
+## STEP 3: train / test 분리 (회귀는 stratify 없음)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.2, random_state=10)
+print(f"\\n훈련 {X_tr.shape[0]} / 테스트 {X_te.shape[0]}")
+
+
+## STEP 4: 회귀 트리 학습 (max_depth=4)
+reg = DecisionTreeRegressor(max_depth=4, random_state=42)
+reg.fit(X_tr, y_tr)
+y_pred = reg.predict(X_te)
+
+
+## STEP 5: R² 와 MSE — 직접 계산 vs 라이브러리
+manual_r2 = 1 - ((y_te - y_pred) ** 2).sum() / ((y_te - y_te.mean()) ** 2).sum()
+sk_r2 = r2_score(y_te, y_pred)
+mse = mean_squared_error(y_te, y_pred)
+print(f"\\nR² (직접)     {manual_r2:.4f}")
+print(f"R² (sklearn)  {sk_r2:.4f}")
+print(f"MSE           {mse:.2f}")
+print(f"RMSE          {mse**0.5:.1f}  ← 평균 오차 크기")
+
+
+## STEP 6: max_depth 튜닝
+best_d, best_r2 = None, -1e9
+print(f"\\n{'max_depth':>10} {'train':>9} {'test':>9}")
+for d in [2, 3, 4, 6, 8, 12, None]:
+    r = DecisionTreeRegressor(max_depth=d, random_state=42).fit(X_tr, y_tr)
+    tr, te = r.score(X_tr, y_tr), r.score(X_te, y_te)
+    if te > best_r2:
+        best_d, best_r2 = d, te
+    label = "None" if d is None else str(d)
+    print(f"{label:>10} {tr:>9.3f} {te:>9.3f}")
+print(f"→ 최적 max_depth = {best_d} (test R² {best_r2:.3f})")
+
+
+## STEP 7: feature_importances_ + 3단 모델 비교
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+
+best_tree = DecisionTreeRegressor(max_depth=best_d, random_state=42).fit(X_tr, y_tr)
+print("\\n🔍 중요 피처:")
+importance = sorted(
+    zip(diabetes.feature_names, best_tree.feature_importances_), key=lambda x: -x[1]
+)
+mx = max(v for _, v in importance) or 1
+for name, val in importance:
+    bar = "█" * int(val / mx * 25)
+    print(f"  {name:>5} {val:.3f} {bar}")
+
+print("\\n🆚 모델 비교:")
+for name, model in [
+    ("LinearRegression", LinearRegression()),
+    (f"DT (d={best_d})",  DecisionTreeRegressor(max_depth=best_d, random_state=42)),
+    ("RF (200, d=6)",     RandomForestRegressor(n_estimators=200, max_depth=6, random_state=42, n_jobs=-1)),
+]:
+    model.fit(X_tr, y_tr)
+    print(f"  {name:<20} train {model.score(X_tr, y_tr):.3f}  test {model.score(X_te, y_te):.3f}")
+`,
+        language: "python",
+      },
+    },
+  },
 ];
 
 export function getProjectById(id: string): Project | undefined {

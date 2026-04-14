@@ -13,6 +13,45 @@
 
 ---
 
+## [3.20.0] - 2026-04-15
+
+### Added — ML 트랙 Ch07 이론·회귀 트리 보강 + 15번째 AI 프로젝트 (아주대 lec06 인사이트)
+외부 대학 강의(아주대 기계학습개론 lec06 — Decision Tree) 자료를 Ch07 에 흡수. 기존 breadth 중심 구성에 **depth (원리 이해) + 회귀 트리** 를 더해 lec06 을 온전히 커버.
+
+**Ch07 '트리와 앙상블' — 이론 섹션 신설**
+- '🧮 트리는 어떻게 분기를 고를까? — 지니와 정보이득' 섹션 신설
+  - 지니 불순도 공식을 평문으로 설명 (완전 순수 → 0, 반반 → 0.5)
+  - numpy 로 지니 함수를 **직접 구현** 하고 순수/반반/편향 3가지 케이스로 값 체감
+  - iris petal_length 를 임계값으로 훑으며 **정보이득 최대점** 직접 탐색 → sklearn 의 루트 분기와 일치함을 확인
+  - criterion='gini' vs 'entropy' vs 'log_loss' 결과 비교
+
+**Ch07 '회귀 트리' 섹션 신설**
+- '🎯 회귀 트리 — 숫자 예측도 트리로' 섹션
+- \`load_diabetes\` + DecisionTreeRegressor: 분류 트리와 **fit/predict 인터페이스가 완전히 동일** 함을 체험
+- max_depth 별 train/test R² 비교 → 회귀에서도 같은 과적합 곡선
+- 회귀 트리의 feature_importances_ 출력 (bmi·s5 가 상위 — 의학적으로 말이 되는 결과)
+- '하나의 공식' 원칙: 모델 클래스만 바뀌고 코드 구조는 동일
+
+**Ch07 퀴즈 +2문항**
+- predict-output: 지니 계산 (반반 분포 → 0.5)
+- 회귀 트리 인터페이스 개념 확인
+
+**15번째 AI 프로젝트 — '당뇨병 진행도 예측 — 회귀 트리' 신설 🩺**
+- 난이도: **intermediate**, 50분 예상
+- 8 STEP: 데이터 로드 → EDA(피처·타깃 상관) → train/test 분리 → DecisionTreeRegressor → **R²·MSE 직접 계산 vs sklearn** → max_depth 튜닝(자동 과적합 진단) → feature_importances + LinearReg/DecisionTree/RandomForest 3단 비교 → 정리
+- 회귀 지표(R², MSE, RMSE)의 의미를 공식·sklearn 양쪽으로 확인
+- 분류 프로젝트(iris-knn) 와 짝을 이루는 **회귀 전용** 프로젝트
+
+### Impact
+- Ch07 이 **breadth 만 있던 상태에서 원리 + 회귀까지 depth 를 확보**
+- 학습자가 '분류·회귀는 같은 공식의 두 얼굴' 이라는 scikit-learn 의 핵심 철학을 체감
+- 회귀 트리가 우리 트랙에 최초 등장 — 비선형 회귀·해석 가능 회귀의 진입점 확보
+
+### 기존 사용자에게
+**새로고침 (Cmd/Ctrl+Shift+R)** → lessonHash 자동 갱신으로 Ch07 신규 섹션이 즉시 반영됩니다.
+
+---
+
 ## [3.19.0] - 2026-04-15
 
 ### Added — ML 실습 트랙 보강 (아주대 lec05 인사이트 반영)
