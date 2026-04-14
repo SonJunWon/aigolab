@@ -107,7 +107,7 @@ export function QuizQuestion({
                     : String.fromCharCode(65 + idx)}
                 </div>
                 <span
-                  className={`text-sm font-mono ${
+                  className={`text-sm font-mono whitespace-pre-line ${
                     submitted && idx === question.correctIndex
                       ? "text-colab-green"
                       : submitted && idx !== selected
