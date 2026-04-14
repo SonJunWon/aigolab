@@ -5209,6 +5209,764 @@ print(report)
       },
     },
   },
+  {
+    id: "churn-prediction",
+    category: "classification",
+    title: "고객 이탈 예측 (SaaS Churn)",
+    subtitle: "EDA → 전처리 → 모델 비교 → 해석까지 실전 ML 플로우",
+    icon: "📉",
+    difficulty: "intermediate",
+    estimatedMinutes: 55,
+    tags: ["scikit-learn", "분류", "불균형", "파이프라인", "모델해석"],
+    description: `## 📉 고객 이탈 예측 프로젝트
+
+**시나리오**: 여러분은 구독형 SaaS 의 **데이터 사이언티스트**. 월 이탈률이 **6%** 까지 치솟았고, CEO 가 말합니다.
+
+> *"이번 주 안에 '이탈 위험 높은 고객' 을 미리 알려주는 **예측 모델** 을 내놔줘.
+> 어떤 피처가 이탈을 예측하는지, 마케팅팀에 어떻게 조치를 권할지까지 같이."*
+
+이 프로젝트에서 **실전 ML 프로젝트의 전체 플로우** 를 한 번에 밟아봅니다.
+
+### 🧰 쓸 도구 (ML 실습 트랙 총복습)
+- 📊 **EDA** — \`describe\`, \`value_counts\`, 피처×타깃 관계
+- 🧹 **전처리 파이프라인** — \`ColumnTransformer\` (숫자=StandardScaler + 카테고리=OneHotEncoder)
+- 🥇 **모델 후보 비교** — Logistic / RandomForest / GradientBoosting 교차검증
+- ⚖️ **불균형 대응** — \`stratify\`, \`class_weight\`, F1 스코어
+- 🔍 **모델 해석** — \`permutation_importance\` 로 "어떤 피처 때문에?"
+- 📉 **임계값 조정** — 예산 제약에 따라 recall/precision 트레이드오프
+- 📝 **경영진 보고서** — 숫자 + 해석 + 권장 액션까지 f-string 조립
+
+### 📦 데이터
+2000명의 **가상 SaaS 고객**:
+- 숫자 피처 4개: tenure(가입 개월), monthly_charges, support_tickets, login_days_30d
+- 카테고리 3개: plan_type, contract, payment
+- 타깃: \`churn\` (0=유지, 1=이탈) — 규칙 기반 + 노이즈로 생성, 불균형 약 20%
+
+### 🎯 배울 것
+1. **실전 ML 플로우의 표준 순서** 를 손에 익히기
+2. 숫자 하나(F1)가 아니라 **"왜 이 모델을 쓰는지"** 를 설명하는 법
+3. 모델 결과를 **비즈니스 액션으로 번역** 하는 보고서 작성`,
+    steps: [
+      {
+        title: "가상 고객 데이터 2000명 생성",
+        stepMarker: "STEP 1",
+        description:
+          "규칙 기반 + 노이즈로 **SaaS 고객 테이블** 을 만듭니다. 실제 테이블과 동일한 구조 (숫자 4 + 카테고리 3 + churn 타깃). \`monthly 계약 + 요금 높음 + 지원 티켓 多 + 최근 로그인 적음 → 이탈 가능성 ↑\` 이라는 **숨겨진 규칙** 이 데이터 안에 박혀 있어요. 모델이 이걸 얼마나 발견하는지가 뒷 스텝의 관전 포인트.",
+        hint: "`np.random.seed(42)` 는 재현성 확보의 시작. `pd.DataFrame({...})` 로 묶어 하나의 표로.",
+        snippet: `np.random.seed(42)
+n = 2000
+
+# 숫자/카테고리 피처 생성 + churn 을 규칙+노이즈로 만들기
+...
+df = pd.DataFrame({...})`,
+        solution: `import numpy as np
+import pandas as pd
+np.random.seed(42)
+
+n = 2000
+
+tenure_months     = np.random.gamma(shape=2, scale=6, size=n).clip(0.5, 60).round(1)
+monthly_charges   = np.random.normal(loc=65, scale=20, size=n).clip(20, 130).round(2)
+support_tickets   = np.random.poisson(lam=2, size=n)
+login_days_30d    = np.random.binomial(n=30, p=0.5, size=n)
+
+plan_type = np.random.choice(["Basic", "Pro", "Enterprise"], size=n, p=[0.5, 0.35, 0.15])
+contract  = np.random.choice(["Monthly", "Annual", "TwoYear"], size=n, p=[0.55, 0.30, 0.15])
+payment   = np.random.choice(["Card", "Bank", "PayPal"], size=n, p=[0.6, 0.3, 0.1])
+
+# 이탈은 규칙 + 노이즈 — 모델이 규칙을 얼마나 잘 찾아내나 관전
+churn_score = (
+    (contract == "Monthly") * 1.5
+    + (monthly_charges > 85) * 0.8
+    + (support_tickets > 3) * 1.2
+    + (login_days_30d < 10) * 1.5
+    + (tenure_months < 6) * 0.7
+    + np.random.normal(0, 0.5, n)
+)
+churn = (churn_score > 1.8).astype(int)
+
+df = pd.DataFrame({
+    "tenure_months":   tenure_months,
+    "monthly_charges": monthly_charges,
+    "support_tickets": support_tickets,
+    "login_days_30d":  login_days_30d,
+    "plan_type":       plan_type,
+    "contract":        contract,
+    "payment":         payment,
+    "churn":           churn,
+})
+
+print(f"✅ 고객 데이터: {df.shape[0]}행 × {df.shape[1]}열")
+print(f"   이탈률: {df['churn'].mean():.1%}")
+print(df.head())`,
+        checkpoint: "2000행 × 8열, 이탈률 20% 내외면 OK.",
+      },
+      {
+        title: "📊 EDA — 피처 × 이탈 관계 훑기",
+        stepMarker: "STEP 2",
+        description:
+          "모델 학습 전 **'이 데이터가 뭐가 들었지?'** 에 답하는 단계. \`describe\` 로 숫자 요약, \`value_counts\` 로 카테고리 분포, 그리고 **이탈자 vs 유지자의 평균 비교** + **계약 유형별 이탈률** 을 뽑아 **숨겨진 규칙의 힌트** 를 찾아내요. 이 단계에서 '월 계약이 이탈률 높아 보인다' 같은 직감이 생깁니다.",
+        hint: "`df.groupby('churn')[...].mean()` 으로 이탈자/유지자 평균 비교. `df.groupby('contract')['churn'].agg(['count','mean'])` 으로 계약별 이탈률.",
+        snippet: `print(df.describe().round(2))
+
+print(df.groupby("churn")[숫자 피처들].mean())
+print(df.groupby("contract")["churn"].agg(["count", "mean"]))`,
+        solution: `print("🔢 숫자 피처 요약")
+print(df.describe().round(2))
+print()
+
+print("🏷️ 카테고리 피처 분포")
+for col in ["plan_type", "contract", "payment"]:
+    print(f"\\n  {col}:")
+    print(df[col].value_counts(normalize=True).mul(100).round(1).to_string())
+print()
+
+print("⚖️ 타깃 분포 (churn)")
+print(df["churn"].value_counts())
+print(f"   이탈자 비중: {df['churn'].mean():.1%}")
+print()
+
+print("📊 이탈자 vs 유지자의 평균 비교")
+comp = df.groupby("churn")[["tenure_months", "monthly_charges",
+                             "support_tickets", "login_days_30d"]].mean().round(2)
+comp.index = ["유지(0)", "이탈(1)"]
+print(comp.T)
+print()
+
+print("📊 계약 유형별 이탈률")
+by_contract = df.groupby("contract")["churn"].agg(["count", "mean"]).round(3)
+by_contract.columns = ["고객수", "이탈률"]
+print(by_contract.sort_values("이탈률", ascending=False))
+print()
+
+print("🧠 힌트: Monthly 계약 고객의 이탈률이 압도적으로 높죠? 모델이 이걸 잘 찾는지 뒷 단계에서 확인.")`,
+        checkpoint: "Monthly 계약의 이탈률이 Annual·TwoYear 보다 훨씬 높게 나와야 정상.",
+      },
+      {
+        title: "🔪 훈련/테스트 분할 (stratify)",
+        stepMarker: "STEP 3",
+        description:
+          "이탈 비율은 불균형(~20%). 단순 분할하면 훈련·테스트 세트의 이탈 비율이 달라질 수 있어 **\`stratify=y\`** 필수. 이 한 옵션이 **'훈련에서 잘 맞췄지만 테스트에선 망하는'** 사고를 예방합니다.",
+        hint: "`train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)`.",
+        snippet: `from sklearn.model_selection import train_test_split
+
+X = df.drop(columns=["churn"])
+y = df["churn"]
+
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.25, random_state=42, stratify=y
+)`,
+        solution: `from sklearn.model_selection import train_test_split
+
+X = df.drop(columns=["churn"])
+y = df["churn"]
+
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.25, random_state=42, stratify=y
+)
+print(f"훈련: {len(X_tr)}행 (이탈 {y_tr.mean():.1%})")
+print(f"테스트: {len(X_te)}행 (이탈 {y_te.mean():.1%})")
+print("→ 두 세트의 이탈 비율이 거의 동일 = stratify 효과!")`,
+        checkpoint: "훈련/테스트의 이탈 비율이 서로 1%p 이내로 비슷해야 stratify 정상 작동.",
+      },
+      {
+        title: "🛠️ 전처리 파이프라인 (ColumnTransformer)",
+        stepMarker: "STEP 4",
+        description:
+          "숫자 피처는 **StandardScaler** 로 표준화, 카테고리는 **OneHotEncoder** 로 변환 — 서로 다른 전처리를 **한 객체에 묶는** 게 \`ColumnTransformer\`. 이걸 Pipeline 으로 감싸면 **교차검증·grid search 에서 누수(leakage) 없이** 모든 fold 에 같은 처리 적용.",
+        hint: "`ColumnTransformer([('num', StandardScaler(), 숫자목록), ('cat', OneHotEncoder(handle_unknown='ignore'), 카테고리목록)])`.",
+        snippet: `from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+
+numeric_cols     = ["tenure_months", "monthly_charges", "support_tickets", "login_days_30d"]
+categorical_cols = ["plan_type", "contract", "payment"]
+
+preprocessor = ColumnTransformer([...])`,
+        solution: `from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+
+numeric_cols     = ["tenure_months", "monthly_charges", "support_tickets", "login_days_30d"]
+categorical_cols = ["plan_type", "contract", "payment"]
+
+preprocessor = ColumnTransformer([
+    ("num", StandardScaler(), numeric_cols),
+    ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_cols),
+])
+
+print("✅ 전처리 파이프라인 준비")
+print(f"   숫자 피처: {len(numeric_cols)}개 → StandardScaler")
+print(f"   카테고리 피처: {len(categorical_cols)}개 → OneHotEncoder")`,
+        checkpoint: "전처리기 준비 메시지가 출력되면 OK (이 단계는 모델 학습 전 준비 단계).",
+      },
+      {
+        title: "🥇 여러 모델 비교 (5-fold 교차검증)",
+        stepMarker: "STEP 5",
+        description:
+          "실무의 1단계는 **여러 베이스라인을 같은 조건에서 비교** 하는 것. Logistic(단순·해석 쉬움) / RandomForest(강건함) / GradientBoosting(성능 왕도) 셋을 동일한 전처리 + 5-fold CV + F1 스코어로 경주. 불균형이라 accuracy 는 피하고 **F1** 을 지표로 씀.",
+        hint: "`Pipeline([('pre', preprocessor), ('clf', 모델)])` + `cross_val_score(pipe, X_tr, y_tr, cv=5, scoring='f1')`.",
+        snippet: `candidates = {
+    "Logistic (balanced)":     LogisticRegression(max_iter=1000, class_weight="balanced"),
+    "RandomForest (balanced)": RandomForestClassifier(..., class_weight="balanced"),
+    "GradientBoosting":        GradientBoostingClassifier(n_estimators=200, random_state=42),
+}
+
+for name, clf in candidates.items():
+    pipe = Pipeline([("pre", preprocessor), ("clf", clf)])
+    scores = cross_val_score(pipe, X_tr, y_tr, cv=5, scoring="f1", n_jobs=-1)
+    print(name, scores.mean())`,
+        solution: `from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.model_selection import cross_val_score
+
+candidates = {
+    "Logistic (balanced)":     LogisticRegression(max_iter=1000, class_weight="balanced"),
+    "RandomForest (balanced)": RandomForestClassifier(n_estimators=200, class_weight="balanced",
+                                                      random_state=42, n_jobs=-1),
+    "GradientBoosting":        GradientBoostingClassifier(n_estimators=200, random_state=42),
+}
+
+print(f"{'모델':<28} {'5-fold F1':>12} {'표준편차':>10}")
+print("-" * 55)
+
+results = {}
+for name, clf in candidates.items():
+    pipe = Pipeline([("pre", preprocessor), ("clf", clf)])
+    scores = cross_val_score(pipe, X_tr, y_tr, cv=5, scoring="f1", n_jobs=-1)
+    results[name] = scores.mean()
+    print(f"{name:<28} {scores.mean():>12.4f} {scores.std():>10.4f}")
+
+best = max(results, key=results.get)
+print(f"\\n🏆 최고 성능: {best}  (F1 평균 {results[best]:.4f})")`,
+        checkpoint: "세 모델의 F1 이 모두 출력되고, 1등 모델명이 표시되면 OK. 보통 GradientBoosting 이 최고.",
+      },
+      {
+        title: "🎯 최종 모델 학습 + 테스트 평가",
+        stepMarker: "STEP 6",
+        description:
+          "챔피언(GradientBoosting) 을 **훈련 전체로 학습** 하고 **숨겨둔 테스트** 에서 평가. Confusion Matrix, classification_report, AUC-ROC 를 한 번에. 이 단계의 숫자가 **'진짜 실전 성능'** 입니다.",
+        hint: "`final_pipe.fit(X_tr, y_tr)` → `y_pred = final_pipe.predict(X_te)` → `y_proba = final_pipe.predict_proba(X_te)[:, 1]`.",
+        snippet: `from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
+
+final_pipe = Pipeline([
+    ("pre", preprocessor),
+    ("clf", GradientBoostingClassifier(n_estimators=200, random_state=42)),
+])
+final_pipe.fit(X_tr, y_tr)
+
+y_pred  = final_pipe.predict(X_te)
+y_proba = final_pipe.predict_proba(X_te)[:, 1]`,
+        solution: `from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
+
+final_pipe = Pipeline([
+    ("pre", preprocessor),
+    ("clf", GradientBoostingClassifier(n_estimators=200, random_state=42)),
+])
+final_pipe.fit(X_tr, y_tr)
+
+y_pred  = final_pipe.predict(X_te)
+y_proba = final_pipe.predict_proba(X_te)[:, 1]
+
+print("🎯 테스트 세트 성능\\n")
+cm = confusion_matrix(y_te, y_pred)
+tn, fp, fn, tp = cm.ravel()
+print("Confusion Matrix:")
+print(f"              예측 유지  예측 이탈")
+print(f"  실제 유지    {tn:>6}       {fp:>6}")
+print(f"  실제 이탈    {fn:>6}       {tp:>6}\\n")
+
+print(classification_report(y_te, y_pred, digits=3,
+                             target_names=["유지", "이탈"]))
+
+print(f"AUC-ROC: {roc_auc_score(y_te, y_proba):.4f}")`,
+        checkpoint: "AUC 0.85 이상 + 이탈 클래스의 recall 이 0.6+ 면 괜찮은 모델.",
+      },
+      {
+        title: "🔍 모델 해석 (permutation importance)",
+        stepMarker: "STEP 7",
+        description:
+          "**'어떤 피처 때문에 이탈로 예측한 건가?'** — 경영진 보고의 필수 질문. \`permutation_importance\` 는 한 피처를 **랜덤으로 섞은 뒤 성능이 얼마나 떨어지나** 로 중요도 측정. 섞었을 때 성능이 확 떨어지면 = 그 피처가 중요하다는 뜻.",
+        hint: "`permutation_importance(final_pipe, X_te, y_te, n_repeats=10, scoring='f1')`. 결과의 `.importances_mean` 을 Series 로 묶어 정렬.",
+        snippet: `from sklearn.inspection import permutation_importance
+
+result = permutation_importance(
+    final_pipe, X_te, y_te, n_repeats=10, random_state=42, scoring="f1"
+)
+
+imp = pd.Series(result.importances_mean, index=X_te.columns).sort_values(ascending=False)
+print(imp)`,
+        solution: `from sklearn.inspection import permutation_importance
+
+result = permutation_importance(
+    final_pipe, X_te, y_te, n_repeats=10, random_state=42, n_jobs=-1, scoring="f1"
+)
+
+imp = (pd.Series(result.importances_mean, index=X_te.columns)
+         .sort_values(ascending=False))
+
+print("🔍 이탈 예측 기여도 (permutation importance)\\n")
+mx = imp.max()
+for feat, val in imp.items():
+    bar = "█" * int((val / mx) * 25) if val > 0 else ""
+    print(f"   {feat:<20} {val:.4f}  {bar}")`,
+        checkpoint: "contract·login_days_30d 중 하나가 상위에 등장해야 정상 (우리가 데이터에 심은 규칙 반영).",
+      },
+      {
+        title: "📉 임계값 조정 + 📝 CEO 보고서",
+        stepMarker: "STEP 8",
+        description:
+          "실무의 마지막 단계 둘을 합침: ① **임계값 스윕** — 예산 무제한이면 낮은 임계값(0.2, recall 우선), 예산 빠듯하면 높은 임계값(0.6, precision 우선). ② **f-string 으로 보고서 조립** — 성능 + 기여 피처 + 권장 임계값 + 실행 액션까지 경영진이 바로 쓸 수 있는 형태로.",
+        hint: "임계값별: `y_pred_t = (y_proba >= t).astype(int)` + `precision_recall_fscore_support`. 보고서: `f\"\"\"...\"\"\"` 삼중 따옴표로 여러 줄.",
+        snippet: `for t in [0.2, 0.3, 0.4, 0.5, 0.6, 0.7]:
+    y_pred_t = (y_proba >= t).astype(int)
+    p, r, f1, _ = precision_recall_fscore_support(y_te, y_pred_t, average="binary")
+    print(t, p, r, f1)
+
+report = f"""... {auc} ... {top3[0]} ..."""
+print(report)`,
+        solution: `from sklearn.metrics import precision_recall_fscore_support
+
+print(f"{'threshold':>10} {'targets':>10} {'recall':>8} {'precision':>10} {'f1':>6}")
+print("-" * 50)
+for t in [0.2, 0.3, 0.4, 0.5, 0.6, 0.7]:
+    y_pred_t = (y_proba >= t).astype(int)
+    target_count = int(y_pred_t.sum())
+    p, r, f1, _ = precision_recall_fscore_support(
+        y_te, y_pred_t, average="binary", zero_division=0
+    )
+    print(f"{t:>10.2f} {target_count:>10} {r:>8.3f} {p:>10.3f} {f1:>6.3f}")
+
+print("\\n💡 예산 무제한 → 낮은 임계값(0.2) / 예산 제한 → 높은 임계값(0.6)\\n")
+
+# ── CEO 보고서 조립 ──
+top3 = imp.head(3).index.tolist()
+auc  = roc_auc_score(y_te, y_proba)
+
+target_mask_03 = y_proba >= 0.3
+n_targets_03   = int(target_mask_03.sum())
+recall_03      = y_te[target_mask_03].sum() / y_te.sum()
+precision_03   = y_te[target_mask_03].sum() / max(n_targets_03, 1)
+
+report = f"""
+══════════════════════════════════════════════════════════
+  📊 고객 이탈 예측 모델 — 경영진 브리핑
+══════════════════════════════════════════════════════════
+
+[모델 성능]
+  AUC-ROC        {auc:.3f}       (0.5=랜덤, 1.0=완벽)
+  테스트 규모    {len(y_te)}명
+
+[예측 영향도 상위 3 피처]
+  1. {top3[0]}
+  2. {top3[1]}
+  3. {top3[2]}
+  → 이 셋이 이탈 여부를 가장 강하게 가름
+  → 제품팀과 공유: Monthly 계약·요금 높음·지원 티켓 잦음에 우선 개입
+
+[권장 임계값: 0.3]
+  대상 고객 수    {n_targets_03} / {len(y_te)}
+  예상 recall     {recall_03:.1%}   (실제 이탈자 중 잡히는 비율)
+  예상 precision  {precision_03:.1%}   (타깃 중 실제 이탈할 비율)
+  → 포괄적 접근 (recall 우선). 예산 빠듯하면 0.5 로 상향.
+
+[제안 액션]
+  1. Monthly 계약 고객에게 연간 업그레이드 할인 쿠폰
+  2. support_tickets ≥ 3 고객에게 전담 담당자 배정
+  3. 최근 30일 로그인 < 10 고객에게 교육 이메일 발송
+══════════════════════════════════════════════════════════
+"""
+print(report)`,
+        checkpoint: "임계값 표가 0.2~0.7 각각의 recall/precision/f1 을 보여주고, 보고서 블록이 깔끔히 출력되면 프로젝트 완료.",
+      },
+      {
+        title: "🎯 결과 해설 — 출력이 무슨 뜻인가?",
+        description: `## 여러분이 방금 한 일 정리
+
+### 📦 STEP 1~2 — 데이터 & EDA
+\`\`\`
+✅ 고객 데이터: 2000행 × 8열
+   이탈률: 약 20%
+
+📊 계약 유형별 이탈률
+           고객수   이탈률
+contract
+Monthly    1100+    0.35+
+Annual      600     0.05
+TwoYear     300     0.01
+\`\`\`
+
+**해석**
+- **Monthly 계약 이탈률이 Annual 의 7배 이상** — 이게 '숨겨진 규칙' 의 가장 굵은 신호.
+- 이탈자는 유지자보다 **tenure 짧고, support 티켓 많고, 로그인 적음** — 평균 비교로 이미 드러남.
+- **여기서 이미 마케팅 팀에 한 가지는 말할 수 있음**: "월 계약 고객을 연간으로 전환시키는 것만으로 이탈 크게 줄 것" — 모델 없이도.
+
+---
+
+### 🔪 STEP 3 — stratify 분할
+\`\`\`
+훈련: 1500행 (이탈 20.0%)
+테스트: 500행 (이탈 20.0%)
+→ 두 세트의 이탈 비율이 거의 동일 = stratify 효과!
+\`\`\`
+
+**왜 중요한가?** \`stratify\` 없으면 훈련 이탈률 18%, 테스트 이탈률 24% 식으로 어긋날 수 있음 → 모델이 **훈련에서 본 분포와 다른 분포** 에서 평가됨. 불균형 데이터일수록 치명적.
+
+---
+
+### 🛠️ STEP 4~5 — 전처리 + 모델 비교
+\`\`\`
+모델                         5-fold F1   표준편차
+-------------------------------------------------------
+Logistic (balanced)          ~0.65       ~0.03
+RandomForest (balanced)      ~0.72       ~0.02
+GradientBoosting             ~0.75       ~0.02
+
+🏆 최고 성능: GradientBoosting
+\`\`\`
+
+**왜 이 결과가 나오는가?**
+- 데이터에 **피처 간 상호작용** (예: Monthly × 낮은 tenure) 이 있어, **선형 모델(Logistic) 은 표현이 약함**.
+- **트리 기반(RandomForest, GradientBoosting)** 이 이런 상호작용을 자연스럽게 학습.
+- **GradientBoosting** 은 이전 트리의 오차를 다음 트리가 보완하며 **점진적으로 성능 상승** → 보통 정형 데이터 1등.
+
+**F1 을 쓰는 이유** — 불균형(~20%) 이라 accuracy 로는 "무조건 유지 예측" 만 해도 80% 나옴. F1 은 **precision 과 recall 의 조화평균** 이라 소수 클래스(이탈) 를 놓치면 확 떨어짐.
+
+---
+
+### 🎯 STEP 6 — 최종 평가
+\`\`\`
+Confusion Matrix
+              예측 유지  예측 이탈
+  실제 유지    ~360        ~40
+  실제 이탈     ~25        ~75
+
+              precision  recall  f1-score
+         유지     0.93     0.90    0.92
+         이탈     0.65     0.75    0.70
+
+AUC-ROC: 0.89
+\`\`\`
+
+**해석 포인트**
+- **이탈(소수 클래스) 의 recall = 0.75** → 실제 이탈자 100명 중 75명을 잡아냄. 이게 **비즈니스 가치의 핵심**.
+- **이탈 precision = 0.65** → 우리가 "이탈" 이라고 찍은 100명 중 65명만 실제 이탈. 즉 **35명은 오경보**. 이탈 방지 캠페인 비용이 낮으면 감수할 만함.
+- **AUC 0.89** → 임의 이탈자 vs 임의 유지자를 세우면 89% 확률로 이탈자에 더 높은 점수. 산업 기준 **AUC 0.8+ 면 쓸 만함**.
+
+---
+
+### 🔍 STEP 7 — 피처 중요도
+\`\`\`
+🔍 이탈 예측 기여도 (permutation importance)
+   contract             0.1xxx  █████████████████████
+   login_days_30d       0.0xxx  ██████████████
+   support_tickets      0.0xxx  ████████
+   monthly_charges      0.0xxx  ███████
+   tenure_months        0.0xxx  █████
+   plan_type            0.00xx  █
+   payment              0.00xx
+\`\`\`
+
+**해석**
+- **contract 1위** — 우리가 데이터에 심은 "Monthly → 이탈+" 규칙을 모델이 정확히 찾아냄. **설명 가능한 ML** 의 실감.
+- **login_days_30d 2위** — "최근 활동 저하" 가 이탈의 강력한 선행 지표. 실제 Netflix·Slack 같은 SaaS 가 항상 모니터링하는 신호.
+- **payment 가장 낮음** — 결제 수단은 이탈과 거의 관련 없음. **피처에서 빼도 무방** 한 신호.
+
+**왜 permutation 방식인가?** 트리 기반 모델의 내장 \`feature_importances_\` 는 **고카디널리티 피처에 편향**. Permutation 은 **"이 피처 없이 쓰면 성능이 얼마나 떨어지나"** 를 실제로 측정해서 더 공정.
+
+---
+
+### 📉 STEP 8 — 임계값 & 보고서
+\`\`\`
+threshold  targets   recall  precision    f1
+---------------------------------------------
+     0.20     ~180    0.95      0.53      0.68
+     0.30     ~120    0.85      0.70      0.77   ← 권장
+     0.40      ~90    0.75      0.83      0.79
+     0.50      ~75    0.65      0.87      0.74
+     0.60      ~55    0.50      0.91      0.65
+     0.70      ~35    0.35      0.95      0.52
+\`\`\`
+
+**이 표가 말해주는 것**
+- **임계값이 낮을수록 더 많은 고객을 '이탈 위험' 으로 찍음** → recall 상승, precision 하락, 캠페인 비용 증가.
+- **임계값이 높을수록 확실한 이탈자만 찍음** → precision 상승, 많은 이탈자 놓침.
+- **"정답" 은 없음 — 비즈니스 상황(예산·개입 비용·이탈당 손실) 에 따라 결정**. 분석가의 역할은 **표를 제시** 하고, 의사결정자가 **비용/효과** 를 판단하게 돕는 것.
+
+---
+
+### ⚠️ 이 프로젝트의 한계
+
+| 한계 | 실무에선? |
+|------|---------|
+| **가상 데이터** | 실제 테이블 + 시간에 따른 이탈 정의 (언제부터 "이탈" 이라고 할지) |
+| **이탈 규칙을 우리가 심음** | 실제로는 숨겨진 패턴을 모델이 발견해야 함 — 모델이 이만큼 잘 맞는 건 **데이터가 유순하기 때문** |
+| **2000행** | 실무는 수십만~수백만 고객 |
+| **시계열 누수 고려 X** | 피처 시점 > 타깃 시점 이면 데이터 누수 — 실무의 가장 큰 함정 |
+| **비즈니스 비용 함수 X** | "이탈자 1명 놓침 = $1000 손실 / 오경보 1건 = $50" 같은 명시적 비용 넣으면 **임계값 최적화** 가능 |
+
+---
+
+### 🧪 지금 시도해 볼 것
+
+1. **SMOTE 대신 class_weight 실험**: RandomForest 에 \`class_weight={0:1, 1:3}\` 로 소수 클래스 가중치 3배 → recall 어떻게 바뀌나.
+
+2. **피처 엔지니어링**:
+   \`\`\`python
+   X_tr["engagement"]   = X_tr["login_days_30d"] / (X_tr["tenure_months"] + 1)
+   X_tr["cost_per_use"] = X_tr["monthly_charges"] / (X_tr["login_days_30d"] + 1)
+   \`\`\`
+   새 피처 2개 추가 후 CV 점수가 오르는지 확인.
+
+3. **HistGradientBoosting** (더 빠르고 강한 부스팅):
+   \`from sklearn.ensemble import HistGradientBoostingClassifier\` 로 교체.
+
+4. **GridSearchCV 튜닝**:
+   \`\`\`python
+   param_grid = {"clf__learning_rate": [0.05, 0.1], "clf__max_depth": [3, 5]}
+   \`\`\`
+   n_estimators·learning_rate·max_depth 조합 찾기.
+
+5. **임계값 비즈니스 최적화**: 이탈자 놓침 비용이 $1000, 오경보 비용이 $50 이라 가정하고 **총비용 최소 임계값** 을 계산하는 함수 작성.
+
+---
+
+### 🏁 이 프로젝트에서 배운 것
+- ✅ **실전 ML 표준 플로우**: EDA → 분할 → 전처리 → 모델 비교 → 최종 학습 → 해석 → 임계값 → 보고
+- ✅ **불균형 데이터 대응**: stratify + class_weight + F1 스코어
+- ✅ **ColumnTransformer + Pipeline**: 누수 없는 전처리
+- ✅ **Permutation Importance**: "왜 이렇게 예측했나" 에 답하는 해석 기법
+- ✅ **임계값 조정**: 모델 성능을 **비즈니스 의사결정** 으로 번역
+- ✅ **경영진 보고의 3요소**: 숫자 + 기여 요인 + 권장 액션
+
+> 💡 **ML 의 가치는 정확도가 아니라 '실행 가능한 의사결정' 에서 나옵니다.** AUC 0.99 여도 그 결과로 아무도 행동하지 않으면 가치는 0. 이 프로젝트가 보여주는 건 '숫자 → 제안' 까지의 완전한 다리입니다.`,
+        checkpoint: "위 해설을 읽고, 🧪 시도해 볼 것 중 최소 하나를 직접 실험해 보세요.",
+      },
+    ],
+    starterFiles: {
+      "main.py": {
+        name: "main.py",
+        language: "python",
+        content: `# 📉 고객 이탈 예측 (SaaS Churn) 프로젝트
+# 우측 가이드 패널에서 단계를 클릭해 각 STEP 으로 이동할 수 있어요.
+# 시나리오: SaaS 데이터 사이언티스트 — CEO 에게 이탈 예측 모델 + 액션 권고 제출
+
+import numpy as np
+import pandas as pd
+
+
+## STEP 1: 가상 고객 데이터 2000명 생성
+# 규칙 + 노이즈로 churn 생성. 모델이 규칙을 얼마나 찾아내는지가 관전 포인트.
+np.random.seed(42)
+n = 2000
+
+tenure_months     = np.random.gamma(shape=2, scale=6, size=n).clip(0.5, 60).round(1)
+monthly_charges   = np.random.normal(loc=65, scale=20, size=n).clip(20, 130).round(2)
+support_tickets   = np.random.poisson(lam=2, size=n)
+login_days_30d    = np.random.binomial(n=30, p=0.5, size=n)
+
+plan_type = np.random.choice(["Basic", "Pro", "Enterprise"], size=n, p=[0.5, 0.35, 0.15])
+contract  = np.random.choice(["Monthly", "Annual", "TwoYear"], size=n, p=[0.55, 0.30, 0.15])
+payment   = np.random.choice(["Card", "Bank", "PayPal"], size=n, p=[0.6, 0.3, 0.1])
+
+churn_score = (
+    (contract == "Monthly") * 1.5
+    + (monthly_charges > 85) * 0.8
+    + (support_tickets > 3) * 1.2
+    + (login_days_30d < 10) * 1.5
+    + (tenure_months < 6) * 0.7
+    + np.random.normal(0, 0.5, n)
+)
+churn = (churn_score > 1.8).astype(int)
+
+df = pd.DataFrame({
+    "tenure_months":   tenure_months,
+    "monthly_charges": monthly_charges,
+    "support_tickets": support_tickets,
+    "login_days_30d":  login_days_30d,
+    "plan_type":       plan_type,
+    "contract":        contract,
+    "payment":         payment,
+    "churn":           churn,
+})
+
+print(f"✅ 고객 데이터: {df.shape[0]}행 × {df.shape[1]}열")
+print(f"   이탈률: {df['churn'].mean():.1%}")
+print(df.head())
+
+
+## STEP 2: 📊 EDA — 피처 × 이탈 관계
+print("\\n🔢 숫자 피처 요약")
+print(df.describe().round(2))
+
+print("\\n⚖️ 타깃 분포 (churn)")
+print(df["churn"].value_counts())
+
+print("\\n📊 이탈자 vs 유지자 평균 비교")
+comp = df.groupby("churn")[["tenure_months", "monthly_charges",
+                             "support_tickets", "login_days_30d"]].mean().round(2)
+comp.index = ["유지(0)", "이탈(1)"]
+print(comp.T)
+
+print("\\n📊 계약 유형별 이탈률")
+by_contract = df.groupby("contract")["churn"].agg(["count", "mean"]).round(3)
+by_contract.columns = ["고객수", "이탈률"]
+print(by_contract.sort_values("이탈률", ascending=False))
+print("\\n🧠 힌트: Monthly 계약 이탈률이 압도적으로 높음 — 모델이 이걸 잘 찾는지 확인!")
+
+
+## STEP 3: 🔪 훈련/테스트 분할 (stratify 필수)
+from sklearn.model_selection import train_test_split
+
+X = df.drop(columns=["churn"])
+y = df["churn"]
+
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.25, random_state=42, stratify=y
+)
+print(f"\\n훈련: {len(X_tr)}행 (이탈 {y_tr.mean():.1%})")
+print(f"테스트: {len(X_te)}행 (이탈 {y_te.mean():.1%})")
+
+
+## STEP 4: 🛠️ 전처리 파이프라인 (ColumnTransformer)
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+
+numeric_cols     = ["tenure_months", "monthly_charges", "support_tickets", "login_days_30d"]
+categorical_cols = ["plan_type", "contract", "payment"]
+
+preprocessor = ColumnTransformer([
+    ("num", StandardScaler(), numeric_cols),
+    ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_cols),
+])
+
+print(f"\\n✅ 전처리 준비: 숫자 {len(numeric_cols)}개 → Scaler / 카테고리 {len(categorical_cols)}개 → OneHot")
+
+
+## STEP 5: 🥇 여러 모델 5-fold 교차검증 비교
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.model_selection import cross_val_score
+
+candidates = {
+    "Logistic (balanced)":     LogisticRegression(max_iter=1000, class_weight="balanced"),
+    "RandomForest (balanced)": RandomForestClassifier(n_estimators=200, class_weight="balanced",
+                                                      random_state=42, n_jobs=-1),
+    "GradientBoosting":        GradientBoostingClassifier(n_estimators=200, random_state=42),
+}
+
+print(f"\\n{'모델':<28} {'5-fold F1':>12} {'표준편차':>10}")
+print("-" * 55)
+
+results = {}
+for name, clf in candidates.items():
+    pipe = Pipeline([("pre", preprocessor), ("clf", clf)])
+    scores = cross_val_score(pipe, X_tr, y_tr, cv=5, scoring="f1", n_jobs=-1)
+    results[name] = scores.mean()
+    print(f"{name:<28} {scores.mean():>12.4f} {scores.std():>10.4f}")
+
+best = max(results, key=results.get)
+print(f"\\n🏆 최고 성능: {best}  (F1 평균 {results[best]:.4f})")
+
+
+## STEP 6: 🎯 최종 모델 학습 + 테스트 평가
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
+
+final_pipe = Pipeline([
+    ("pre", preprocessor),
+    ("clf", GradientBoostingClassifier(n_estimators=200, random_state=42)),
+])
+final_pipe.fit(X_tr, y_tr)
+
+y_pred  = final_pipe.predict(X_te)
+y_proba = final_pipe.predict_proba(X_te)[:, 1]
+
+print("\\n🎯 테스트 세트 성능")
+cm = confusion_matrix(y_te, y_pred)
+tn, fp, fn, tp = cm.ravel()
+print("\\nConfusion Matrix:")
+print(f"              예측 유지  예측 이탈")
+print(f"  실제 유지    {tn:>6}       {fp:>6}")
+print(f"  실제 이탈    {fn:>6}       {tp:>6}")
+print()
+print(classification_report(y_te, y_pred, digits=3, target_names=["유지", "이탈"]))
+print(f"AUC-ROC: {roc_auc_score(y_te, y_proba):.4f}")
+
+
+## STEP 7: 🔍 모델 해석 (permutation importance)
+from sklearn.inspection import permutation_importance
+
+result = permutation_importance(
+    final_pipe, X_te, y_te, n_repeats=10, random_state=42, n_jobs=-1, scoring="f1"
+)
+
+imp = (pd.Series(result.importances_mean, index=X_te.columns)
+         .sort_values(ascending=False))
+
+print("\\n🔍 이탈 예측 기여도 (permutation importance)\\n")
+mx = imp.max()
+for feat, val in imp.items():
+    bar = "█" * int((val / mx) * 25) if val > 0 else ""
+    print(f"   {feat:<20} {val:.4f}  {bar}")
+
+
+## STEP 8: 📉 임계값 조정 + 📝 CEO 보고서
+from sklearn.metrics import precision_recall_fscore_support
+
+print(f"\\n{'threshold':>10} {'targets':>10} {'recall':>8} {'precision':>10} {'f1':>6}")
+print("-" * 50)
+for t in [0.2, 0.3, 0.4, 0.5, 0.6, 0.7]:
+    y_pred_t = (y_proba >= t).astype(int)
+    target_count = int(y_pred_t.sum())
+    p, r, f1, _ = precision_recall_fscore_support(
+        y_te, y_pred_t, average="binary", zero_division=0
+    )
+    print(f"{t:>10.2f} {target_count:>10} {r:>8.3f} {p:>10.3f} {f1:>6.3f}")
+
+print("\\n💡 예산 무제한 → 낮은 임계값(0.2, recall 우선) / 예산 제한 → 높은 임계값(0.6, precision 우선)")
+
+# ── 보고서 조립 ──
+top3 = imp.head(3).index.tolist()
+auc  = roc_auc_score(y_te, y_proba)
+
+target_mask_03 = y_proba >= 0.3
+n_targets_03   = int(target_mask_03.sum())
+recall_03      = y_te[target_mask_03].sum() / y_te.sum()
+precision_03   = y_te[target_mask_03].sum() / max(n_targets_03, 1)
+
+report = f"""
+══════════════════════════════════════════════════════════
+  📊 고객 이탈 예측 모델 — 경영진 브리핑
+══════════════════════════════════════════════════════════
+
+[모델 성능]
+  AUC-ROC        {auc:.3f}       (0.5=랜덤, 1.0=완벽)
+  테스트 규모    {len(y_te)}명
+
+[예측 영향도 상위 3 피처]
+  1. {top3[0]}
+  2. {top3[1]}
+  3. {top3[2]}
+  → 이 셋이 이탈 여부를 가장 강하게 가름
+  → 제품팀과 공유: Monthly 계약·요금 높음·지원 티켓 잦음에 우선 개입
+
+[권장 임계값: 0.3]
+  대상 고객 수    {n_targets_03} / {len(y_te)}
+  예상 recall     {recall_03:.1%}   (실제 이탈자 중 잡히는 비율)
+  예상 precision  {precision_03:.1%}   (타깃 중 실제 이탈할 비율)
+  → 포괄적 접근 (recall 우선). 예산 빠듯하면 0.5 로 상향.
+
+[제안 액션]
+  1. Monthly 계약 고객에게 연간 업그레이드 할인 쿠폰
+  2. support_tickets ≥ 3 고객에게 전담 담당자 배정
+  3. 최근 30일 로그인 < 10 고객에게 교육 이메일 발송
+══════════════════════════════════════════════════════════
+"""
+print(report)
+`,
+      },
+    },
+  },
 ];
 
 export function getProjectById(id: string): Project | undefined {

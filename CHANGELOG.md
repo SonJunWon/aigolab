@@ -13,6 +13,41 @@
 
 ---
 
+## [3.13.0] - 2026-04-14
+
+### Added — B2: 고객 이탈 예측 프로젝트 (13번째 AI 프로젝트)
+ML 실습 트랙 Ch10 (SaaS Churn 예측) 을 프로젝트 IDE 모드로 이식.
+
+**새 프로젝트**: `churn-prediction` (카테고리: classification)
+- 시나리오: SaaS 데이터 사이언티스트 → CEO 에게 이탈 예측 모델 + 액션 권고 브리핑
+- 8 STEP + 🎯 결과 해설
+  - STEP 1: 가상 고객 2000명 생성 (규칙 + 노이즈로 churn 타깃)
+  - STEP 2: 📊 EDA — 피처 × 이탈 관계 + 계약 유형별 이탈률
+  - STEP 3: 🔪 훈련/테스트 분할 (`stratify=y` 필수)
+  - STEP 4: 🛠️ 전처리 파이프라인 (ColumnTransformer: Scaler + OneHot)
+  - STEP 5: 🥇 모델 3종 5-fold CV 비교 (Logistic / RF / GradientBoosting, F1 스코어)
+  - STEP 6: 🎯 최종 모델 학습 + Confusion Matrix + AUC-ROC
+  - STEP 7: 🔍 permutation_importance 로 모델 해석
+  - STEP 8: 📉 임계값 스윕 + 📝 CEO 경영진 보고서 f-string 조립
+  - 🎯 결과 해설: 각 스텝의 숫자 해석 + 한계 표 + 5가지 시도 변형
+
+**ML 실습 트랙 총복습 체감**:
+- **불균형 데이터 대응**: stratify + class_weight + F1
+- **누수 없는 파이프라인**: ColumnTransformer + Pipeline
+- **모델 해석**: permutation_importance ("왜 이렇게 예측했나")
+- **임계값 조정**: precision/recall 트레이드오프를 비즈니스 의사결정에 연결
+- **경영진 보고**: 숫자 + 기여 요인 + 권장 액션까지 f-string 조립
+
+### Why
+- 기존 레슨(Ch10) 은 **노트북 스타일 이론 흐름** — 읽기는 좋지만 "직접 짜는 체감" 부족
+- 프로젝트 IDE 모드에선 STEP 단위 **힌트→스니펫→정답 점진 공개 + 결과 해설** 제공
+- 레슨(이론) + 프로젝트(실습) 이중 트랙 — B1 (v3.12.0) 과 동일한 구조
+
+### 콘텐츠 현황
+- AI 프로젝트 **13개** (classification 4개·NLP 4개·unsupervised 2개·timeseries 1개·anomaly 1개·generative(nlp편입)·data-analysis 1개)
+
+---
+
 ## [3.12.0] - 2026-04-14
 
 ### Added — B1: e-commerce EDA 프로젝트 (12번째 AI 프로젝트)
