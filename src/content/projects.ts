@@ -6597,6 +6597,361 @@ for name, model in [
       },
     },
   },
+  {
+    id: "iris-pca",
+    category: "unsupervised",
+    title: "아이리스 PCA — 4차원 꽃을 2D로 펼치기",
+    subtitle: "주성분 분석으로 차원 축소의 마법 체험",
+    icon: "🌌",
+    difficulty: "intermediate",
+    estimatedMinutes: 50,
+    tags: ["scikit-learn", "PCA", "차원 축소", "비지도 학습", "matplotlib", "SVD"],
+    description: `## 🌌 아이리스 PCA — 4D 를 2D 로 펼치기
+
+**목표**: iris 의 4차원 측정치를 **주성분 분석 (PCA)** 으로 2차원 평면에 투영해서, 3종의 꽃이 어떻게 갈라지는지 **눈으로 확인** 합니다.
+
+> "데이터가 4차원이다" 라는 말은 직관적으로 와닿지 않아요. 산점도에 점 하나를 찍으려면 최대 3차원까지만 가능. PCA 는 **정보를 최대한 보존하면서 차원을 낮추는** 가장 유명한 기법이에요.
+
+### 이 프로젝트의 가치
+- **시각화 불가능한 고차원 데이터를 눈에 보이게** — 탐색적 분석의 출발점
+- **SVD 블랙박스 분해** — numpy 로 직접 구현해 원리 체감
+- **sklearn PCA** — 실전 한 줄 API 와 수동 구현을 대조
+- **biplot 해석** — 어떤 원 특성이 어떤 주성분에 기여하는지
+
+### 배울 것
+- **차원의 저주** 가 실제로 무엇을 의미하는지
+- \`np.linalg.svd\` 로 PCA 를 **손으로 조립**
+- \`sklearn.decomposition.PCA\` 의 실전 사용
+- \`explained_variance_ratio_\` — 정보 보존 정도
+- **Loadings** 와 **Biplot** — 원 특성의 기여도 해석
+- PCA 의 **함정** (표준화, 선형만)`,
+    steps: [
+      {
+        title: "문제 이해 — 왜 PCA 가 필요한가",
+        stepMarker: "STEP 1",
+        description:
+          "iris 는 꽃받침 길이·너비, 꽃잎 길이·너비 **4개 측정치** 로 종을 구별합니다. 2개 특성만 고르면 산점도를 그릴 수 있지만, **모든 특성이 기여하는 그림** 을 보려면? 그게 PCA.",
+        hint: "우선 데이터를 불러와서 shape 과 특성 이름, 클래스 이름을 확인하세요.",
+        snippet: `from sklearn.datasets import load_iris
+iris = load_iris()`,
+        solution: `from sklearn.datasets import load_iris
+import numpy as np
+
+iris = load_iris()
+X, y = iris.data, iris.target
+print(f"데이터 shape: {X.shape}   → {X.shape[1]}차원")
+print(f"특성: {iris.feature_names}")
+print(f"클래스: {list(iris.target_names)}")
+print(f"\\n문제: 이 4차원 데이터를 '한 장의 산점도' 로 그리고 싶다!")
+print(f"      → 2D 로 투영해야 하는데, 어떻게 해야 정보 손실이 최소일까?")`,
+      },
+      {
+        title: "표준화 — PCA 는 왜 스케일에 민감한가",
+        stepMarker: "STEP 2",
+        description:
+          "PCA 는 **분산이 큰 방향** 을 찾는 알고리즘. 만약 한 특성의 값 범위가 다른 특성의 100배라면 그 특성이 분산을 독점해 주성분이 사실상 그 하나의 특성이 되어버려요. 그래서 PCA 전에 **반드시 표준화**.",
+        hint: "`StandardScaler` 로 각 특성을 평균 0·표준편차 1 로 정렬. iris 는 스케일 차이가 작지만 습관들이세요.",
+        snippet: `from sklearn.preprocessing import StandardScaler
+X_scaled = StandardScaler().fit_transform(X)`,
+        solution: `from sklearn.preprocessing import StandardScaler
+
+print(f"원 데이터 각 특성의 범위:")
+for i, name in enumerate(iris.feature_names):
+    print(f"  {name:<22} min={X[:, i].min():.2f}  max={X[:, i].max():.2f}  std={X[:, i].std():.2f}")
+
+X_scaled = StandardScaler().fit_transform(X)
+
+print(f"\\n표준화 후:")
+for i, name in enumerate(iris.feature_names):
+    print(f"  {name:<22} mean={X_scaled[:, i].mean():+.3f}  std={X_scaled[:, i].std():.3f}")
+print(f"\\n→ 모든 특성이 같은 '무게' 로 PCA 에 참여하게 됨")`,
+        checkpoint: "표준화 후 모든 특성의 mean ≈ 0, std ≈ 1 이면 정상.",
+      },
+      {
+        title: "SVD 로 PCA 손으로 조립",
+        stepMarker: "STEP 3",
+        description: `**블랙박스를 열어보는 스텝**. sklearn PCA 가 내부에서 하는 일을 numpy 로 그대로 재현:
+
+- \`X_scaled = U · Σ · Vᵀ\` (SVD 분해)
+- V 의 열 = 주축 벡터 (PC 방향)
+- Σ = 특이값 (PC 의 '크기')
+- **scores** = U · diag(Σ) = 새 좌표계에서의 점들`,
+        hint: "`np.linalg.svd(X_scaled, full_matrices=False)` 는 U, S, VT 3 개를 반환.",
+        snippet: `U, S, VT = np.linalg.svd(X_scaled, full_matrices=False)
+scores_manual = U @ np.diag(S)`,
+        solution: `# SVD 분해
+U, S, VT = np.linalg.svd(X_scaled, full_matrices=False)
+
+print(f"U shape:  {U.shape}    ← 샘플 × 성분")
+print(f"S shape:  {S.shape}       ← 특이값 (내림차순)")
+print(f"VT shape: {VT.shape}      ← 성분 × 특성")
+print(f"\\n특이값 S: {np.round(S, 3)}")
+
+# 주성분 점수 (scores) — 원 데이터를 새 축에 투영한 것
+scores_manual = U @ np.diag(S)
+print(f"\\nscores (새 좌표) shape: {scores_manual.shape}")
+print(f"\\n처음 5 샘플의 PC1, PC2 좌표:")
+for i in range(5):
+    print(f"  샘플 {i}: PC1={scores_manual[i,0]:+.3f}  PC2={scores_manual[i,1]:+.3f}  (실제 종: {iris.target_names[y[i]]})")`,
+      },
+      {
+        title: "sklearn PCA 와 결과 비교",
+        stepMarker: "STEP 4",
+        description:
+          "직접 계산한 게 맞는지 검증하려면 **같은 답을 내야 하는 다른 구현** 과 비교. \`sklearn.decomposition.PCA\` 는 내부적으로 정확히 같은 SVD 를 씁니다.",
+        hint: "부호는 뒤집힐 수 있어요 (+v 나 -v 는 같은 축). 절대값으로 비교하세요.",
+        snippet: `from sklearn.decomposition import PCA
+pca = PCA(n_components=2)
+scores_sklearn = pca.fit_transform(X_scaled)`,
+        solution: `from sklearn.decomposition import PCA
+
+pca = PCA(n_components=2)
+scores_sklearn = pca.fit_transform(X_scaled)
+
+print(f"sklearn explained_variance_ratio_: {pca.explained_variance_ratio_.round(4)}")
+print(f"sklearn 누적:                       {pca.explained_variance_ratio_.sum():.4f}")
+
+# 내가 직접 계산한 것
+n = X_scaled.shape[0]
+ratio_manual = (S**2 / (n - 1)) / (S**2 / (n - 1)).sum()
+print(f"\\n수동 계산 explained ratio (상위 2): {ratio_manual[:2].round(4)}")
+print(f"수동 누적:                           {ratio_manual[:2].sum():.4f}")
+
+# 절대값 차이
+diff = np.abs(np.abs(scores_sklearn) - np.abs(scores_manual[:, :2])).max()
+print(f"\\n두 결과의 최대 차이: {diff:.2e}   ← 0 에 매우 가까우면 완벽히 일치")`,
+        checkpoint: "두 방법의 explained_variance_ratio_ 가 일치하고 차이가 1e-10 수준이면 OK.",
+      },
+      {
+        title: "설명 분산 비율 — 2D 로 압축해도 괜찮을까?",
+        stepMarker: "STEP 5",
+        description:
+          "4 개 주성분 중 상위 2 개로 얼마나 정보가 보존되는지 확인. iris 는 **PC1+PC2 만으로 95% 이상** 을 설명해서 2D 투영이 매우 효과적인 예시.",
+        hint: "PCA() 를 n_components 없이 호출하면 모든 성분을 계산. np.cumsum 으로 누적 비율.",
+        snippet: `pca_full = PCA().fit(X_scaled)
+cumulative = np.cumsum(pca_full.explained_variance_ratio_)`,
+        solution: `pca_full = PCA().fit(X_scaled)
+ratios = pca_full.explained_variance_ratio_
+cumulative = np.cumsum(ratios)
+
+print(f"{'PC':>4} {'분산 비율':>10} {'누적':>8}")
+print("-" * 35)
+for i, (r, c) in enumerate(zip(ratios, cumulative), 1):
+    bar = "█" * int(r * 30)
+    print(f"PC{i:>2} {r:>9.1%} {c:>7.1%}  {bar}")
+
+print(f"\\n→ PC1 + PC2 만으로 {cumulative[1]:.1%} 정보 보존")
+print(f"  나머지 PC3, PC4 는 버려도 거의 손해가 없음")`,
+      },
+      {
+        title: "2D 산점도 — 3 종이 갈라지는 순간",
+        stepMarker: "STEP 6",
+        description:
+          "이 스텝이 이 프로젝트의 **하이라이트**. 4차원 데이터를 2D 평면에 뿌려서 **3 종이 눈으로 갈라지는** 것을 확인하세요. Pyodide 환경에서 `plt.show()` 없이 자동 렌더링됩니다.",
+        hint: "각 클래스 마스크를 만들어 색/마커를 다르게 plt.scatter. 축 라벨에 설명분산비율을 포함하면 전문가 느낌.",
+        snippet: `import matplotlib.pyplot as plt
+plt.figure(figsize=(7, 5))
+for i, name in enumerate(iris.target_names):
+    mask = y == i`,
+        solution: `import matplotlib.pyplot as plt
+
+plt.figure(figsize=(7, 5))
+colors  = ["#e74c3c", "#2ecc71", "#3498db"]
+markers = ["o", "s", "^"]
+
+for i, name in enumerate(iris.target_names):
+    mask = y == i
+    plt.scatter(
+        scores_sklearn[mask, 0], scores_sklearn[mask, 1],
+        c=colors[i], marker=markers[i],
+        label=name, s=70, alpha=0.75, edgecolor="white", linewidth=1.2,
+    )
+
+plt.xlabel(f"PC1 ({pca.explained_variance_ratio_[0]*100:.1f}%)")
+plt.ylabel(f"PC2 ({pca.explained_variance_ratio_[1]*100:.1f}%)")
+plt.title("Iris — 4차원 꽃을 2D 평면에 투영")
+plt.legend(title="종", loc="best")
+plt.grid(alpha=0.3)
+plt.tight_layout()`,
+        checkpoint: "setosa(빨강) 가 왼쪽에 뚜렷하게 분리되고 versicolor/virginica 가 오른쪽에 일부 겹치면 정상.",
+      },
+      {
+        title: "Biplot — 원 특성이 어느 PC 에 기여했나",
+        stepMarker: "STEP 7",
+        description: `**Biplot** 은 산점도 위에 **loading 벡터** 를 화살표로 겹쳐 그린 그림. 원 특성이 PC 공간에서 어느 방향으로 증가하는지 한눈에 보입니다.
+
+읽는 법:
+- 화살표 **방향** — 그 특성이 증가하는 방향
+- 화살표 **길이** — PC1/PC2 에 대한 기여도
+- 같은 방향의 화살표들은 **상관이 높은 특성**`,
+        hint: "loadings = VT[:2].T  또는  pca.components_.T. plt.arrow 로 각 특성에 화살표.",
+        snippet: `loadings = VT[:2].T
+fig, ax = plt.subplots(figsize=(7, 5))`,
+        solution: `loadings = VT[:2].T   # (4, 2) — 특성별 (PC1 기여, PC2 기여)
+
+print(f"{'특성':<25} {'PC1':>8} {'PC2':>8}")
+print("-" * 45)
+for name, (l1, l2) in zip(iris.feature_names, loadings):
+    print(f"{name:<25} {l1:>+8.3f} {l2:>+8.3f}")
+
+# Biplot
+fig, ax = plt.subplots(figsize=(7, 5))
+
+# 먼저 scores 점들을 흐릿하게
+for i, name in enumerate(iris.target_names):
+    mask = y == i
+    ax.scatter(
+        scores_sklearn[mask, 0], scores_sklearn[mask, 1],
+        c=colors[i], marker=markers[i], s=40, alpha=0.4,
+        label=name, edgecolor="white",
+    )
+
+# 그 위에 loading 화살표 (스케일 맞춰 증폭)
+scale = 3.0
+for name, (l1, l2) in zip(iris.feature_names, loadings):
+    ax.arrow(0, 0, l1 * scale, l2 * scale,
+             head_width=0.1, color="black", length_includes_head=True, alpha=0.9)
+    ax.text(l1 * scale * 1.18, l2 * scale * 1.18, name.replace(" (cm)", ""),
+            fontsize=9, ha="center", color="black",
+            bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.7))
+
+ax.axhline(0, color="gray", lw=0.5)
+ax.axvline(0, color="gray", lw=0.5)
+ax.set_xlabel(f"PC1 ({pca.explained_variance_ratio_[0]*100:.1f}%)")
+ax.set_ylabel(f"PC2 ({pca.explained_variance_ratio_[1]*100:.1f}%)")
+ax.set_title("Iris PCA Biplot — 점 + loading 화살표")
+ax.legend(loc="best")
+ax.grid(alpha=0.3)
+plt.tight_layout()`,
+      },
+      {
+        title: "🎯 정리 — PCA 의 가치와 한계",
+        description: `## 이 프로젝트에서 확인한 것
+
+### ✅ PCA 는 '축을 갈아끼우는' 도구
+원 특성이 4 개든 100 개든, PCA 는 **분산이 가장 큰 방향들** 을 새 좌표계로 삼아 정보를 최대한 지키며 차원을 낮춥니다.
+
+### ✅ SVD = PCA 의 엔진
+\`np.linalg.svd\` 로 직접 구현해봤듯, PCA 는 특별한 마법이 아니라 **선형대수의 고전 분해** 에 기반합니다. sklearn 의 \`pca.fit_transform\` 은 이 SVD 를 한 줄로 감싼 것.
+
+### ✅ 설명 분산 비율로 '얼마나 버릴지' 판단
+iris 는 PC1+PC2 로 ~95% — 2D 로 충분. wine (13D) 이나 digits (64D) 는 더 많은 PC 가 필요. **누적 95%** 가 실무의 대표적 기준선.
+
+### ✅ Biplot 으로 '누가 기여했나' 해석
+- iris biplot 에선 **petal length/width** 가 PC1 에 크게 기여 → 종 구별의 주역
+- 이 관찰이 **lec05 에서 본 "petal 이 중요하다"** 와 일치 → PCA 와 DT feature_importances 가 같은 결론
+
+### ⚠️ PCA 의 함정
+| 함정 | 왜 |
+|---|---|
+| **표준화 필수** | 스케일 큰 특성이 분산 독점 |
+| **선형만** | 곡선 구조는 못 잡음 → t-SNE / UMAP / Kernel PCA 필요 |
+| **해석 어려움** | PC1 은 원 특성들의 가중합 — 직관적이지 않음 |
+| **이상치에 민감** | 큰 분산 방향에 이상치가 낀다면 왜곡 |
+
+### 🧪 더 해볼 것
+1. **wine 데이터 (13D → 2D)**: setosa 같은 드라마틱한 분리가 나올까?
+2. **digits 데이터 (64D → 2D)**: 손글씨 숫자 10 개가 어떻게 갈라지는지
+3. **PC 개수 99% 로 늘려 분류기 성능 비교**: PCA + LogReg vs LogReg 단독
+4. **t-SNE 와 비교**: 비선형 차원 축소의 위력 체감
+
+### 🏁 다음 챕터
+- \`from sklearn.manifold import TSNE\` — 비선형 차원 축소
+- \`KernelPCA\` — 커널 트릭으로 곡선 구조 포착
+- Autoencoder — 신경망 기반 차원 축소 (Ch15 CNN 이후)`,
+        checkpoint: "PC1 이 설명 분산의 약 72%, PC1+PC2 가 약 95% 인 것을 직접 말로 설명할 수 있으면 완성.",
+      },
+    ],
+    starterFiles: {
+      "main.py": {
+        name: "main.py",
+        content: `# 🌌 iris PCA — 4차원 꽃을 2D 로 펼치기
+# 우측 가이드의 단계를 클릭하면 해당 STEP 으로 이동합니다.
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+
+## STEP 1: 문제 이해
+iris = load_iris()
+X, y = iris.data, iris.target
+print(f"데이터: {X.shape}, 특성: {iris.feature_names}")
+print(f"클래스: {list(iris.target_names)}")
+
+
+## STEP 2: 표준화 (PCA 는 스케일 민감)
+X_scaled = StandardScaler().fit_transform(X)
+print("\\n표준화 완료 — 모든 특성이 평균 0, 표준편차 1")
+
+
+## STEP 3: SVD 로 PCA 수동 조립
+U, S, VT = np.linalg.svd(X_scaled, full_matrices=False)
+scores_manual = U @ np.diag(S)
+print(f"\\n특이값 S: {np.round(S, 3)}")
+
+
+## STEP 4: sklearn PCA 와 비교
+pca = PCA(n_components=2)
+scores = pca.fit_transform(X_scaled)
+print(f"\\nsklearn 설명분산비율: {pca.explained_variance_ratio_.round(4)}")
+print(f"두 방법의 차이: {np.abs(np.abs(scores) - np.abs(scores_manual[:, :2])).max():.2e}")
+
+
+## STEP 5: 누적 설명분산 — 2D 로 충분한지
+pca_full = PCA().fit(X_scaled)
+for i, (r, c) in enumerate(zip(pca_full.explained_variance_ratio_,
+                               np.cumsum(pca_full.explained_variance_ratio_)), 1):
+    print(f"  PC{i}: {r:.1%}  누적 {c:.1%}")
+
+
+## STEP 6: 2D 산점도 — 3 종이 갈라진다
+plt.figure(figsize=(7, 5))
+colors  = ["#e74c3c", "#2ecc71", "#3498db"]
+markers = ["o", "s", "^"]
+for i, name in enumerate(iris.target_names):
+    mask = y == i
+    plt.scatter(scores[mask, 0], scores[mask, 1],
+                c=colors[i], marker=markers[i], label=name,
+                s=70, alpha=0.75, edgecolor="white", linewidth=1.2)
+plt.xlabel(f"PC1 ({pca.explained_variance_ratio_[0]*100:.1f}%)")
+plt.ylabel(f"PC2 ({pca.explained_variance_ratio_[1]*100:.1f}%)")
+plt.title("Iris — 4D → 2D 투영")
+plt.legend(title="종")
+plt.grid(alpha=0.3)
+plt.tight_layout()
+
+
+## STEP 7: Biplot (loading 화살표)
+loadings = VT[:2].T
+fig, ax = plt.subplots(figsize=(7, 5))
+for i, name in enumerate(iris.target_names):
+    mask = y == i
+    ax.scatter(scores[mask, 0], scores[mask, 1],
+               c=colors[i], marker=markers[i], s=40, alpha=0.4,
+               label=name, edgecolor="white")
+
+scale = 3.0
+for name, (l1, l2) in zip(iris.feature_names, loadings):
+    ax.arrow(0, 0, l1*scale, l2*scale, head_width=0.1, color="black",
+             length_includes_head=True, alpha=0.9)
+    ax.text(l1*scale*1.18, l2*scale*1.18, name.replace(" (cm)", ""),
+            fontsize=9, ha="center",
+            bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.7))
+
+ax.axhline(0, color="gray", lw=0.5)
+ax.axvline(0, color="gray", lw=0.5)
+ax.set_xlabel("PC1"); ax.set_ylabel("PC2")
+ax.set_title("Iris PCA Biplot — 점 + loading")
+ax.legend(); ax.grid(alpha=0.3)
+plt.tight_layout()
+`,
+        language: "python",
+      },
+    },
+  },
 ];
 
 export function getProjectById(id: string): Project | undefined {

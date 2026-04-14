@@ -9,11 +9,12 @@ import { lesson07 } from "./07-trees-ensembles";
 import { lesson08 } from "./08-boosting-regularization";
 import { lesson09 } from "./09-interpretation-imbalanced";
 import { lesson10 } from "./10-mini-project";
+import { lesson11 } from "./11-dimensionality-reduction";
 
 /**
- * Python ML 실습 트랙의 모든 레슨 (10강 완주 코스).
+ * Python ML 실습 트랙의 모든 레슨.
  * 1~5강 기초(회귀/분류/평가/클러스터/파이프라인) → 6~10강 실전
- * (전처리·앙상블·부스팅·해석·미니프로젝트).
+ * (전처리·앙상블·부스팅·해석·미니프로젝트) → 11강+ 심화 (차원 축소·PCA ...).
  */
 export const LESSONS: Lesson[] = [
   lesson01,
@@ -26,6 +27,7 @@ export const LESSONS: Lesson[] = [
   lesson08,
   lesson09,
   lesson10,
+  lesson11,
 ];
 
 export const LESSON_SUMMARIES: LessonSummary[] = LESSONS.map((l) => ({
