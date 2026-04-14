@@ -368,10 +368,20 @@ export function ProjectWorkPage() {
             shrink-0 border-r border-colab-subtle bg-colab-panel overflow-hidden
             md:static
             ${panels.treeOpen ? "md:w-48" : "md:w-0"}
-            absolute top-0 bottom-0 left-0 w-60 z-40 transition-all duration-200
+            absolute top-0 bottom-0 left-0 w-[72%] max-w-[260px] z-40 transition-all duration-200
             ${mobileTreeOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
           `}
         >
+          {/* 모바일 닫기 버튼 */}
+          {mobileTreeOpen && (
+            <button
+              onClick={() => setMobileTreeOpen(false)}
+              className="md:hidden absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-colab-bg/90 text-colab-text hover:bg-colab-hover flex items-center justify-center shadow-lg"
+              aria-label="파일 탐색기 닫기"
+            >
+              ✕
+            </button>
+          )}
           <FileTree />
         </div>
 
@@ -409,10 +419,20 @@ export function ProjectWorkPage() {
             shrink-0 border-l border-colab-subtle bg-brand-panel overflow-hidden
             md:static
             ${panels.guideOpen ? "md:w-[340px]" : "md:w-0"}
-            absolute top-0 bottom-0 right-0 w-[85%] max-w-[360px] z-40 transition-all duration-200
+            absolute top-0 bottom-0 right-0 w-[92%] max-w-[420px] z-40 transition-all duration-200
             ${mobileGuideOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"}
           `}
         >
+          {/* 모바일 닫기 버튼 */}
+          {mobileGuideOpen && (
+            <button
+              onClick={() => setMobileGuideOpen(false)}
+              className="md:hidden absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-brand-bg/90 text-brand-text hover:bg-brand-hover flex items-center justify-center shadow-lg"
+              aria-label="가이드 패널 닫기"
+            >
+              ✕
+            </button>
+          )}
           <ProjectGuidePanel
             project={project}
             progressKey={`project_progress_${project.id}`}

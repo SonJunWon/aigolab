@@ -168,3 +168,12 @@ kbd {
   min-width: 18px;
   text-align: center;
 }
+
+/* 모바일 가로 스크롤 UI 용 — 스크롤바 숨김 */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE / Edge */
+  scrollbar-width: none;      /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;              /* Chrome / Safari */
+}

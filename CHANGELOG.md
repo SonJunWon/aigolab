@@ -13,6 +13,45 @@
 
 ---
 
+## [3.14.0] - 2026-04-14
+
+### Improved — C3: 모바일 UX 정밀화
+모바일 (<640px) 에서 주요 페이지의 여백·크기·드로어 UX 개선.
+
+**ProjectsPage (리스트)**
+- 카테고리 필터 8개가 모바일에서 4줄로 wrap 되던 문제 → **가로 스크롤** (snap-x) 로 전환, 스크롤바 숨김
+- 아코디언 헤더: 데스크탑은 그대로, 모바일은
+  - 아이콘 축소 (`text-4xl` → `text-3xl sm:text-4xl`)
+  - 태그 `+N` 축약 + 우측 "약 X분 · N단계" 메타를 태그 줄에 인라인 배치
+  - 우측 시간·단계 블록은 `sm:block` 으로 데스크탑 전용
+- 외부 패딩: `px-6 py-12` → `px-4 py-6 sm:px-6 sm:py-12`
+
+**ProjectWorkPage (IDE)**
+- 모바일 가이드 드로어 폭 확장: `w-[85%] max-w-[360px]` → `w-[92%] max-w-[420px]`
+- 파일 트리 드로어: `w-60` → `w-[72%] max-w-[260px]` (폰에 비례)
+- 모바일 드로어 우상단에 **명시적 닫기 버튼 (×)** 추가 — 기존엔 backdrop 탭만 가능해서 발견성 낮음
+
+**CourseDetailPage (강의)**
+- 외부 패딩: `px-6 py-12` → `px-4 py-6 sm:px-6 sm:py-12`
+- 제목: `text-3xl` → `text-2xl sm:text-3xl` (아이콘 `text-4xl` → `text-3xl sm:text-4xl`)
+- 섹션 간격: `space-y-8` → `space-y-6 sm:space-y-8`
+- "다음 강의" 카드: 모바일에서 아이콘·제목 축소, truncate 적용
+- 메타 정보 영역: `flex-wrap gap-x-3 gap-y-1` 로 줄바꿈 대응
+
+**Added — `.scrollbar-hide` 유틸리티**
+- `src/index.css` 에 크로스 브라우저 스크롤바 숨김 CSS 추가
+- 가로 스크롤 카테고리 필터에 적용
+
+### Why
+- 오디트 결과 ProjectsPage 카테고리 필터가 7~8개로 늘어난 후 (v3.12.0 data-analysis 추가) 모바일에서 **4줄로 wrap 되어 카드보다 많은 공간 차지**
+- ProjectWorkPage 모바일 드로어 닫기 방법이 **backdrop 탭뿐** 이라 발견성 낮음 — 첫 방문자가 갇히는 느낌
+- CourseDetailPage 의 `px-6 max-w-3xl` 경직성 → 320px 폰에서 콘텐츠 가독성 저하
+
+### ⚠️ 참고
+이 릴리즈는 **로직 변경 없이 CSS/레이아웃만** 수정. LessonPage 는 v3.x 에서 이미 모바일 오버플로 메뉴가 구현되어 있어 이번 릴리즈 범위에서 제외. 실기기 UX 검증은 배포 후 수동으로 권장.
+
+---
+
 ## [3.13.0] - 2026-04-14
 
 ### Added — B2: 고객 이탈 예측 프로젝트 (13번째 AI 프로젝트)

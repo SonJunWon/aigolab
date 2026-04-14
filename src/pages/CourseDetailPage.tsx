@@ -33,9 +33,9 @@ export function CourseDetailPage() {
 
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text">
-      <div className="mx-auto max-w-3xl px-6 py-12">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6 sm:py-12">
         {/* 상단 네비 */}
-        <nav className="mb-8">
+        <nav className="mb-5 sm:mb-8">
           <Link
             to="/courses"
             className="text-sm text-brand-textDim hover:text-brand-primary transition-colors"
@@ -45,19 +45,19 @@ export function CourseDetailPage() {
         </nav>
 
         {/* 헤더 */}
-        <header className="mb-10">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-4xl">{course.icon}</span>
-            <div>
-              <h1 className="text-3xl font-bold text-brand-text">
+        <header className="mb-7 sm:mb-10">
+          <div className="flex items-start gap-2.5 sm:items-center sm:gap-3 mb-3">
+            <span className="text-3xl sm:text-4xl shrink-0">{course.icon}</span>
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-brand-text leading-tight">
                 {course.title}
               </h1>
               {course.subtitle && (
-                <p className="text-brand-textDim mt-1">{course.subtitle}</p>
+                <p className="text-sm sm:text-base text-brand-textDim mt-1">{course.subtitle}</p>
               )}
             </div>
           </div>
-          <div className="flex items-center gap-3 text-xs text-brand-textDim">
+          <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-xs text-brand-textDim">
             <span>⏱ 약 {course.estimatedMinutes}분</span>
             <span>📖 {course.sections.length}개 섹션</span>
             {course.quiz && (
@@ -67,7 +67,7 @@ export function CourseDetailPage() {
         </header>
 
         {/* 섹션들 */}
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           {course.sections.map((section, i) => (
             <SectionRenderer key={i} section={section} index={i} />
           ))}
@@ -98,23 +98,23 @@ export function CourseDetailPage() {
 
         {/* 다음 강의 */}
         {nextCourse && (
-          <div className="mt-10">
+          <div className="mt-8 sm:mt-10">
             <Link
               to={`/courses/${nextCourse.id}`}
-              className="block p-5 rounded-xl border border-brand-subtle bg-brand-panel
+              className="block p-4 sm:p-5 rounded-xl border border-brand-subtle bg-brand-panel
                          hover:border-brand-primary/50 transition-all group"
             >
-              <div className="flex items-center gap-4">
-                <span className="text-3xl">{nextCourse.icon}</span>
-                <div className="flex-1">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <span className="text-2xl sm:text-3xl shrink-0">{nextCourse.icon}</span>
+                <div className="flex-1 min-w-0">
                   <div className="text-xs text-brand-textDim mb-1">
                     다음 강의
                   </div>
-                  <h3 className="text-base font-semibold group-hover:text-brand-primary transition-colors">
+                  <h3 className="text-sm sm:text-base font-semibold group-hover:text-brand-primary transition-colors truncate">
                     {nextCourse.title}
                   </h3>
                 </div>
-                <span className="text-brand-primary text-xl group-hover:translate-x-1 transition-transform">
+                <span className="text-brand-primary text-xl group-hover:translate-x-1 transition-transform shrink-0">
                   →
                 </span>
               </div>
@@ -123,7 +123,7 @@ export function CourseDetailPage() {
         )}
 
         {/* 하단 */}
-        <div className="mt-12 pt-8 border-t border-brand-subtle text-center">
+        <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-brand-subtle text-center">
           <Link
             to="/courses"
             className="text-sm text-brand-textDim hover:text-brand-primary transition-colors"

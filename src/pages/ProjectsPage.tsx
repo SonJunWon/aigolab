@@ -74,16 +74,20 @@ export function ProjectsPage() {
 
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text">
-      <div className="mx-auto max-w-4xl px-6 py-12">
-        <header className="mb-10">
-          <h1 className="text-3xl font-bold mb-2">🧪 AI 프로젝트</h1>
-          <p className="text-brand-textDim">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-12">
+        <header className="mb-6 sm:mb-10">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1.5 sm:mb-2">🧪 AI 프로젝트</h1>
+          <p className="text-sm sm:text-base text-brand-textDim">
             실제 데이터로 머신러닝 모델을 만들어보세요. 브라우저에서 바로 실행!
           </p>
         </header>
 
-        {/* 카테고리 필터 */}
-        <div className="mb-6 flex flex-wrap gap-2">
+        {/* 카테고리 필터 — 모바일은 가로 스크롤, 데스크탑은 wrap */}
+        <div
+          className="mb-5 sm:mb-6 -mx-4 px-4 sm:mx-0 sm:px-0 flex sm:flex-wrap gap-2 overflow-x-auto sm:overflow-visible scrollbar-hide snap-x snap-mandatory"
+          role="tablist"
+          aria-label="카테고리 필터"
+        >
           {CATEGORIES.map((c) => {
             const count = countsByCat[c.id] ?? 0;
             const isActive = activeCat === c.id;
@@ -92,7 +96,9 @@ export function ProjectsPage() {
                 key={c.id}
                 onClick={() => selectCategory(c.id)}
                 disabled={count === 0}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                role="tab"
+                aria-selected={isActive}
+                className={`shrink-0 snap-start text-xs px-3 py-2 sm:py-1.5 rounded-full border transition-colors whitespace-nowrap ${
                   isActive
                     ? "border-brand-primary bg-brand-primary/15 text-brand-primary"
                     : "border-brand-subtle text-brand-textDim hover:text-brand-text hover:border-brand-primary/50"
@@ -125,16 +131,17 @@ export function ProjectsPage() {
                 {/* 헤더 — 클릭 시 아코디언 토글 */}
                 <button
                   onClick={() => toggle(p.id)}
-                  className="w-full text-left p-5 flex items-center gap-5 group"
+                  className="w-full text-left p-4 sm:p-5 flex items-center gap-3 sm:gap-5 group"
                   aria-expanded={isOpen}
                 >
-                  <div className="text-4xl shrink-0">{p.icon}</div>
+                  <div className="text-3xl sm:text-4xl shrink-0">{p.icon}</div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-primary/15 text-brand-primary">
                         {p.difficulty === "beginner" ? "입문" : "중급"}
                       </span>
-                      {p.tags.map((t) => (
+                      {/* 모바일: 태그 2개만 보여주기 */}
+                      {p.tags.slice(0, 2).map((t) => (
                         <span
                           key={t}
                           className="text-[10px] px-2 py-0.5 rounded-full bg-brand-subtle text-brand-textDim"
@@ -142,17 +149,27 @@ export function ProjectsPage() {
                           {t}
                         </span>
                       ))}
+                      {p.tags.length > 2 && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-subtle text-brand-textDim hidden sm:inline-block">
+                          +{p.tags.length - 2}
+                        </span>
+                      )}
+                      {/* 모바일: 약 X분·N단계 를 tag 줄에 인라인으로 */}
+                      <span className="sm:hidden text-[10px] text-brand-textDim ml-auto shrink-0">
+                        ⏱ {p.estimatedMinutes}분 · {p.steps.length}단계
+                      </span>
                     </div>
                     <h3
-                      className={`text-lg font-semibold transition-colors ${
+                      className={`text-base sm:text-lg font-semibold transition-colors leading-snug ${
                         isOpen ? "text-brand-primary" : "group-hover:text-brand-primary"
                       }`}
                     >
                       {p.title}
                     </h3>
-                    <p className="text-sm text-brand-textDim">{p.subtitle}</p>
+                    <p className="text-xs sm:text-sm text-brand-textDim leading-snug mt-0.5">{p.subtitle}</p>
                   </div>
-                  <div className="shrink-0 text-right">
+                  {/* 데스크탑 전용: 시간/단계 우측 메타 */}
+                  <div className="shrink-0 text-right hidden sm:block">
                     <div className="text-xs text-brand-textDim mb-1">
                       약 {p.estimatedMinutes}분
                     </div>
@@ -161,7 +178,7 @@ export function ProjectsPage() {
                     </div>
                   </div>
                   <div
-                    className={`shrink-0 text-xl text-brand-textDim transition-transform ${
+                    className={`shrink-0 text-lg sm:text-xl text-brand-textDim transition-transform ${
                       isOpen ? "rotate-180 text-brand-primary" : ""
                     }`}
                   >
@@ -171,11 +188,11 @@ export function ProjectsPage() {
 
                 {/* 펼친 본문 — 상단 CTA + 브리핑 */}
                 {isOpen && (
-                  <div className="border-t border-brand-subtle px-5 py-5 bg-brand-bg/40 space-y-5">
+                  <div className="border-t border-brand-subtle px-4 sm:px-5 py-4 sm:py-5 bg-brand-bg/40 space-y-4 sm:space-y-5">
                     {/* 🚀 CTA — 펼친 후 즉시 보이도록 맨 위 */}
                     <Link
                       to={`/projects/${p.id}/work`}
-                      className="block w-full text-center py-3 rounded-xl bg-brand-primary text-white font-medium text-sm hover:bg-brand-primaryDim transition-colors shadow-lg shadow-brand-primary/20"
+                      className="block w-full text-center py-3.5 rounded-xl bg-brand-primary text-white font-medium text-sm hover:bg-brand-primaryDim transition-colors shadow-lg shadow-brand-primary/20"
                     >
                       🚀 프로젝트 시작하기
                     </Link>
