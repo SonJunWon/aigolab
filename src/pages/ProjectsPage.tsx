@@ -61,13 +61,14 @@ export function ProjectsPage() {
   const toggle = (id: string) => {
     const next = openId === id ? null : id;
     setOpenId(next);
-    // URL 업데이트 (북마크·공유 가능)
+    // URL 업데이트 — 기존 파라미터(cat 등) 유지하며 open 만 토글
+    const nextParams = new URLSearchParams(searchParams);
     if (next) {
-      setSearchParams({ open: next }, { replace: true });
+      nextParams.set("open", next);
     } else {
-      searchParams.delete("open");
-      setSearchParams(searchParams, { replace: true });
+      nextParams.delete("open");
     }
+    setSearchParams(nextParams, { replace: true });
   };
 
   return (
@@ -167,9 +168,17 @@ export function ProjectsPage() {
                   </div>
                 </button>
 
-                {/* 펼친 본문 — 브리핑 + CTA */}
+                {/* 펼친 본문 — 상단 CTA + 브리핑 */}
                 {isOpen && (
                   <div className="border-t border-brand-subtle px-5 py-5 bg-brand-bg/40 space-y-5">
+                    {/* 🚀 CTA — 펼친 후 즉시 보이도록 맨 위 */}
+                    <Link
+                      to={`/projects/${p.id}/work`}
+                      className="block w-full text-center py-3 rounded-xl bg-brand-primary text-white font-medium text-sm hover:bg-brand-primaryDim transition-colors shadow-lg shadow-brand-primary/20"
+                    >
+                      🚀 프로젝트 시작하기
+                    </Link>
+
                     {/* 설명 마크다운 */}
                     <div className="prose prose-invert max-w-none">
                       <Markdown content={p.description} />
@@ -194,14 +203,6 @@ export function ProjectsPage() {
                         })}
                       </ol>
                     </div>
-
-                    {/* CTA */}
-                    <Link
-                      to={`/projects/${p.id}/work`}
-                      className="block w-full text-center py-3 rounded-xl bg-brand-primary text-white font-medium text-sm hover:bg-brand-primaryDim transition-colors"
-                    >
-                      🚀 프로젝트 시작하기
-                    </Link>
                   </div>
                 )}
               </div>
