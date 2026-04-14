@@ -13,6 +13,55 @@
 
 ---
 
+## [3.18.4] - 2026-04-15
+
+### Fixed — v3.18.1~3.18.2 동안 잘못 매칭된 IndexedDB 데이터 자동 무효화
+
+**증상 (사용자 보고 스크린샷 2장):**
+- 새 lesson 의 인트로 셀 위치에 옛 v3.17.x 코드가 표시 ("Jupyter/Colab 가서 보세요")
+- "두 가지 그리는 방식" markdown 새 콘텐츠 아래에 옛 라인 차트 코드가 표시
+- 챕터 4 전체가 markdown 은 새것, code 는 옛것이 뒤죽박죽
+
+**원인 (정확한 흐름):**
+1. v3.18.0: 신규 9개 셀 추가 → 사용자 IndexedDB 옛 10개 ≠ 새 18개 (불일치)
+2. v3.18.1: 큐 매칭으로 옛 saved code 10개를 새 lesson 18 위치에 강제 끼워넣음 → **잘못 매칭된 18개가 IndexedDB 에 저장됨**
+3. v3.18.3: code 셀 개수만 검증 → 18 == 18 일치 → 잘못된 옛 코드를 머지로 그대로 가져옴 ❌
+
+**수정 (v3.18.4):**
+머지 검증을 두 단계로 강화 — code 셀 개수 + **markdown 시그니처** 둘 다 일치해야 머지:
+
+\`\`\`ts
+const lessonMdSignature = lesson.cells
+  .filter((c) => c.type === "markdown")
+  .map((c) => c.source)
+  .join("\\n---\\n");
+const savedMdSignature = saved.cells
+  .filter((c) => c.type === "markdown")
+  .map((c) => c.source)
+  .join("\\n---\\n");
+
+const useOriginal =
+  !saved ||
+  saved.cells.length === 0 ||
+  savedCodeCells.length !== lessonCodeCells.length ||
+  savedMdSignature !== lessonMdSignature;  // ← NEW
+
+if (useOriginal) {
+  loadCells(lesson.cells, lesson.language);  // 잘못된 머지 대신 원본
+}
+\`\`\`
+
+**효과:**
+- ✅ markdown 텍스트가 한 글자라도 바뀌면 → 자동 무효화 → lesson 원본 사용
+- ✅ v3.18.1~3.18.2 의 잘못된 매칭 결과가 자동으로 무효화됨
+- ✅ 향후 비슷한 콘텐츠 변경에서도 안전
+- ⚠️ markdown 변경 시 사용자 코드 손실은 여전 (셀별 ID 시스템이 진짜 해결책, 다음 milestone)
+
+### 기존 사용자에게
+**새로고침 (Cmd/Ctrl+Shift+R) 한 번** → markdown 시그니처 불일치 감지 → 자동으로 lesson 원본 재로드. 챕터 4 가 깨끗하게 정리됩니다. 콘솔에 \`[lesson] 콘텐츠 변경 감지 — lesson 원본 재로드\` 메시지 확인 가능.
+
+---
+
 ## [3.18.3] - 2026-04-15
 
 ### Fixed — v3.18.1 머지 로직이 신규 셀 추가 시 코드를 잘못 매칭

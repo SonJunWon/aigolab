@@ -86,26 +86,52 @@ export function LessonPage() {
       const saved = await loadNotebook(lesson.id);
       if (cancelled) return;
 
-      // ── 머지 전략 (v3.18.3 안전화) ──
-      // 1. 저장본 없음 → lesson 원본
-      // 2. 저장본의 code 셀 개수가 lesson 과 정확히 같음
-      //    → lesson 을 base 로 markdown 은 최신, code 만 순서대로 saved 에서 복원
-      //      (사용자가 작성한 코드 보존 + 안내문 업데이트)
-      // 3. 저장본의 code 셀 개수가 lesson 과 다름 (콘텐츠 업데이트 후)
-      //    → saved 의 code 가 어느 lesson 셀에 대응되는지 알 수 없음
-      //      → lesson 원본 사용 (사용자 코드 손실 ⚠️)
-      //    이전 v3.18.1 머지는 큐 기반으로 매칭했지만, 신규 셀이 중간에
-      //    추가되면 미션 빈칸 코드가 다른 셀에 잘못 매핑돼 NameError 발생.
-      //    따라서 셀 구조가 바뀌면 안전하게 원본 사용.
+      // ── 머지 전략 (v3.18.4 강화) ──
+      // 검증 단계:
+      //   ① 저장본 없음 → lesson 원본
+      //   ② code 셀 개수 불일치 → lesson 원본 (사용자 코드 손실)
+      //   ③ markdown 시그니처 불일치 → lesson 원본
+      //      (콘텐츠가 바뀌었을 때 잘못 매칭된 옛 데이터 무효화)
+      //   ④ 모두 통과 → markdown 은 lesson 최신, code 는 saved 순서대로
+      //
+      // 왜 markdown 시그니처가 필요한가:
+      // v3.18.1 의 큐 매칭이 셀 개수 ≠ 인 상태에서 saved 를 잘못 매핑한 결과를
+      // IndexedDB 에 저장. 이후 lesson 과 같은 개수가 되면 v3.18.3 머지가
+      // 잘못된 데이터를 그대로 가져오는 문제 발생. markdown 도 비교해 콘텐츠
+      // 변경을 더 정밀하게 감지.
       const lessonCodeCells = lesson.cells.filter((c) => c.type === "code");
       const savedCodeCells = saved
         ? saved.cells.filter((c) => c.type === "code")
         : [];
 
-      if (!saved || saved.cells.length === 0) {
+      const lessonMdSignature = lesson.cells
+        .filter((c) => c.type === "markdown")
+        .map((c) => c.source)
+        .join("\n---\n");
+      const savedMdSignature = saved
+        ? saved.cells
+            .filter((c) => c.type === "markdown")
+            .map((c) => c.source)
+            .join("\n---\n")
+        : "";
+
+      const useOriginal =
+        !saved ||
+        saved.cells.length === 0 ||
+        savedCodeCells.length !== lessonCodeCells.length ||
+        savedMdSignature !== lessonMdSignature;
+
+      if (useOriginal) {
+        if (saved && saved.cells.length > 0) {
+          console.warn(
+            `[lesson] 콘텐츠 변경 감지 — lesson 원본 재로드 (` +
+              `code: ${savedCodeCells.length}/${lessonCodeCells.length}, ` +
+              `md changed: ${savedMdSignature !== lessonMdSignature})`
+          );
+        }
         loadCells(lesson.cells, lesson.language);
-      } else if (savedCodeCells.length === lessonCodeCells.length) {
-        // 코드 셀 개수 일치 → 순서대로 안전 매칭
+      } else {
+        // 모든 검증 통과 → 안전한 머지 (사용자 코드 보존)
         const savedCodeQueue = savedCodeCells.map((c) => c.source);
         let qIdx = 0;
         const merged = lesson.cells.map((lessonCell) => {
@@ -119,7 +145,6 @@ export function LessonPage() {
               solution: lessonCell.solution,
             };
           }
-          // markdown 은 항상 lesson 최신
           return {
             type: lessonCell.type,
             source: lessonCell.source,
@@ -128,13 +153,6 @@ export function LessonPage() {
           };
         });
         loadCells(merged, lesson.language);
-      } else {
-        // 셀 구조 변경됨 → 안전하게 lesson 원본 사용
-        // (사용자 코드 손실은 안내가 필요하면 향후 toast 추가 고려)
-        console.warn(
-          `[lesson] 콘텐츠 구조 변경 감지 (saved code: ${savedCodeCells.length}, lesson code: ${lessonCodeCells.length}) — 원본으로 재로드`
-        );
-        loadCells(lesson.cells, lesson.language);
       }
       setLoadState("ready");
 
