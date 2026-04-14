@@ -240,6 +240,29 @@ print(f"최적 파라미터: {grid.best_params_}")
 print(f"최적 교차 검증 점수: {grid.best_score_:.4f}")
 print(f"테스트 점수: {grid.score(X_test, y_test):.4f}")`,
     },
+    {
+      type: "markdown",
+      source: `## 🎉 챕터 5 완료 — 전반 5강 마무리!
+
+기초 편(1~5강)을 끝냈어요. 회귀·분류·평가·클러스터링·파이프라인·튜닝까지 **ML 의 골격** 을 갖췄습니다.
+
+지금까지 배운 것:
+- ✅ **Ch1 선형 회귀** — 숫자 예측 + 평가지표
+- ✅ **Ch2 분류** — 로지스틱 + 트리 기초
+- ✅ **Ch3 모델 평가** — 혼동행렬, F1, 교차검증
+- ✅ **Ch4 클러스터링** — 비지도 K-means
+- ✅ **Ch5 파이프라인 & 튜닝** — StandardScaler + GridSearchCV
+
+### 🚀 앞으로 남은 5강 — 실전 편
+
+- 🧩 **Ch6 특성 전처리와 인코딩** — ColumnTransformer, OneHot/Ordinal, 데이터 누수 방지
+- 🌳 **Ch7 트리와 앙상블** — DecisionTree, RandomForest, feature importance
+- 🚀 **Ch8 부스팅과 정규화** — GradientBoosting, Ridge/Lasso
+- 🔍 **Ch9 모델 해석과 불균형 데이터** — permutation_importance, ROC/AUC, class_weight
+- 🏁 **Ch10 미니 프로젝트** — 고객 이탈 예측 전체 플로우
+
+실무 ML 프로젝트의 현실적인 모습은 6~10강에 더 많이 들어 있어요. 계속 이어가 보세요! 🔥`,
+    },
   ],
   quiz: {
     title: "ML 파이프라인 퀴즈",

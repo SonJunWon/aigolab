@@ -48,8 +48,8 @@ export const TRACKS: TrackInfo[] = [
   {
     id: "ml-practice",
     name: "머신러닝 실습",
-    description: "scikit-learn으로 회귀, 분류, 클러스터링, 파이프라인까지.",
-    estimatedHours: 5,
+    description: "scikit-learn 으로 회귀·분류·클러스터링부터 앙상블·부스팅·해석·이탈 예측 미니프로젝트까지 10강 완주 코스.",
+    estimatedHours: 10,
   },
 ];
 
