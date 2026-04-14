@@ -42,8 +42,8 @@ export const TRACKS: TrackInfo[] = [
   {
     id: "data-science",
     name: "데이터 과학",
-    description: "NumPy, Pandas, Matplotlib로 데이터를 다루고 분석해요.",
-    estimatedHours: 5,
+    description: "NumPy, Pandas, Matplotlib 부터 정제·결합·그룹분석·미니프로젝트까지 10강 완주 코스.",
+    estimatedHours: 10,
   },
   {
     id: "ml-practice",
