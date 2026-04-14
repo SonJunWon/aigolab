@@ -13,6 +13,31 @@
 
 ---
 
+## [3.16.1] - 2026-04-15
+
+### Fixed — matplotlib `import matplotlib.pyplot as plt` 시 ModuleNotFoundError
+- **증상**: 데이터 과학 트랙 04강(Matplotlib) 의 라인 차트 셀에서
+  `import matplotlib.pyplot as plt` 가 ModuleNotFoundError 로 실패. 패키지 자동 로드는 성공("📦 matplotlib already loaded") 했는데 임포트 자체에서 막힘.
+- **원인**: Pyodide 0.28 의 matplotlib 은 import 시 기본 백엔드로
+  `matplotlib_pyodide` (HTML5 캔버스) 를 찾으려 함. 이 패키지는 별도 micropip
+  설치가 필요한데 학습 환경엔 없으므로 ModuleNotFoundError 발생.
+- **수정**: `public/pyodide-worker.js` 의 `initPyodide()` 직후 환경변수
+  `MPLBACKEND=Agg` 를 설정. matplotlib 은 첫 import 직전에 한 번만
+  이 변수를 읽으므로, 워커 init 단계에서 강제하면 모든 셀의
+  `import matplotlib.pyplot` 가 헤드리스 백엔드(Agg) 로 안전하게 동작.
+- **결과**:
+  - ✅ matplotlib import 에러 사라짐
+  - ✅ `plt.figure()`, `plt.plot()`, `plt.title()` 등 호출은 정상 동작 (메모리상 figure 생성)
+  - ⚠️ 그래프 자체는 여전히 표시 안 됨 (헤드리스) — 레슨 안내대로 Jupyter/Colab 에서 확인
+  - ⚠️ 한국어 글자 (`월별`, `1월`) 는 폰트 부재로 UserWarning 가능 (치명 아님)
+
+### 향후 옵션
+실제로 브라우저 안에서 matplotlib 그래프를 표시하려면 `matplotlib_pyodide`
+를 추가 로드하고 OutputPanel 에 캔버스 영역을 만드는 별도 기능이 필요함
+(v3.17.0 후보).
+
+---
+
 ## [3.16.0] - 2026-04-14
 
 ### Added — 구독 모델 Phase 2A: 관리자 모드 + 실제 접근 제어

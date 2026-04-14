@@ -22,6 +22,21 @@ async function initPyodide() {
     pyodide = await self.loadPyodide({
       indexURL: PYODIDE_INDEX_URL,
     });
+
+    // ── matplotlib 기본 백엔드를 'Agg' 로 강제 (v3.16.1 hotfix) ──
+    // Pyodide 0.28 의 matplotlib 은 import 시 기본으로 matplotlib_pyodide
+    // (HTML5 캔버스 백엔드) 를 찾으려 하는데, 이 패키지는 별도 micropip 설치가
+    // 필요하다. 학습 환경에선 그래프 렌더링이 필요 없으므로 헤드리스
+    // 백엔드(Agg) 를 강제해 import 단계에서 ModuleNotFoundError 를 회피한다.
+    // matplotlib 은 환경변수 MPLBACKEND 를 import 직전에 한 번만 읽으므로
+    // 워커 init 단계에서 설정해 두면 모든 셀의 `import matplotlib.pyplot` 가
+    // 안전하게 동작한다.
+    pyodide.runPython(`
+import os as _os
+_os.environ["MPLBACKEND"] = "Agg"
+del _os
+    `);
+
     return pyodide;
   })();
 
