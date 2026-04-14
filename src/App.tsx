@@ -28,6 +28,7 @@ import { ProjectDetailPage } from "./pages/ProjectDetailPage";
 import { ProjectWorkPage } from "./pages/ProjectWorkPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { TermsPage } from "./pages/TermsPage";
+import { AdminPage } from "./pages/AdminPage";
 import { useProgressStore } from "./store/progressStore";
 
 /**
@@ -118,6 +119,9 @@ function AppInner() {
         {/* 정책 페이지 */}
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
+
+        {/* 관리자 */}
+        <Route path="/admin" element={<AdminPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

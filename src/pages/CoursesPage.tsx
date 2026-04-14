@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { COURSE_SUMMARIES } from "../content/courses";
 import { isCoursePro } from "../content/tier";
+import { canAccessCourse } from "../content/access";
+import { useEntitlements } from "../hooks/useEntitlements";
 import { ProBadge } from "../components/paywall/ProBadge";
 import { usePaywall } from "../components/paywall/usePaywall";
 
@@ -19,6 +21,7 @@ const categoryLabel = {
 
 export function CoursesPage() {
   const { showPaywall, modal } = usePaywall();
+  const { entitlements } = useEntitlements();
 
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text">
@@ -32,7 +35,9 @@ export function CoursesPage() {
 
         <div className="space-y-3 sm:space-y-4">
           {COURSE_SUMMARIES.map((course) => {
-            const isPro = isCoursePro(course.id);
+            // pro 콘텐츠인데 접근 권한 없는 경우에만 잠금
+            const isPro =
+              isCoursePro(course.id) && !canAccessCourse(course.id, entitlements);
 
             const inner = (
               <div className="flex items-center gap-3 sm:gap-5">

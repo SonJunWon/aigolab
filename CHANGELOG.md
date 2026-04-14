@@ -13,6 +13,63 @@
 
 ---
 
+## [3.16.0] - 2026-04-14
+
+### Added — 구독 모델 Phase 2A: 관리자 모드 + 실제 접근 제어
+Phase 1 (v3.15.0) 에서 UI 배지만 있던 상태에서 **실제 차단**이 동작하는 단계로. 관리자가 사용자별로 번들 권한을 체크박스로 부여/회수할 수 있습니다.
+
+### 권한 체계 (하이브리드)
+- **환경변수 슈퍼 관리자**: `VITE_ADMIN_EMAILS` — 절대 권한, 코드 공개 안 됨
+- **DB 기반 관리자·사용자**: `user_entitlements` 테이블 — 운영 시 관리자가 UI 로 편집
+
+### 번들 5종 (옵션 B)
+- `all-pro` — 전체 PRO (아래 3개 묶음 = 정식 구독)
+- `ai-courses-pro` — AI 강의 07~10
+- `python-advanced` — Python 중급·데이터 과학·ML 실습
+- `projects-pro` — AI 프로젝트 11개
+- `admin` — 관리자 모드 접근
+
+### Supabase 스키마 (`supabase/migrations/v3.16.0_entitlements.sql`)
+- `profiles.email` 컬럼 추가 + 백필 + trigger 업데이트
+- `user_entitlements` 테이블 (user_id × entitlement 유니크, 만료일·메모·출처·감사 필드)
+- `public.is_admin()` SECURITY DEFINER 함수 (RLS 재귀 방지)
+- RLS: 본인 read, admin read-all + write-all, admin read-all profiles
+- 부트스트랩: `gyumsonsam@gmail.com` 에 admin + all-pro 자동 부여
+
+### 새 파일 (10개)
+- `supabase/migrations/v3.16.0_entitlements.sql`
+- `.env.example` (VITE_ADMIN_EMAILS 문서화)
+- `src/types/entitlement.ts` (타입 + 라벨 + 설명)
+- `src/lib/adminEmails.ts` (env 파싱)
+- `src/content/access.ts` (`canAccessCourse/Project/Lesson/Track`, `isAdmin`)
+- `src/storage/supabaseEntitlementsRepo.ts` (load·list·grant·revoke)
+- `src/hooks/useEntitlements.ts` (DB + env 자동 병합)
+- `src/pages/AdminPage.tsx` (대시보드 · 검색 · 체크박스 편집 · toast)
+
+### 통합 변경
+- Paywall 통합 4개 페이지 (HomePage / CoursesPage / CurriculumPage / ProjectsPage) 가 이제 `canAccess*()` 로 실제 권한 확인. 권한 있으면 배지·모달 안 뜸
+- NavBar 에 관리자일 때 "🛡️ 관리자" 링크 표시 (desktop + mobile)
+- App 라우트에 `/admin` 추가 (비관리자 접근 시 안내 화면)
+
+### UX 세부사항
+- 관리자 페이지: 이메일·닉네임 검색, 4개 통계 카드 (전체/All PRO/부분 PRO/관리자), 사용자 클릭 → 아코디언 체크박스
+- ENV 기반 혜택은 체크박스에 "ENV (고정)" 배지 + disabled — DB 에서 변경 불가 명시
+- 저장 중 opacity 60%, 결과 toast 2.5초 표시
+- 모바일 대응 (카드 반응형, 통계 2×2 그리드)
+
+### 배포 절차
+1. Supabase Dashboard → SQL Editor 에서 `supabase/migrations/v3.16.0_entitlements.sql` 실행 (이메일 확인)
+2. Vercel Environment Variables 에 `VITE_ADMIN_EMAILS=gyumsonsam@gmail.com` 추가
+3. 로컬 `.env.local` 에도 동일하게 추가
+4. 배포 후 해당 이메일로 로그인 → NavBar 에 🛡️ 관리자 링크 등장 확인
+
+### 다음 단계 (Phase 3)
+- 결제 연동 (포트원 / 토스페이먼츠)
+- 가격 페이지 + 쿠폰 + 이용약관·환불정책·정기결제 동의 UI
+- Paywall 모달 CTA 를 가격 페이지로 교체
+
+---
+
 ## [3.15.0] - 2026-04-14
 
 ### Added — 구독 모델 Phase 1: 콘텐츠 티어링 + Paywall UI

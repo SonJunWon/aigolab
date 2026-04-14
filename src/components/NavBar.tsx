@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useProfileStore } from "../store/profileStore";
 import { useUIStore } from "../store/uiStore";
+import { useEntitlements } from "../hooks/useEntitlements";
+import { isAdmin } from "../content/access";
 import { DefaultAvatar } from "./DefaultAvatar";
 
 // @ts-expect-error -- Vite injects this from package.json
@@ -24,6 +26,8 @@ export function NavBar() {
   const avatarEmoji = useProfileStore((s) => s.avatarEmoji);
   const theme = useUIStore((s) => s.theme);
   const toggleTheme = useUIStore((s) => s.toggleTheme);
+  const { entitlements } = useEntitlements();
+  const showAdminLink = isAdmin(entitlements);
 
   // 표시할 이름: 닉네임 > 이메일 @ 앞부분 > 이메일 전체
   const displayName =
@@ -74,6 +78,20 @@ export function NavBar() {
               {item.label}
             </button>
           ))}
+          {showAdminLink && (
+            <button
+              onClick={() => navigate("/admin")}
+              className={`relative px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer
+                ${
+                  isActive("/admin")
+                    ? "text-amber-400 bg-amber-400/10"
+                    : "text-amber-400/70 hover:text-amber-400 hover:bg-amber-400/5"
+                }`}
+              title="관리자 대시보드"
+            >
+              🛡️ 관리자
+            </button>
+          )}
 
           {/* 테마 토글 */}
           <button
@@ -170,6 +188,19 @@ export function NavBar() {
                 {item.label}
               </button>
             ))}
+            {showAdminLink && (
+              <button
+                onClick={() => navigate("/admin")}
+                className={`text-left px-3 py-2.5 text-sm rounded-lg transition-colors
+                  ${
+                    isActive("/admin")
+                      ? "text-amber-400 bg-amber-400/10"
+                      : "text-amber-400/80 hover:bg-amber-400/5"
+                  }`}
+              >
+                🛡️ 관리자
+              </button>
+            )}
 
             <div className="h-px bg-brand-subtle my-2" />
 

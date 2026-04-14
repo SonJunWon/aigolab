@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { LANGUAGES, TRACKS, getLanguage, getTrack } from "../content/languages";
 import { getLessonById } from "../content";
 import { isTrackPro } from "../content/tier";
+import { canAccessTrack } from "../content/access";
+import { useEntitlements } from "../hooks/useEntitlements";
 import { ProBadge } from "../components/paywall/ProBadge";
 import { usePaywall } from "../components/paywall/usePaywall";
 import { listAllProgress } from "../storage/progressRepo";
@@ -48,11 +50,15 @@ export function HomePage() {
   }, [user]);
 
   const { showPaywall, modal } = usePaywall();
+  const { entitlements } = useEntitlements();
 
   const handleTrackSelect = (track: Track) => {
     if (!selectedLang) return;
-    // PRO 트랙이면 paywall — 실제 이동 차단
-    if (isTrackPro(selectedLang, track)) {
+    // PRO 트랙인데 권한 없으면 paywall — 권한 있으면 통과
+    if (
+      isTrackPro(selectedLang, track) &&
+      !canAccessTrack(selectedLang, track, entitlements)
+    ) {
       const trk = getTrack(track);
       const lang = getLanguage(selectedLang);
       if (trk && lang) {
@@ -101,10 +107,13 @@ export function HomePage() {
 
         {/* ─── 이어서 학습 배너 (진도 있을 때만) ─── */}
         {resumeInfo && (() => {
-          const resumePro = isTrackPro(
-            resumeInfo.lang.id,
-            resumeInfo.track.id as Track
-          );
+          const resumePro =
+            isTrackPro(resumeInfo.lang.id, resumeInfo.track.id as Track) &&
+            !canAccessTrack(
+              resumeInfo.lang.id,
+              resumeInfo.track.id as Track,
+              entitlements
+            );
           const innerContent = (
             <div className="flex items-center gap-5">
               <div className="shrink-0 text-5xl">{resumeInfo.lang.icon}</div>
@@ -289,7 +298,10 @@ export function HomePage() {
               </h2>
               <div className="grid md:grid-cols-2 gap-4">
                 {TRACKS.map((track) => {
-                  const pro = isTrackPro(selectedLang, track.id);
+                  // 권한이 있으면 pro 마크 숨김
+                  const pro =
+                    isTrackPro(selectedLang, track.id) &&
+                    !canAccessTrack(selectedLang, track.id, entitlements);
                   return (
                     <button
                       key={track.id}

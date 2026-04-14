@@ -3,6 +3,8 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { getCurriculum } from "../content";
 import { getLanguage, getTrack } from "../content/languages";
 import { isTrackPro } from "../content/tier";
+import { canAccessTrack } from "../content/access";
+import { useEntitlements } from "../hooks/useEntitlements";
 import { ProBadge } from "../components/paywall/ProBadge";
 import { usePaywall } from "../components/paywall/usePaywall";
 import { useProgressStore } from "../store/progressStore";
@@ -30,12 +32,16 @@ export function CurriculumPage() {
   }, [lang, trk, ensureLoaded]);
 
   const { showPaywall, modal } = usePaywall();
+  const { entitlements } = useEntitlements();
 
   if (!lang || !trk) {
     return <Navigate to="/coding" replace />;
   }
 
-  const trackPro = isTrackPro(lang.id as Language, trk.id as Track);
+  // pro 트랙인데 접근 권한 없는 경우에만 잠금
+  const trackPro =
+    isTrackPro(lang.id as Language, trk.id as Track) &&
+    !canAccessTrack(lang.id as Language, trk.id as Track, entitlements);
   const progress =
     lang && trk ? getProgress(lang.id as Language, trk.id as Track) : undefined;
   const totalLessons = curriculum?.summaries.length ?? 0;

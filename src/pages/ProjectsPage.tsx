@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PROJECTS, type ProjectCategory } from "../content/projects";
 import { isProjectPro } from "../content/tier";
+import { canAccessProject } from "../content/access";
+import { useEntitlements } from "../hooks/useEntitlements";
 import { Markdown } from "../components/Markdown";
 import { ProBadge } from "../components/paywall/ProBadge";
 import { usePaywall } from "../components/paywall/usePaywall";
@@ -75,8 +77,9 @@ export function ProjectsPage() {
     setSearchParams(nextParams, { replace: true });
   };
 
-  // ── Paywall ──
+  // ── Paywall + 사용자 entitlements ──
   const { showPaywall, modal } = usePaywall();
+  const { entitlements } = useEntitlements();
 
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text">
@@ -125,7 +128,9 @@ export function ProjectsPage() {
           )}
           {visibleProjects.map((p) => {
             const isOpen = openId === p.id;
-            const isPro = isProjectPro(p.id);
+            // pro 콘텐츠인데 사용자가 접근 권한 없는 경우에만 잠금 표시
+            const locked = isProjectPro(p.id) && !canAccessProject(p.id, entitlements);
+            const isPro = locked;
             return (
               <div
                 key={p.id}
