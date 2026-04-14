@@ -13,6 +13,16 @@
 
 ---
 
+## [3.7.1] - 2026-04-14
+
+### Fixed — 감성 분석기 SyntaxError (f-string 따옴표 충돌)
+- 증상: 감성 분석기 ▶ 실행 시 `SyntaxError: invalid syntax` (line 80)
+- 원인: starter 코드의 \`print(f"\\n📝 \\"{result['text']}\\"")\` 에서 JS 백틱 안의
+  \`\\"\` 가 결과 문자열에 그냥 \`"\` 로 들어가, Python f-string 외부 따옴표가 일찍 종료됨
+- 수정: 외부 따옴표를 작은따옴표로 변경 — \`print(f'\\n📝 "{result["text"]}"')\`
+
+---
+
 ## [3.7.0] - 2026-04-14
 
 ### Added — 5개 프로젝트 모두 "🎯 결과 해설" 단계 추가

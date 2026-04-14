@@ -1685,7 +1685,7 @@ def analyze_sentiment(text):
 ## STEP 4: 부정어 처리 확인 (위 analyze_sentiment 함수에 이미 포함)
 def print_result(result):
     """분석 결과를 보기 좋게 출력합니다."""
-    print(f"\\n📝 \"{result['text']}\"")
+    print(f'\\n📝 "{result["text"]}"')
     print(f"   결과: {result['label']} (점수: {result['score']:+d})")
     if result["details"]:
         for d in result["details"]:
