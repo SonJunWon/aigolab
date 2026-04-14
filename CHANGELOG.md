@@ -13,6 +13,47 @@
 
 ---
 
+## [3.17.1] - 2026-04-15
+
+### Fixed — 한글 폰트 자동 지원 + UserWarning 억제 + 레슨 print 정리
+v3.17.0 그래프 표시 직후 후속 polish.
+
+**증상 (사용자 스크린샷 확인):**
+1. 한국어 라벨이 모두 □ 로 표시 (`월별 매출 추이` → `□□ □□ □□`)
+2. `<exec>:19: UserWarning: Glyph N missing from current font` 가 8줄씩 빨간색으로 노이즈
+3. 레슨 코드의 `print("Jupyter/Colab에서 plt.show() 주석 해제하면...")` 안내문 그대로 남아 있음
+
+**수정:**
+
+1. **한글 폰트 (NanumGothic) 번들** — `public/fonts/NanumGothic-Regular.ttf` (2.0MB, OFL 라이선스, OFL.txt 포함)
+
+2. **워커 init 단계에서 폰트 fetch + Pyodide FS 에 배치** — `/home/pyodide/fonts/NanumGothic-Regular.ttf`
+
+3. **matplotlib 사용 셀에 setup 코드 자동 prepend** — 정규식 `\bmatplotlib\b|\bpyplot\b|\bplt\b` 로 감지. 사용 안 하는 셀은 비용 0.
+   ```python
+   # 자동 prepend (1회만 실행, sys.modules 플래그로 idempotent)
+   matplotlib.font_manager.fontManager.addfont(font_path)
+   matplotlib.rcParams["font.family"] = "NanumGothic"
+   matplotlib.rcParams["axes.unicode_minus"] = False
+   warnings.filterwarnings("ignore", message="Glyph .* missing from current font")
+   warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
+   ```
+
+4. **레슨 04-matplotlib.ts 의 print 안내문 정리** — `"Jupyter/Colab에서 plt.show() 주석을 해제하면 그래프가 나옵니다"` → `"아래에 그래프가 자동으로 표시됩니다 ↓"` (4곳 수정)
+
+5. **레슨 마무리 안내 텍스트도 업데이트** — "이 환경에서는 그래프가 렌더링되지 않아..." → "이제 plt.show() 없이도 자동 표시됩니다. 한글 폰트도 자동 적용."
+
+### 결과
+- ✅ 한글 라벨 정상 표시 (`월별 매출 추이`, `매출 (만원)`, `1월`~`6월` 등 모두 깨끗하게)
+- ✅ Glyph missing UserWarning 사라짐 (8줄 노이즈 제거)
+- ✅ 레슨 print 가 더 이상 "Jupyter 가서 보세요" 라고 잘못 안내하지 않음
+- ⚠️ 워커 init 시 폰트 2MB 추가 다운로드 (1회, 캐싱됨)
+
+### 라이선스 (OFL)
+NanumGothic 은 NHN Corp. 의 SIL Open Font License 1.1 폰트. 재배포 자유. `public/fonts/OFL.txt` 에 라이선스 전문 포함.
+
+---
+
 ## [3.17.0] - 2026-04-15
 
 ### Added — 🎨 matplotlib 그래프 브라우저 내 자동 표시

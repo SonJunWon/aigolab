@@ -27,7 +27,7 @@ export const lesson04: Lesson = {
 > \`plt.show()\` 호출 안 해도 자동으로 셀 출력에 PNG 로 렌더링돼요.
 > 우측의 **↓ PNG** 버튼으로 그림 파일 다운로드도 가능합니다.
 >
-> ⚠️ 한국어 글자(\`월별\` 등) 는 폰트 부재로 □ 로 보일 수 있어요. 영어 라벨로 바꾸면 깨끗하게 보입니다.`,
+> 🇰🇷 한국어 폰트(NanumGothic) 자동 적용 — 한국어 라벨도 깨끗하게 표시됩니다 (v3.17.1 부터).`,
     },
     {
       type: "code",
@@ -79,11 +79,10 @@ plt.xlabel("월")
 plt.ylabel("매출 (만원)")
 plt.grid(True, alpha=0.3)
 
-# Jupyter에서는 plt.show()로 그래프 표시
-# plt.show()
+# 그래프는 셀 출력에 자동으로 PNG 로 표시됩니다 (plt.show() 호출 불필요)
 
-print("=== 라인 차트 코드 실행 완료 ===")
-print("Jupyter/Colab에서 plt.show() 주석을 해제하면 그래프가 나옵니다.")
+print("=== 라인 차트 ===")
+print("아래에 그래프가 자동으로 표시됩니다 ↓")
 print()
 print("데이터 미리보기:")
 for m, s in zip(months, sales):
@@ -115,9 +114,9 @@ plt.ylabel("매출 (만원)")
 plt.legend()  # 범례 표시
 plt.grid(True, alpha=0.3)
 
-# plt.show()
+# 그래프 ↓ 자동 표시
 
-print("=== 다중 라인 차트 코드 실행 완료 ===")
+print("=== 다중 라인 차트 ===")
 print("데이터 미리보기:")
 for i, m in enumerate(months):
     print(f"  {m}: A={product_a[i]:>3}, B={product_b[i]:>3}")`,
@@ -150,9 +149,9 @@ plt.ylabel("인기도 점수")
 for i, v in enumerate(popularity):
     plt.text(i, v + 1, str(v), ha="center", fontweight="bold")
 
-# plt.show()
+# 그래프 ↓ 자동 표시
 
-print("=== 바 차트 코드 실행 완료 ===")
+print("=== 바 차트 ===")
 print("텍스트 미리보기:")
 for lang, pop in zip(languages, popularity):
     bar = "█" * (pop // 5)
@@ -270,11 +269,10 @@ axes[1, 1].set_title("히스토그램")
 fig.suptitle("다양한 차트 유형", fontsize=16)
 plt.tight_layout()
 
-# plt.show()
+# 4 개 서브플롯이 한 figure 로 ↓ 자동 표시됩니다
 
-print("=== 2x2 서브플롯 코드 실행 완료 ===")
-print("4가지 차트: 라인, 바, 산점도, 히스토그램")
-print("Jupyter/Colab에서 실행하면 한 화면에 4개가 나옵니다.")`,
+print("=== 2x2 서브플롯 ===")
+print("4가지 차트: 라인, 바, 산점도, 히스토그램")`,
     },
     {
       type: "markdown",
@@ -417,8 +415,9 @@ for dept, proj in zip(departments, projects):
 - ✅ plt.subplots() — 여러 그래프 배치
 - ✅ 제목, 라벨, 범례, 그리드 설정
 
-> 💡 **브라우저 환경 팁**: 이 환경에서는 그래프가 렌더링되지 않아 문법 학습에 집중했어요.
-> Jupyter Notebook / Google Colab / VS Code 노트북 에서 바로 실행하면 그래프가 보입니다.
+> 💡 **브라우저 환경 팁**: 이제 \`plt.show()\` 호출 없이도 그래프가 셀 출력에 PNG 로 자동 표시됩니다.
+> 한글 폰트(NanumGothic) 도 자동 적용되니 한국어 라벨도 깨끗하게 보여요.
+> 더 복잡한 인터랙티브 시각화(슬라이더·hover) 는 Jupyter / Plotly 등 별도 환경이 필요합니다.
 > 실제 데이터 분석 업무의 대부분은 **시각화 전 단계** (집계·정제·결합) 가 차지하니, 후반 챕터(6~10) 가 훨씬 더 실무에 가까워요.
 
 **다음 챕터에서는**: 지금까지 배운 모든 것을 합쳐서 **데이터 분석 파이프라인**을 만들어봅니다! 🔬`,

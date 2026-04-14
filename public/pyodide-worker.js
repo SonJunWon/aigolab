@@ -24,18 +24,33 @@ async function initPyodide() {
     });
 
     // ── matplotlib 기본 백엔드를 'Agg' 로 강제 (v3.16.1 hotfix) ──
-    // Pyodide 0.28 의 matplotlib 은 import 시 기본으로 matplotlib_pyodide
-    // (HTML5 캔버스 백엔드) 를 찾으려 하는데, 이 패키지는 별도 micropip 설치가
-    // 필요하다. 학습 환경에선 그래프 렌더링이 필요 없으므로 헤드리스
-    // 백엔드(Agg) 를 강제해 import 단계에서 ModuleNotFoundError 를 회피한다.
-    // matplotlib 은 환경변수 MPLBACKEND 를 import 직전에 한 번만 읽으므로
-    // 워커 init 단계에서 설정해 두면 모든 셀의 `import matplotlib.pyplot` 가
-    // 안전하게 동작한다.
     pyodide.runPython(`
 import os as _os
 _os.environ["MPLBACKEND"] = "Agg"
 del _os
     `);
+
+    // ── 한글 폰트(NanumGothic) 를 Pyodide FS 에 미리 배치 (v3.17.1) ──
+    // 워커가 같은 origin 의 /fonts/NanumGothic-Regular.ttf 를 fetch 해서
+    // /home/pyodide/fonts/ 에 저장. 실제 matplotlib 에 등록하는 단계는
+    // 사용자 코드가 matplotlib 을 처음 쓸 때 lazy 하게 prepend 됨.
+    try {
+      const fontResp = await fetch("/fonts/NanumGothic-Regular.ttf");
+      if (fontResp.ok) {
+        const fontBytes = new Uint8Array(await fontResp.arrayBuffer());
+        try {
+          pyodide.FS.mkdirTree("/home/pyodide/fonts");
+        } catch {
+          // 이미 존재하면 무시
+        }
+        pyodide.FS.writeFile(
+          "/home/pyodide/fonts/NanumGothic-Regular.ttf",
+          fontBytes
+        );
+      }
+    } catch {
+      // 폰트 로드 실패해도 치명적이지 않음 — 한글이 □ 로 보일 뿐
+    }
 
     return pyodide;
   })();
@@ -82,7 +97,15 @@ self.onmessage = async (event) => {
 
     if (msg.type === "run") {
       const py = await initPyodide();
-      const { id, cellId, code } = msg;
+      const { id, cellId, code: rawCode } = msg;
+
+      // ── matplotlib 사용 셀에 한글 폰트 setup 코드 자동 prepend (v3.17.1) ──
+      // 폰트 등록은 처음 한 번만 (모듈 캐시 플래그로 idempotent).
+      // matplotlib 안 쓰는 셀은 prepend 안 함 — 불필요한 import 비용 회피.
+      const usesMatplotlib = /\bmatplotlib\b|\bpyplot\b|\bplt\b/.test(rawCode);
+      const code = usesMatplotlib
+        ? `# AIGoLab: 한글 폰트 + UserWarning 억제 자동 설정\nimport sys as _sys\nif "_aigolab_mpl_init" not in _sys.modules:\n    try:\n        import matplotlib as _mpl\n        import matplotlib.font_manager as _fm\n        import warnings as _w\n        import os.path as _op\n        _font_path = "/home/pyodide/fonts/NanumGothic-Regular.ttf"\n        if _op.exists(_font_path):\n            _fm.fontManager.addfont(_font_path)\n            _mpl.rcParams["font.family"] = "NanumGothic"\n            _mpl.rcParams["axes.unicode_minus"] = False\n        # 글리프 부재 경고는 1회 출력 후 억제 (사용자에게 노이즈)\n        _w.filterwarnings("ignore", message="Glyph .* missing from current font")\n        _w.filterwarnings("ignore", category=UserWarning, module="matplotlib")\n        _sys.modules["_aigolab_mpl_init"] = True\n        del _mpl, _fm, _w, _op, _font_path\n    except Exception:\n        pass\ndel _sys\n` + rawCode
+        : rawCode;
 
       // 매 실행마다 stdout/stderr 콜백을 cellId에 바인딩
       py.setStdout({
