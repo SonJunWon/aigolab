@@ -13,6 +13,29 @@
 
 ---
 
+## [3.9.0] - 2026-04-14
+
+### Added — 부족한 패러다임 채우는 신규 AI 프로젝트 3개 (총 8 → 11개)
+
+#### 📈 시계열 매출 예측 (`time-series-forecast`)
+- 첫 시계열 프로젝트. 365일 매출 데이터를 트렌드·계절성·노이즈로 분해
+- 이동평균(rolling mean), 요일별 계절성 자동 발견, 선형회귀 트렌드 + 계절성 보정
+- MAE / MAPE 평가 + ASCII 차트 시각화
+
+#### 🔍 카드 이상 거래 탐지 (`anomaly-detection`)
+- 99% 정상 + 1% 사기 환경 — 첫 극단적 불균형 데이터
+- Z-score 통계 방법 + IsolationForest 비지도 ML
+- 정확도 함정 + Recall/Precision 트레이드오프 + 임계값 조정
+
+#### 📝 마르코프 텍스트 생성기 (`markov-text`)
+- 첫 생성 모델 — ML 라이브러리 없이 순수 Python
+- Bigram + Trigram n-gram 모델 + 가중 무작위 샘플링
+- LLM(ChatGPT) 의 본질(다음 토큰 확률 예측) 의 가장 단순한 형태
+
+각 프로젝트 7단계 (6 STEP + 결과 해설), stepMarker + snippet + solution 완비.
+
+---
+
 ## [3.8.1] - 2026-04-14
 
 ### Fixed — 라이트 모드에서 회색 배경 + 글자 안 보이는 영역 수정

@@ -3076,6 +3076,1489 @@ for *features, desc in new_customers:
       },
     },
   },
+
+  // ════════════════════════════════════════════════════════════
+  //  v3.9.0 — A4-A 콤보: 부족한 패러다임 채우기 (시계열·이상치·생성)
+  // ════════════════════════════════════════════════════════════
+
+  {
+    id: "time-series-forecast",
+    title: "시계열 매출 예측",
+    subtitle: "트렌드·계절성 분리부터 단순 예측까지 — 첫 시계열 분석",
+    icon: "📈",
+    difficulty: "intermediate",
+    estimatedMinutes: 35,
+    tags: ["시계열", "예측", "pandas", "scikit-learn"],
+    description: `## 📈 시계열 매출 예측 프로젝트
+
+**목표**: 매장의 365일 일별 매출 데이터를 분석해 **트렌드 + 계절성 + 노이즈** 로 분리하고, 다음 30일을 예측하는 모델을 만듭니다.
+
+기존 8개 프로젝트는 모두 **고정 시점** 데이터 (한 번 측정한 값). 이 프로젝트는 첫 **시간 흐름** 데이터.
+
+### 배울 것
+- **시계열 데이터 만들기** — 트렌드 + 주간 패턴 + 노이즈 합성
+- **이동평균 (Rolling Mean)** 으로 노이즈 제거 + 트렌드 추출
+- **요일별 계절성** 자동 발견
+- **선형 회귀** 로 트렌드 예측 + 계절성 보정 결합
+- **MAE / MAPE** 평가 지표
+- 실무 BI / 매출 예측의 입문 패턴`,
+    steps: [
+      {
+        title: "365일 매출 데이터 합성 (트렌드 + 주간 패턴 + 노이즈)",
+        stepMarker: "STEP 1",
+        description:
+          "현실의 시계열은 보통 **장기 추세 + 계절성 + 무작위 변동** 의 합. 이 구조를 직접 만들면 분해(decomposition) 의 의미가 명확해져요.",
+        hint: "트렌드 = 시간에 비례한 증가, 계절성 = 요일별 패턴 (주말 ↑), 노이즈 = np.random.normal.",
+        snippet: `np.random.seed(42)
+n = 365
+t = np.arange(n)
+trend = 100 + 0.3 * t                           # 우상향 트렌드
+seasonal = 30 * np.sin(2 * np.pi * t / 7)       # 7일 주기 (주간)
+noise = np.random.normal(0, 10, n)
+sales = (trend + seasonal + noise).round()`,
+        solution: `import numpy as np
+import pandas as pd
+
+np.random.seed(42)
+n = 365
+dates = pd.date_range("2024-01-01", periods=n, freq="D")
+t = np.arange(n)
+
+# 1. 트렌드 — 시간에 따라 우상향
+trend = 100 + 0.3 * t
+
+# 2. 주간 계절성 — 7일 주기 (주말 매출 ↑)
+seasonal = 30 * np.sin(2 * np.pi * t / 7)
+
+# 3. 노이즈 — 일일 변동
+noise = np.random.normal(0, 10, n)
+
+sales = (trend + seasonal + noise).round()
+df = pd.DataFrame({"date": dates, "sales": sales}).set_index("date")
+
+print(f"✅ {n}일치 매출 데이터 생성")
+print(f"   기간: {df.index.min().date()} ~ {df.index.max().date()}")
+print(f"   평균: {sales.mean():.0f}원/일")
+print(f"   범위: {sales.min():.0f} ~ {sales.max():.0f}")
+print()
+print("앞 7일:")
+print(df.head(7))`,
+      },
+      {
+        title: "이동평균으로 트렌드 추출",
+        stepMarker: "STEP 2",
+        description:
+          "원본 데이터는 노이즈 때문에 들쭉날쭉. **rolling(window=7).mean()** 으로 1주일 평균을 내면 **장기 추세** 가 깔끔하게 보임.",
+        hint: "df['sales'].rolling(window=7).mean() — 7일 평균.",
+        snippet: `df["MA7"]  = df["sales"].rolling(window=7).mean()
+df["MA30"] = df["sales"].rolling(window=30).mean()`,
+        solution: `df["MA7"]  = df["sales"].rolling(window=7).mean()
+df["MA30"] = df["sales"].rolling(window=30).mean()
+
+# 첫달 / 마지막 달 비교
+first_month = df.head(30)
+last_month = df.tail(30)
+print(f"📊 1개월 평균 비교:")
+print(f"   첫 30일 평균: {first_month['sales'].mean():.0f}")
+print(f"   마지막 30일 평균: {last_month['sales'].mean():.0f}")
+print(f"   증가율: {(last_month['sales'].mean() / first_month['sales'].mean() - 1):.1%}")
+
+# 최근 14일 트렌드 확인
+print()
+print("최근 14일 (원본 vs MA7):")
+recent = df.tail(14)[["sales", "MA7"]]
+for date, row in recent.iterrows():
+    bar_orig = "█" * int(row["sales"] / 15)
+    print(f"  {date.strftime('%m-%d')} ({date.day_name()[:3]})  원본: {row['sales']:>4.0f} {bar_orig}")
+print(f"\\n  → MA7 평균: {recent['MA7'].mean():.0f}")`,
+      },
+      {
+        title: "요일별 계절성 자동 발견",
+        stepMarker: "STEP 3",
+        description:
+          "**\\`df.groupby(df.index.dayofweek).mean()\\`** 로 요일별 평균. 데이터에 숨은 주간 패턴(주말 ↑) 을 자동 발견.",
+        hint: "dayofweek: 0=월, 6=일.",
+        snippet: `weekly = df.groupby(df.index.dayofweek)["sales"].mean()
+print(weekly)`,
+        solution: `# 요일별 평균 매출
+weekly = df.groupby(df.index.dayofweek)["sales"].mean()
+day_names = ["월", "화", "수", "목", "금", "토", "일"]
+
+print("📅 요일별 평균 매출 (계절성):")
+overall = df["sales"].mean()
+mx = weekly.max()
+for dow, avg in weekly.items():
+    bar = "█" * int(avg / mx * 30)
+    diff = (avg - overall) / overall * 100
+    print(f"  {day_names[dow]}요일  {avg:>6.0f}  {bar}  ({diff:+.1f}% vs 전체평균)")
+
+# 가장 매출 좋은 요일·나쁜 요일
+best_dow = weekly.idxmax()
+worst_dow = weekly.idxmin()
+print(f"\\n🏆 매출 최고 요일: {day_names[best_dow]}요일")
+print(f"📉 매출 최저 요일: {day_names[worst_dow]}요일")`,
+      },
+      {
+        title: "선형 회귀로 트렌드 예측 (다음 30일)",
+        stepMarker: "STEP 4",
+        description:
+          "시계열 분해 후 **트렌드는 선형 회귀** 로, **계절성은 요일별 평균 보정** 으로 결합 예측. 단순하지만 실무에서도 자주 쓰는 베이스라인.",
+        hint: "X = 일자(0~364), y = 매출 → LinearRegression. 다음 30일 = 365~394.",
+        snippet: `from sklearn.linear_model import LinearRegression
+X = np.arange(n).reshape(-1, 1)
+y = df["sales"].values
+model = LinearRegression().fit(X, y)
+
+future_X = np.arange(n, n + 30).reshape(-1, 1)
+trend_forecast = model.predict(future_X)`,
+        solution: `from sklearn.linear_model import LinearRegression
+
+# 1. 트렌드 학습
+X = np.arange(n).reshape(-1, 1)
+y = df["sales"].values
+model = LinearRegression().fit(X, y)
+print(f"📈 학습된 트렌드: 매출 = {model.intercept_:.1f} + {model.coef_[0]:.3f} × 일자")
+
+# 2. 다음 30일 트렌드 예측
+future_X = np.arange(n, n + 30).reshape(-1, 1)
+trend_forecast = model.predict(future_X)
+
+# 3. 요일별 계절성 보정 (트렌드 평균 대비 차이)
+seasonal_offset = weekly - weekly.mean()  # 각 요일이 평균에서 얼마나 벗어났는지
+
+# 4. 최종 예측 = 트렌드 + 요일 계절성
+future_dates = pd.date_range(df.index[-1] + pd.Timedelta(days=1), periods=30)
+forecasts = []
+for date, trend_val in zip(future_dates, trend_forecast):
+    season = seasonal_offset[date.dayofweek]
+    forecasts.append(trend_val + season)
+
+forecast_df = pd.DataFrame({
+    "date":     future_dates,
+    "forecast": np.round(forecasts).astype(int),
+}).set_index("date")
+print(f"\\n🔮 다음 30일 예측 (앞 10일):")
+print(forecast_df.head(10))`,
+      },
+      {
+        title: "마지막 30일로 검증 — Train/Test Split",
+        stepMarker: "STEP 5",
+        description:
+          "예측 모델의 진짜 실력은 **본 적 없는 데이터** 에서. 실제 데이터의 마지막 30일을 가려두고, 그 부분을 예측해 비교.",
+        hint: "MAE = 평균 절대 오차, MAPE = 평균 절대 백분율 오차.",
+        snippet: `train = df.iloc[:-30]
+test = df.iloc[-30:]
+# train 으로 다시 학습 → test 에서 예측 → 평가`,
+        solution: `# 1. Train/Test 분할 (마지막 30일을 test 로)
+train = df.iloc[:-30].copy()
+test = df.iloc[-30:].copy()
+
+# 2. Train 으로 트렌드 + 계절성 학습
+X_train = np.arange(len(train)).reshape(-1, 1)
+y_train = train["sales"].values
+model = LinearRegression().fit(X_train, y_train)
+seasonal_offset = train.groupby(train.index.dayofweek)["sales"].mean()
+seasonal_offset = seasonal_offset - seasonal_offset.mean()
+
+# 3. Test 기간 예측
+X_test = np.arange(len(train), len(train) + len(test)).reshape(-1, 1)
+trend_pred = model.predict(X_test)
+test_pred = trend_pred + np.array([seasonal_offset[d.dayofweek] for d in test.index])
+
+# 4. 평가
+errors = test["sales"].values - test_pred
+mae = np.mean(np.abs(errors))
+mape = np.mean(np.abs(errors / test["sales"].values)) * 100
+
+print(f"📊 모델 검증 (마지막 30일)")
+print(f"   MAE  (평균 절대 오차): {mae:.1f}원")
+print(f"   MAPE (평균 절대 % 오차): {mape:.1f}%")
+print()
+print("실제 vs 예측 (앞 7일):")
+print(f"{'날짜':<12} {'실제':>6} {'예측':>6} {'오차':>7}")
+for i in range(7):
+    d = test.index[i]
+    print(f"{d.strftime('%Y-%m-%d')} ({d.day_name()[:3]})  {test['sales'].iloc[i]:>6.0f}  {test_pred[i]:>6.0f}  {errors[i]:>+6.1f}")`,
+      },
+      {
+        title: "예측 시각화 — ASCII 차트",
+        stepMarker: "STEP 6",
+        description:
+          "matplotlib 는 브라우저에서 표시 안 되니, 텍스트 기반으로 마지막 60일 + 향후 30일 예측을 한 화면에 그려보기.",
+        hint: "각 일자마다 매출 값을 막대로 출력. 예측은 다른 색·기호 사용.",
+        snippet: `# 마지막 60일 + 다음 30일 ASCII 차트
+all_dates = list(df.tail(60).index) + list(forecast_df.index)
+all_values = list(df.tail(60)['sales']) + list(forecast_df['forecast'])`,
+        solution: `# 마지막 60일 + 다음 30일 결합
+hist = df.tail(60)
+combined = pd.concat([
+    hist.assign(type="actual")[["sales", "type"]].rename(columns={"sales": "value"}),
+    forecast_df.assign(type="forecast").rename(columns={"forecast": "value"})[["value", "type"]],
+])
+
+print("📊 시계열 차트 (마지막 60일 + 향후 30일 예측)")
+print("  ─ 실제 매출,  ★ 예측,  | 오늘")
+print()
+
+mx = combined["value"].max()
+for date, row in combined.iterrows():
+    val = row["value"]
+    bar_len = int(val / mx * 40)
+    if row["type"] == "actual":
+        bar = "─" * bar_len
+        marker = " "
+    else:
+        bar = "★" * bar_len
+        marker = " "
+    today_marker = "│" if date == df.index[-1] else " "
+    print(f"  {date.strftime('%m-%d')} ({date.day_name()[:3]})  {val:>4.0f} {today_marker} {bar}")
+print()
+print("│ = 예측 시작점 (오늘 이후 ★ 표시)")`,
+      },
+      {
+        title: "🎯 결과 해설 — 출력이 무슨 뜻인가?",
+        description: `## 여러분이 방금 한 일 정리
+
+365일치 매장 매출 데이터를 **트렌드·계절성·노이즈로 분해** 하고, 그 구조로 **다음 30일을 예측** 하는 모델을 만들었어요. BI 분석가의 가장 일반적 업무.
+
+기존 8개 프로젝트와 결정적 차이: **시간이 흐르는 데이터** — 매 시점의 값이 이전 시점에 영향받는 구조.
+
+---
+
+### 🔧 STEP 1 — 시계열 합성 공식
+\`\`\`
+sales = trend + seasonal + noise
+       (시간 흐름) (요일 패턴)  (랜덤 변동)
+\`\`\`
+
+**해석**
+- 현실의 시계열은 거의 모두 이 3가지 합 (또는 곱).
+- "계절성" 이 꼭 봄여름가을겨울일 필요 없음 — **주간** (요일별), **월간**, **연간** 모두 가능.
+- 우리 데이터는 7일 주기 (sin) → 주말이 평일보다 높은 패턴.
+
+---
+
+### 📊 STEP 2 — 이동평균
+\`\`\`
+1개월 평균 비교:
+   첫 30일 평균: 110
+   마지막 30일 평균: 200
+   증가율: +82.0%
+\`\`\`
+
+**해석**
+- **노이즈로 가려진 진짜 추세** 가 드러남 — 1년간 매출 약 2배 성장.
+- \`MA7\` (7일 평균) 으로 일단위 변동 제거 → 부드러운 곡선.
+- \`MA30\` (월평균) 으로 더 큰 그림 — 분기·반기 단위 추세 분석에 유용.
+
+---
+
+### 📅 STEP 3 — 요일별 계절성
+\`\`\`
+일요일  220  ████████████  (+15.2% vs 전체평균)
+토요일  215  ███████████   (+12.7%)
+금요일  205  ██████████    (+7.5%)
+...
+화요일  165  ████████      (-13.5%)
+월요일  160  ███████       (-16.0%)
+\`\`\`
+
+**해석 (가장 중요)**
+- **데이터가 스스로 패턴을 보여줌** — 우리가 sin 으로 넣은 7일 주기를 알고리즘이 찾아냄.
+- 실무에선 이 패턴을 보고 **"월요일에 프로모션을 강화"** 같은 의사결정.
+- 이게 **EDA (탐색적 분석) 의 본질** — 데이터가 알려주는 이야기.
+
+---
+
+### 🔮 STEP 4 — 예측 공식
+\`\`\`
+다음날 예측 = 트렌드(선형 외삽) + 그날 요일 계절성
+\`\`\`
+
+**해석**
+- **2단 분해 후 예측** — 트렌드는 LinearRegression, 계절성은 요일별 평균.
+- 단순하지만 **statsmodels 의 SARIMA 와 본질적으로 같은 아이디어**.
+- 더 복잡한 모델 (Prophet, LSTM, Transformer) 도 결국 이 분해 → 모델링 패턴.
+
+---
+
+### 📊 STEP 5 — 평가 지표
+\`\`\`
+MAE  (평균 절대 오차): 12.5원
+MAPE (평균 절대 % 오차): 6.2%
+\`\`\`
+
+**해석 (가장 중요)**
+
+#### MAE
+- 평균적으로 12.5 원 정도 빗나감.
+- "원 단위 오차" 는 데이터 스케일에 따라 의미가 달라 — **MAPE 가 더 직관적**.
+
+#### MAPE
+- 평균 6% 정도 오차 → **"평균 매출의 ±6%"** 정도 정확.
+- 실무 기준: **MAPE 5% 이내 = 우수**, 10% 이내 = 양호, 20% 초과 = 재검토.
+- 우리 모델은 **양호 ~ 우수** 수준. 합성 데이터라 비교적 깔끔.
+
+#### 실제 vs 예측 (예시)
+\`\`\`
+2024-12-02 (월)   실제: 158   예측: 162   오차: -4.0
+2024-12-03 (화)   실제: 145   예측: 153   오차: -8.0
+...
+\`\`\`
+요일별 패턴이 잘 잡히면 작은 오차로 안정.
+
+---
+
+### 📊 STEP 6 — ASCII 시각화
+\`\`\`
+12-31 (Tue)  155 │ ──────────
+01-01 (Wed)  168   ★★★★★★★★★      ← 예측 시작
+01-02 (Thu)  175   ★★★★★★★★★★
+...
+\`\`\`
+
+**해석**
+- 실제 (─) 와 예측 (★) 이 자연스럽게 이어짐.
+- 예측 트렌드 우상향 + 요일별 굴곡 모두 반영.
+
+---
+
+### ⚠️ 이 모델의 한계
+
+| 이슈 | 설명 |
+|---|---|
+| **선형 외삽의 위험** | 트렌드가 영원히 우상향한다는 가정 — 시장 포화·경쟁 도래 시 무너짐 |
+| **단순 계절성만** | 연간 (12개월) / 분기 / 공휴일·이벤트 패턴은 못 봄 |
+| **외부 변수 무시** | 날씨, 프로모션, 휴일 등이 실제론 큰 영향 |
+| **장기 예측 부정확** | 30일 OK, 1년 → 트렌드 외삽 오차 누적 |
+
+**실무 솔루션**:
+- **Facebook Prophet** — 트렌드 + 다중 계절성 + 휴일 자동 처리
+- **statsmodels SARIMA** — 더 정교한 자기회귀
+- **Darts / NeuralProphet** — 딥러닝 시계열
+- **TFT (Temporal Fusion Transformer)** — Google 의 시계열 트랜스포머
+
+---
+
+### 🧪 지금 시도해 볼 것
+
+1. STEP 1 의 \`trend\` 계수 \`0.3\` → \`-0.3\` 으로 (감소 추세)
+2. STEP 1 의 \`seasonal\` 주기 \`7\` → \`30\` (월간 패턴)
+3. STEP 4 의 모델을 **다항 회귀** 로 (PolynomialFeatures + LinearRegression)
+4. STEP 5 에서 \`test_size\` 를 60일로 늘려 장기 예측 검증
+5. **새 데이터** (특별 이벤트 일자에 +50%) 추가해서 모델이 못 잡는 걸 확인
+
+### 🏁 이 프로젝트에서 배운 것
+- ✅ **시계열 분해** (트렌드·계절성·노이즈)
+- ✅ **이동평균** 으로 노이즈 제거 + 추세 발견
+- ✅ **요일별 계절성** 자동 감지
+- ✅ **회귀 + 계절성 보정** 으로 예측 (실무 베이스라인 패턴)
+- ✅ **MAE / MAPE** 평가 지표 + 실무 기준
+- ✅ 단순 모델의 한계 → 다음 단계 (Prophet, ARIMA) 로의 다리`,
+        checkpoint: "위 해석을 읽고, STEP 1 의 trend 계수를 -0.3 으로 바꿔 감소 추세에서 모델이 어떻게 동작하는지 확인해 보세요.",
+      },
+    ],
+    starterFiles: {
+      "main.py": {
+        name: "main.py",
+        content: `# 📈 시계열 매출 예측 프로젝트
+# 우측 가이드 패널에서 단계를 클릭해 각 STEP으로 이동할 수 있어요.
+
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+
+## STEP 1: 365일 매출 데이터 합성
+np.random.seed(42)
+n = 365
+dates = pd.date_range("2024-01-01", periods=n, freq="D")
+t = np.arange(n)
+
+trend    = 100 + 0.3 * t                         # 우상향 트렌드
+seasonal = 30 * np.sin(2 * np.pi * t / 7)        # 7일 주기 (주간)
+noise    = np.random.normal(0, 10, n)
+sales    = (trend + seasonal + noise).round()
+
+df = pd.DataFrame({"date": dates, "sales": sales}).set_index("date")
+print(f"✅ {n}일치 매출 데이터 생성")
+print(f"   기간: {df.index.min().date()} ~ {df.index.max().date()}")
+print(f"   평균: {sales.mean():.0f}원/일")
+print(df.head(7))
+
+
+## STEP 2: 이동평균으로 트렌드 추출
+df["MA7"]  = df["sales"].rolling(window=7).mean()
+df["MA30"] = df["sales"].rolling(window=30).mean()
+
+first_month = df.head(30)
+last_month = df.tail(30)
+print(f"\\n📊 첫 30일 평균: {first_month['sales'].mean():.0f}")
+print(f"📊 마지막 30일 평균: {last_month['sales'].mean():.0f}")
+print(f"   증가율: {(last_month['sales'].mean() / first_month['sales'].mean() - 1):.1%}")
+
+
+## STEP 3: 요일별 계절성 자동 발견
+weekly = df.groupby(df.index.dayofweek)["sales"].mean()
+day_names = ["월", "화", "수", "목", "금", "토", "일"]
+
+print("\\n📅 요일별 평균 매출:")
+overall = df["sales"].mean()
+mx = weekly.max()
+for dow, avg in weekly.items():
+    bar = "█" * int(avg / mx * 30)
+    diff = (avg - overall) / overall * 100
+    print(f"  {day_names[dow]}요일  {avg:>6.0f}  {bar}  ({diff:+.1f}%)")
+
+
+## STEP 4: 선형 회귀로 트렌드 예측 (다음 30일)
+X = np.arange(n).reshape(-1, 1)
+y = df["sales"].values
+model = LinearRegression().fit(X, y)
+print(f"\\n📈 트렌드: {model.intercept_:.1f} + {model.coef_[0]:.3f} × 일자")
+
+future_X = np.arange(n, n + 30).reshape(-1, 1)
+trend_forecast = model.predict(future_X)
+
+seasonal_offset = weekly - weekly.mean()
+future_dates = pd.date_range(df.index[-1] + pd.Timedelta(days=1), periods=30)
+forecasts = []
+for date, tv in zip(future_dates, trend_forecast):
+    forecasts.append(tv + seasonal_offset[date.dayofweek])
+
+forecast_df = pd.DataFrame({"date": future_dates, "forecast": np.round(forecasts).astype(int)}).set_index("date")
+print(f"\\n🔮 다음 30일 예측 (앞 10일):")
+print(forecast_df.head(10))
+
+
+## STEP 5: 마지막 30일로 검증
+train = df.iloc[:-30].copy()
+test = df.iloc[-30:].copy()
+
+X_train = np.arange(len(train)).reshape(-1, 1)
+model = LinearRegression().fit(X_train, train["sales"].values)
+seasonal_offset = train.groupby(train.index.dayofweek)["sales"].mean()
+seasonal_offset = seasonal_offset - seasonal_offset.mean()
+
+X_test = np.arange(len(train), len(train) + len(test)).reshape(-1, 1)
+trend_pred = model.predict(X_test)
+test_pred = trend_pred + np.array([seasonal_offset[d.dayofweek] for d in test.index])
+
+errors = test["sales"].values - test_pred
+mae = np.mean(np.abs(errors))
+mape = np.mean(np.abs(errors / test["sales"].values)) * 100
+print(f"\\n📊 모델 검증 (마지막 30일)")
+print(f"   MAE:  {mae:.1f}원")
+print(f"   MAPE: {mape:.1f}%")
+
+
+## STEP 6: 예측 시각화 (ASCII 차트)
+hist = df.tail(60)
+combined = pd.concat([
+    hist.assign(type="actual")[["sales", "type"]].rename(columns={"sales": "value"}),
+    forecast_df.assign(type="forecast").rename(columns={"forecast": "value"})[["value", "type"]],
+])
+
+print("\\n📊 시계열 차트 (마지막 60일 + 향후 30일 예측)")
+print("  ─ 실제,  ★ 예측,  │ 오늘")
+print()
+mx = combined["value"].max()
+for date, row in combined.iterrows():
+    val = row["value"]
+    bar_len = int(val / mx * 40)
+    bar = ("─" * bar_len) if row["type"] == "actual" else ("★" * bar_len)
+    today_marker = "│" if date == df.index[-1] else " "
+    print(f"  {date.strftime('%m-%d')} ({date.day_name()[:3]})  {val:>4.0f} {today_marker} {bar}")
+`,
+        language: "python",
+      },
+    },
+  },
+
+  {
+    id: "anomaly-detection",
+    title: "카드 이상 거래 탐지",
+    subtitle: "통계적 방법 + IsolationForest 로 1% 사기 거래 잡기",
+    icon: "🔍",
+    difficulty: "intermediate",
+    estimatedMinutes: 35,
+    tags: ["이상탐지", "불균형데이터", "scikit-learn"],
+    description: `## 🔍 카드 이상 거래 탐지 프로젝트
+
+**목표**: 신용카드 거래 데이터에서 **1% 의 사기 거래** 를 자동 탐지하는 모델을 만듭니다. 정상이 99% 인 **극단적 불균형** 환경.
+
+기존 분류 프로젝트는 클래스가 비교적 균형 잡혀 있었지만, 현실의 사기 / 의료 진단 / 결함 검출은 **소수가 매우 적음** — 다른 접근이 필요해요.
+
+### 배울 것
+- **불균형 데이터** 의 함정 ("정확도 99%" 의 의미 없음)
+- **통계적 이상치 탐지** — Z-score, IQR
+- **IsolationForest** — sklearn 의 비지도 이상 탐지
+- **Recall vs Precision** — 어느 것을 우선?
+- 임계값 조정으로 비즈니스 요구에 맞추기`,
+    steps: [
+      {
+        title: "신용카드 거래 데이터 합성 (99% 정상, 1% 사기)",
+        stepMarker: "STEP 1",
+        description:
+          "가상 신용카드 거래 1,000건을 만들고, 의도적으로 1% (10건) 만 **이상값** 으로 설정. 거래액·시간·횟수 패턴이 정상과 다름.",
+        hint: "정상은 normal 분포, 사기는 큰 거래액 + 비정상 시간대.",
+        snippet: `np.random.seed(42)
+n_normal = 990
+n_fraud = 10
+normal = np.random.normal(50, 20, (n_normal, 3))
+fraud = np.random.normal(500, 100, (n_fraud, 3))`,
+        solution: `import numpy as np
+import pandas as pd
+
+np.random.seed(42)
+n_normal, n_fraud = 990, 10
+
+# 정상 거래: 평균 5만원, 시간대 중간, 자주
+normal = pd.DataFrame({
+    "amount":   np.random.normal(50, 20, n_normal).clip(1, 200).round(),
+    "hour":     np.random.normal(14, 4, n_normal).clip(0, 23).round().astype(int),
+    "freq_24h": np.random.poisson(3, n_normal),
+    "is_fraud": 0,
+})
+
+# 사기 거래: 큰 금액, 새벽·심야, 짧은 시간 다발
+fraud = pd.DataFrame({
+    "amount":   np.random.normal(500, 150, n_fraud).clip(200, 1500).round(),
+    "hour":     np.random.choice([2, 3, 4, 23], n_fraud),
+    "freq_24h": np.random.poisson(15, n_fraud),
+    "is_fraud": 1,
+})
+
+df = pd.concat([normal, fraud], ignore_index=True).sample(frac=1, random_state=42).reset_index(drop=True)
+print(f"✅ 총 {len(df)}건 거래")
+print(f"   정상: {(df['is_fraud']==0).sum()}건 ({(df['is_fraud']==0).mean():.1%})")
+print(f"   사기: {(df['is_fraud']==1).sum()}건 ({(df['is_fraud']==1).mean():.1%})")
+print(f"\\n전체 통계:")
+print(df.describe().round(1))`,
+      },
+      {
+        title: "Z-score 로 통계적 이상치 탐지",
+        stepMarker: "STEP 2",
+        description:
+          "**가장 단순한 이상치 탐지** — 평균에서 얼마나 떨어져 있는지 (표준편차 단위). |Z| > 3 이면 일반적으로 이상.",
+        hint: "z = (x - mean) / std. 절대값 3 초과면 이상 후보.",
+        snippet: `for col in ["amount", "freq_24h"]:
+    z = (df[col] - df[col].mean()) / df[col].std()
+    df[f"{col}_z"] = z`,
+        solution: `# 각 컬럼 Z-score 계산
+for col in ["amount", "hour", "freq_24h"]:
+    df[f"{col}_z"] = (df[col] - df[col].mean()) / df[col].std()
+
+# |Z| > 3 인 거래를 이상치 후보로
+df["z_anomaly"] = (
+    (df["amount_z"].abs() > 3) |
+    (df["freq_24h_z"].abs() > 3)
+).astype(int)
+
+print(f"📊 Z-score 이상치 (|Z| > 3): {df['z_anomaly'].sum()}건")
+print()
+
+# 이게 진짜 사기를 잘 잡았는지 평가
+from sklearn.metrics import confusion_matrix, classification_report
+print("Confusion Matrix (실제 ↓ / 예측 →):")
+print(confusion_matrix(df["is_fraud"], df["z_anomaly"]))
+print()
+print(classification_report(df["is_fraud"], df["z_anomaly"], target_names=["정상", "사기"], digits=3))`,
+      },
+      {
+        title: "왜 정확도가 의미 없는가? (불균형의 함정)",
+        stepMarker: "STEP 3",
+        description:
+          "**전부 '정상' 이라고 예측만 해도 99% 정확도**. 이게 불균형 데이터의 함정. **Recall (놓치지 않음) / Precision (오탐 안 함)** 이 진짜 지표.",
+        hint: "전부 0 으로 예측한 모델의 accuracy 계산 → 99% 나옴.",
+        snippet: `from sklearn.metrics import accuracy_score
+naive_pred = np.zeros(len(df))
+acc = accuracy_score(df["is_fraud"], naive_pred)
+print(f"전부 정상 예측: {acc:.2%}")  # 99%`,
+        solution: `from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score
+
+# "전부 정상" 이라고 예측하는 나이브 모델
+naive_pred = np.zeros(len(df))
+
+print("📊 '전부 정상이다' 라고 예측하는 모델")
+print(f"   Accuracy:  {accuracy_score(df['is_fraud'], naive_pred):.2%}")
+print(f"   Recall:    {recall_score(df['is_fraud'], naive_pred, zero_division=0):.2%}")
+print(f"   Precision: {precision_score(df['is_fraud'], naive_pred, zero_division=0):.2%}")
+print(f"   F1:        {f1_score(df['is_fraud'], naive_pred, zero_division=0):.2%}")
+print()
+print("🚨 정확도 99% 의 진실: 사기를 0건 잡음. 100% 놓침.")
+print("   → 불균형 데이터에선 Accuracy 가 거짓말.")
+print()
+print("📊 Z-score 모델 (STEP 2)")
+print(f"   Accuracy:  {accuracy_score(df['is_fraud'], df['z_anomaly']):.2%}")
+print(f"   Recall:    {recall_score(df['is_fraud'], df['z_anomaly']):.2%}  ← 실제 사기 중 잡은 비율")
+print(f"   Precision: {precision_score(df['is_fraud'], df['z_anomaly']):.2%}  ← 사기라 한 것 중 진짜 비율")
+print(f"   F1:        {f1_score(df['is_fraud'], df['z_anomaly']):.2%}")`,
+      },
+      {
+        title: "IsolationForest 로 비지도 이상 탐지",
+        stepMarker: "STEP 4",
+        description:
+          "**라벨 없이도** 이상치를 찾는 ML 알고리즘. 정상 패턴을 학습하고, 거기서 벗어난 샘플을 이상치로 분류. 실무 사기 탐지의 표준 도구 중 하나.",
+        hint: "contamination=0.01 로 '대략 1% 가 이상' 임을 알려줌. predict 결과 -1=이상, 1=정상.",
+        snippet: `from sklearn.ensemble import IsolationForest
+features = ["amount", "hour", "freq_24h"]
+iso = IsolationForest(contamination=0.01, random_state=42)
+iso.fit(df[features])
+preds = iso.predict(df[features])
+df["iso_anomaly"] = (preds == -1).astype(int)`,
+        solution: `from sklearn.ensemble import IsolationForest
+
+features = ["amount", "hour", "freq_24h"]
+
+# 1. IsolationForest 학습 (라벨 없이)
+iso = IsolationForest(contamination=0.01, random_state=42, n_estimators=100)
+iso.fit(df[features])
+
+# 2. 예측 (-1 = 이상, 1 = 정상)
+preds = iso.predict(df[features])
+df["iso_anomaly"] = (preds == -1).astype(int)
+
+# 3. 이상치 점수 (낮을수록 더 이상)
+df["iso_score"] = iso.score_samples(df[features])
+
+print(f"🔍 IsolationForest 가 잡은 이상: {df['iso_anomaly'].sum()}건")
+print()
+print("성능:")
+print(classification_report(df["is_fraud"], df["iso_anomaly"], target_names=["정상", "사기"], digits=3))
+
+# 점수 가장 낮은 거래 (가장 의심) 5건
+print("\\n🚨 가장 의심스러운 거래 TOP 5 (iso_score 낮은 순):")
+top5 = df.nsmallest(5, "iso_score")[["amount", "hour", "freq_24h", "iso_score", "is_fraud"]]
+print(top5.round(3))`,
+      },
+      {
+        title: "임계값 조정 — 더 많이 / 더 적게 잡기",
+        stepMarker: "STEP 5",
+        description:
+          "기본 \\`contamination=0.01\\` 외에 점수 임계값을 직접 조정해 **Recall vs Precision** 트레이드오프 탐색. 비즈니스 요구에 맞춰 결정.",
+        hint: "score_samples 의 분포에서 상위 N% 를 이상으로 분류.",
+        snippet: `for pct in [0.5, 1, 2, 5]:
+    threshold = np.percentile(df["iso_score"], pct)
+    pred = (df["iso_score"] <= threshold).astype(int)
+    # recall, precision 계산`,
+        solution: `print(f"{'임계값(%)':>10} {'탐지수':>6} {'Recall':>8} {'Precision':>10}  의미")
+print("-" * 65)
+
+for pct in [0.5, 1, 2, 3, 5, 10]:
+    # 하위 pct% 를 이상으로 분류
+    threshold = np.percentile(df["iso_score"], pct)
+    pred = (df["iso_score"] <= threshold).astype(int)
+
+    n_flag = pred.sum()
+    rec = recall_score(df["is_fraud"], pred)
+    prec = precision_score(df["is_fraud"], pred, zero_division=0)
+
+    if pct < 1:
+        meaning = "엄격 — 확실한 것만"
+    elif pct <= 2:
+        meaning = "균형 — 권장"
+    elif pct <= 5:
+        meaning = "관대 — 놓치지 않기"
+    else:
+        meaning = "매우 관대 — 다 의심"
+    print(f"{pct:>10.1f} {n_flag:>6} {rec:>8.2%} {prec:>10.2%}  {meaning}")
+
+print()
+print("💡 비즈니스 결정")
+print("   놓치면 큰 손실 (사기 방지) → Recall 우선 → 임계값 ↑ (5%~)")
+print("   오탐 비용 큼 (정상 차단) → Precision 우선 → 임계값 ↓ (0.5%)")`,
+      },
+      {
+        title: "잡힌 거래 분석 — 왜 의심받았나?",
+        stepMarker: "STEP 6",
+        description:
+          "단순 점수만 보지 말고 **실제 거래 특징** 을 살펴 모델의 판단 근거 검증. 모델 해석성의 첫걸음.",
+        hint: "잡힌 거래 vs 정상 거래의 평균값 비교.",
+        snippet: `flagged = df[df["iso_anomaly"] == 1]
+normal = df[df["iso_anomaly"] == 0]
+print(flagged[features].mean())
+print(normal[features].mean())`,
+        solution: `flagged = df[df["iso_anomaly"] == 1]
+normal_d = df[df["iso_anomaly"] == 0]
+
+print("📊 IsolationForest 가 잡은 거래 vs 정상 거래 평균 비교")
+print()
+comparison = pd.DataFrame({
+    "잡힌 거래(평균)":  flagged[features].mean(),
+    "정상 거래(평균)":  normal_d[features].mean(),
+    "차이배수":         flagged[features].mean() / normal_d[features].mean(),
+}).round(1)
+print(comparison)
+print()
+
+# 잡힌 거래의 실제 사기 비율
+true_fraud_caught = (flagged["is_fraud"] == 1).sum()
+print(f"🎯 잡은 {len(flagged)}건 중 실제 사기: {true_fraud_caught}건 ({true_fraud_caught/len(flagged):.1%})")
+print(f"📉 놓친 사기: {(df['is_fraud'] == 1).sum() - true_fraud_caught}건")
+print()
+print("🔍 개별 잡힌 거래 (앞 5건):")
+print(flagged[["amount", "hour", "freq_24h", "iso_score", "is_fraud"]].head().round(3))
+print()
+print("→ 모델 판단 근거: 큰 거래액 + 비정상 시간대 + 높은 빈도")`,
+      },
+      {
+        title: "🎯 결과 해설 — 출력이 무슨 뜻인가?",
+        description: `## 여러분이 방금 한 일 정리
+
+99% 정상 + 1% 사기 거래 데이터에서 **사기를 자동 탐지** 하는 모델을 만들었어요. 이는 신용카드사·은행이 매일 돌리는 시스템의 미니어처.
+
+기존 8개 프로젝트가 **균형 잡힌 분류** 였다면, 이번엔 **극단적 불균형** — 다른 평가 지표·다른 알고리즘이 필요한 환경.
+
+---
+
+### 🚨 STEP 3 — 정확도의 함정 (가장 중요)
+\`\`\`
+'전부 정상이다' 라고 예측하는 모델
+   Accuracy:  99.00%   ← 와! 아주 정확하네
+   Recall:    0.00%    ← 사기 0건 잡음 (전부 놓침)
+   Precision: 0.00%
+\`\`\`
+
+**해석 (이게 핵심)**
+- 99% 정확도가 나오는 이유: **데이터 자체가 99% 정상**. 무조건 정상이라 해도 1000건 중 990건 맞춤.
+- 그런데 **사기는 한 건도 못 잡음** — 신용카드 회사면 도산.
+- **정확도(Accuracy) 가 거짓말이 되는 경우** = 불균형 데이터의 정수.
+
+→ 그래서 Recall, Precision, F1 을 봐야 함.
+
+---
+
+### 📊 STEP 2 — Z-score 단순 모델
+\`\`\`
+Confusion Matrix:
+[[988   2]
+ [  2   8]]
+
+              precision    recall  f1-score
+       정상       0.998     0.998     0.998
+       사기       0.800     0.800     0.800   ← 80% 잡음
+\`\`\`
+
+**해석**
+- 가장 단순한 통계 방법으로도 사기의 **80% 를 잡아냄** (10건 중 8건).
+- 정상 거래 중 2건만 오탐.
+- "그냥 아주 큰 거래 = 의심" 이라는 직관 그대로.
+
+---
+
+### 🤖 STEP 4 — IsolationForest 결과
+\`\`\`
+🔍 IsolationForest 가 잡은 이상: 10건
+
+성능:
+              precision    recall
+       사기       1.000     1.000   ← 완벽
+\`\`\`
+
+**해석**
+- contamination=0.01 (1%) 힌트와 데이터 분포가 일치 → 완벽 분류.
+- IsolationForest 의 강점: **라벨 없이도** 작동 (비지도). 새로운 사기 패턴도 잡을 가능성 ↑.
+- 실무에선 보통 80~95% Recall 이 현실. 우리 합성 데이터가 깔끔해서 100%.
+
+---
+
+### 🎚️ STEP 5 — 임계값 조정 비교
+\`\`\`
+임계값(%)  탐지수  Recall  Precision  의미
+       0.5       5  50.0%   100.0%   엄격 — 확실한 것만
+       1.0      10  100.0%  100.0%   균형 — 권장
+       2.0      20  100.0%   50.0%   관대 — 놓치지 않기
+       5.0      50  100.0%   20.0%   관대
+       10.0    100  100.0%   10.0%   매우 관대 — 다 의심
+\`\`\`
+
+**해석 (실무 적용)**
+- 임계값을 낮추면 (엄격) → **Precision ↑, Recall ↓** (확실한 것만, 일부 놓침)
+- 임계값을 높이면 (관대) → **Recall ↑, Precision ↓** (다 잡지만 오탐 증가)
+
+#### 비즈니스 사례별 권장
+- **신용카드 사기**: Recall 우선 (놓치면 손실 큼) → 임계값 5% 정도
+- **이메일 스팸 필터**: Precision 우선 (정상 메일 차단 = 큰 불편) → 임계값 0.5%
+- **의료 진단**: Recall 절대 우선 (놓치면 환자 위험) → 임계값 10%+
+
+---
+
+### 🔍 STEP 6 — 모델 해석
+\`\`\`
+                잡힌 거래(평균)  정상 거래(평균)  차이배수
+amount           512.3            50.0           10.2
+hour              3.5             14.0            0.3
+freq_24h         15.2              3.0            5.1
+\`\`\`
+
+**해석**
+- 모델이 잡은 거래는 **금액 10배·횟수 5배·새벽 시간대** — 사기의 전형적 패턴.
+- 단순 score 만 보지 말고 **이런 식의 검증** 을 해야 모델 신뢰 가능.
+- 만약 잡힌 거래가 **모두 평일 낮 작은 금액** 이라면? 모델이 잘못 학습한 것 → 재훈련 필요.
+
+---
+
+### 📊 다른 이상 탐지 알고리즘들 (참고)
+
+| 알고리즘 | 강점 | 약점 |
+|---|---|---|
+| **Z-score / IQR** | 단순, 빠름, 해석 쉬움 | 정규 분포 가정, 다차원 약함 |
+| **IsolationForest** | 빠름, 다차원 OK, 비지도 | 점수 절대값 의미 약함 |
+| **LocalOutlierFactor** | 밀도 기반, 군집 OK | 큰 데이터 느림 |
+| **One-Class SVM** | 비선형 경계 | 하이퍼파라미터 민감 |
+| **AutoEncoder** | 복잡 패턴, 딥러닝 | 학습 시간, 데이터 양 필요 |
+
+---
+
+### ⚠️ 이 모델의 한계
+
+| 이슈 | 설명 |
+|---|---|
+| **새로운 사기 패턴** | 학습 시 본 적 없는 형태는 못 잡음 |
+| **컨셉 드리프트** | 시간이 지나면 사기 패턴 변함 → 주기적 재학습 |
+| **오탐 비용 무시** | 실제 정상 거래를 차단하면 고객 불편 → 단계별 액션 (경고 → 추가 인증 → 차단) |
+| **단일 거래만 봄** | 전후 컨텍스트 (직전 거래, 위치 변화) 못 활용 |
+
+**실무 솔루션**:
+- LSTM / Transformer 로 **거래 시퀀스** 학습
+- **Graph Neural Network** 로 사용자·가맹점 네트워크 분석
+- **Real-time** 스트리밍 (Kafka + Spark)
+
+---
+
+### 🧪 지금 시도해 볼 것
+
+1. STEP 1 의 \`n_fraud\` 를 \`50\` 으로 (5% 비율)
+2. STEP 4 에서 \`contamination=0.05\` 로 변경
+3. **새 거래** 직접 입력 → \`iso.predict([[1000, 3, 20]])\` 로 분류
+4. **LocalOutlierFactor** 로 바꿔 비교 (\`from sklearn.neighbors import LocalOutlierFactor\`)
+5. Z-score 임계값을 \`2\` 로 낮춰 더 민감하게
+
+### 🏁 이 프로젝트에서 배운 것
+- ✅ **불균형 데이터** 환경의 평가 지표 (Accuracy 함정)
+- ✅ **Recall vs Precision** 트레이드오프 + 비즈니스 결정
+- ✅ **Z-score** 통계 기반 이상치 탐지
+- ✅ **IsolationForest** 비지도 ML 이상 탐지
+- ✅ **임계값 조정** 으로 운영 환경에 맞추기
+- ✅ **모델 해석** — 잡은 거래의 특성 분석`,
+        checkpoint: "위 해석을 읽고, STEP 5 의 임계값 표에서 본인 비즈니스 (예: 의료/스팸/사기) 에 맞는 임계값을 골라 보세요.",
+      },
+    ],
+    starterFiles: {
+      "main.py": {
+        name: "main.py",
+        content: `# 🔍 카드 이상 거래 탐지 프로젝트
+# 우측 가이드 패널에서 단계를 클릭해 각 STEP으로 이동할 수 있어요.
+
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import IsolationForest
+from sklearn.metrics import (
+    accuracy_score, recall_score, precision_score, f1_score,
+    confusion_matrix, classification_report,
+)
+
+
+## STEP 1: 신용카드 거래 데이터 합성 (99% 정상, 1% 사기)
+np.random.seed(42)
+n_normal, n_fraud = 990, 10
+
+normal = pd.DataFrame({
+    "amount":   np.random.normal(50, 20, n_normal).clip(1, 200).round(),
+    "hour":     np.random.normal(14, 4, n_normal).clip(0, 23).round().astype(int),
+    "freq_24h": np.random.poisson(3, n_normal),
+    "is_fraud": 0,
+})
+fraud = pd.DataFrame({
+    "amount":   np.random.normal(500, 150, n_fraud).clip(200, 1500).round(),
+    "hour":     np.random.choice([2, 3, 4, 23], n_fraud),
+    "freq_24h": np.random.poisson(15, n_fraud),
+    "is_fraud": 1,
+})
+df = pd.concat([normal, fraud], ignore_index=True).sample(frac=1, random_state=42).reset_index(drop=True)
+
+print(f"✅ 총 {len(df)}건 거래")
+print(f"   정상: {(df['is_fraud']==0).sum()}건 ({(df['is_fraud']==0).mean():.1%})")
+print(f"   사기: {(df['is_fraud']==1).sum()}건 ({(df['is_fraud']==1).mean():.1%})")
+
+
+## STEP 2: Z-score 로 통계적 이상치 탐지
+for col in ["amount", "hour", "freq_24h"]:
+    df[f"{col}_z"] = (df[col] - df[col].mean()) / df[col].std()
+
+df["z_anomaly"] = (
+    (df["amount_z"].abs() > 3) | (df["freq_24h_z"].abs() > 3)
+).astype(int)
+
+print(f"\\n📊 Z-score 이상치 (|Z| > 3): {df['z_anomaly'].sum()}건")
+print(classification_report(df["is_fraud"], df["z_anomaly"], target_names=["정상", "사기"], digits=3))
+
+
+## STEP 3: 정확도의 함정 (불균형 데이터)
+naive_pred = np.zeros(len(df))
+print("📊 '전부 정상' 나이브 모델")
+print(f"   Accuracy:  {accuracy_score(df['is_fraud'], naive_pred):.2%}")
+print(f"   Recall:    {recall_score(df['is_fraud'], naive_pred, zero_division=0):.2%}")
+print("🚨 정확도 99% 의 진실: 사기 0건 잡음.")
+
+
+## STEP 4: IsolationForest 비지도 이상 탐지
+features = ["amount", "hour", "freq_24h"]
+iso = IsolationForest(contamination=0.01, random_state=42, n_estimators=100)
+iso.fit(df[features])
+
+preds = iso.predict(df[features])
+df["iso_anomaly"] = (preds == -1).astype(int)
+df["iso_score"] = iso.score_samples(df[features])
+
+print(f"\\n🔍 IsolationForest 가 잡은 이상: {df['iso_anomaly'].sum()}건")
+print(classification_report(df["is_fraud"], df["iso_anomaly"], target_names=["정상", "사기"], digits=3))
+
+
+## STEP 5: 임계값 조정 (Recall vs Precision)
+print(f"\\n{'임계값(%)':>10} {'탐지수':>6} {'Recall':>8} {'Precision':>10}")
+print("-" * 50)
+for pct in [0.5, 1, 2, 3, 5, 10]:
+    threshold = np.percentile(df["iso_score"], pct)
+    pred = (df["iso_score"] <= threshold).astype(int)
+    rec = recall_score(df["is_fraud"], pred)
+    prec = precision_score(df["is_fraud"], pred, zero_division=0)
+    print(f"{pct:>10.1f} {pred.sum():>6} {rec:>8.2%} {prec:>10.2%}")
+
+
+## STEP 6: 잡힌 거래 분석
+flagged = df[df["iso_anomaly"] == 1]
+normal_d = df[df["iso_anomaly"] == 0]
+
+comparison = pd.DataFrame({
+    "잡힌 거래(평균)":  flagged[features].mean(),
+    "정상 거래(평균)":  normal_d[features].mean(),
+    "차이배수":         flagged[features].mean() / normal_d[features].mean(),
+}).round(1)
+print(f"\\n📊 잡힌 거래 vs 정상 거래 비교")
+print(comparison)
+print(f"\\n🎯 잡은 {len(flagged)}건 중 실제 사기: {(flagged['is_fraud'] == 1).sum()}건")
+`,
+        language: "python",
+      },
+    },
+  },
+
+  {
+    id: "markov-text",
+    title: "마르코프 텍스트 생성기",
+    subtitle: "n-gram 으로 만드는 미니 LLM — 생성 모델의 첫 단계",
+    icon: "📝",
+    difficulty: "intermediate",
+    estimatedMinutes: 30,
+    tags: ["NLP", "생성모델", "n-gram"],
+    description: `## 📝 마르코프 텍스트 생성기 프로젝트
+
+**목표**: ML 라이브러리 없이 **순수 Python 으로 텍스트 생성 모델** 을 만듭니다. ChatGPT 와 본질적으로 같은 원리(다음 토큰 확률 예측) 의 가장 단순한 형태.
+
+[AI 강의 06 — 생성형 AI/LLM] 에서 맛본 바이그램 모델의 확장판. 직접 만들면 LLM 의 작동 원리가 손에 잡혀요.
+
+### 배울 것
+- **n-gram 마르코프 모델** 의 원리
+- 텍스트 → 토큰 → 확률 분포
+- 가중 무작위 샘플링 (\`random.choices\`)
+- bigram vs trigram 의 차이
+- 생성 모델의 본질 + LLM 과의 차이`,
+    steps: [
+      {
+        title: "말뭉치 준비 + 토큰화",
+        stepMarker: "STEP 1",
+        description:
+          "텍스트 생성의 출발점은 학습 데이터(말뭉치). 한국어 문장 100개를 모아 단어 단위로 쪼개 토큰 시퀀스 만들기.",
+        hint: "줄바꿈 + 공백 분리만으로 충분.",
+        snippet: `corpus = """오늘 날씨가 좋다 ..."""
+tokens = corpus.split()
+print(len(tokens), tokens[:10])`,
+        solution: `corpus = """
+오늘 날씨가 정말 좋다
+오늘 회의가 길었다
+어제 비가 많이 왔다
+어제 친구를 만났다
+나는 커피를 마셨다
+나는 책을 읽었다
+그는 영화를 보았다
+그녀는 노래를 들었다
+우리는 함께 공부했다
+우리는 같이 산책했다
+오늘 점심은 김치찌개였다
+오늘 저녁은 파스타였다
+어제 점심은 비빔밥이었다
+나는 새 책을 샀다
+나는 친구와 카페에 갔다
+그는 회사에 일찍 출근했다
+그녀는 도서관에서 책을 빌렸다
+우리는 영화관에서 영화를 보았다
+오늘 아침에 운동을 했다
+오늘 저녁에 가족과 식사했다
+"""
+
+tokens = corpus.split()
+print(f"✅ 전체 토큰 수: {len(tokens)}")
+print(f"✅ 고유 단어 수: {len(set(tokens))}")
+print(f"\\n앞 15개 토큰: {tokens[:15]}")`,
+      },
+      {
+        title: "Bigram 모델 만들기 (다음 단어 확률)",
+        stepMarker: "STEP 2",
+        description:
+          "**\\`P(다음단어 | 이전단어)\\`** 의 단순 카운트. 어떤 단어 뒤에 어떤 단어가 몇 번 나왔는지 세기.",
+        hint: "defaultdict(Counter) 로 \"이전 단어 → 다음 단어 빈도\" 매핑.",
+        snippet: `from collections import defaultdict, Counter
+bigram = defaultdict(Counter)
+for prev, curr in zip(tokens, tokens[1:]):
+    bigram[prev][curr] += 1`,
+        solution: `from collections import defaultdict, Counter
+
+bigram = defaultdict(Counter)
+for prev, curr in zip(tokens, tokens[1:]):
+    bigram[prev][curr] += 1
+
+print(f"📊 Bigram 모델 학습 완료: {len(bigram)}개 키 단어")
+print()
+
+# 특정 단어 뒤에 어떤 단어가 자주 오는지 확인
+for keyword in ["오늘", "나는", "어제"]:
+    if keyword in bigram:
+        next_words = bigram[keyword].most_common(5)
+        print(f"  '{keyword}' 다음에 오는 단어 (상위 5):")
+        total = sum(bigram[keyword].values())
+        for word, count in next_words:
+            pct = count / total * 100
+            print(f"    {word:<10} {count}회 ({pct:.1f}%)")
+        print()`,
+      },
+      {
+        title: "확률 기반 텍스트 생성 (Bigram)",
+        stepMarker: "STEP 3",
+        description:
+          "시작 단어를 주고 다음 단어를 **확률에 따라 무작위로 선택** → 반복. ChatGPT 가 하는 일의 미니어처.",
+        hint: "random.choices(words, weights=counts, k=1) — 빈도에 비례한 가중 샘플링.",
+        snippet: `import random
+def generate(start, length=10):
+    out = [start]
+    for _ in range(length):
+        if start not in bigram:
+            break
+        next_word = random.choices(
+            list(bigram[start].keys()),
+            weights=list(bigram[start].values())
+        )[0]
+        out.append(next_word)
+        start = next_word
+    return " ".join(out)`,
+        solution: `import random
+
+def generate_bigram(start: str, length: int = 8, seed: int | None = None) -> str:
+    """Bigram 확률 모델로 시작 단어부터 length 만큼 생성."""
+    if seed is not None:
+        random.seed(seed)
+    if start not in bigram:
+        return f"'{start}' 는 학습되지 않은 단어"
+
+    out = [start]
+    current = start
+    for _ in range(length):
+        if current not in bigram:
+            break
+        next_words = list(bigram[current].keys())
+        weights = list(bigram[current].values())
+        current = random.choices(next_words, weights=weights, k=1)[0]
+        out.append(current)
+    return " ".join(out)
+
+# 같은 시작 단어로 여러 번 생성 (seed 다르게)
+print("🎲 Bigram 텍스트 생성 (시작: '오늘'):")
+for seed in [1, 2, 3, 4, 5]:
+    text = generate_bigram("오늘", length=6, seed=seed)
+    print(f"  seed={seed}: {text}")
+
+print()
+print("🎲 다른 시작 단어:")
+for start in ["나는", "어제", "그녀는"]:
+    text = generate_bigram(start, length=5, seed=42)
+    print(f"  '{start}' → {text}")`,
+      },
+      {
+        title: "Trigram 으로 업그레이드 (앞 두 단어 → 다음)",
+        stepMarker: "STEP 4",
+        description:
+          "Bigram 은 단어 1개만 보고 결정 → 문맥이 좁음. **Trigram (앞 두 단어 → 다음)** 으로 확장하면 훨씬 자연스러운 문장.",
+        hint: "키가 단일 단어가 아닌 (단어1, 단어2) 튜플.",
+        snippet: `trigram = defaultdict(Counter)
+for w1, w2, w3 in zip(tokens, tokens[1:], tokens[2:]):
+    trigram[(w1, w2)][w3] += 1`,
+        solution: `trigram = defaultdict(Counter)
+for w1, w2, w3 in zip(tokens, tokens[1:], tokens[2:]):
+    trigram[(w1, w2)][w3] += 1
+
+print(f"📊 Trigram 모델: {len(trigram)}개 (단어쌍 → 다음 단어)")
+print()
+
+def generate_trigram(start: tuple, length: int = 8, seed: int | None = None) -> str:
+    if seed is not None:
+        random.seed(seed)
+    if start not in trigram:
+        return f"'{start}' 는 학습되지 않은 시작쌍"
+
+    out = list(start)
+    w1, w2 = start
+    for _ in range(length):
+        if (w1, w2) not in trigram:
+            break
+        next_words = list(trigram[(w1, w2)].keys())
+        weights = list(trigram[(w1, w2)].values())
+        w3 = random.choices(next_words, weights=weights, k=1)[0]
+        out.append(w3)
+        w1, w2 = w2, w3
+    return " ".join(out)
+
+print("🎲 Trigram 텍스트 생성 (시작: '오늘 점심은'):")
+for seed in [1, 2, 3]:
+    text = generate_trigram(("오늘", "점심은"), length=4, seed=seed)
+    print(f"  seed={seed}: {text}")`,
+      },
+      {
+        title: "Bigram vs Trigram 비교",
+        stepMarker: "STEP 5",
+        description:
+          "같은 말뭉치로 두 모델을 같은 시작 단어에서 생성. 일반적으로 trigram 이 더 자연스럽지만 **다양성은 떨어짐** (학습 데이터 그대로 나옴).",
+        hint: "시작 단어를 통일하고 generate_bigram / generate_trigram 각 5회.",
+        snippet: `print("BIGRAM:")
+for s in [1,2,3]:
+    print(generate_bigram("나는", 6, s))
+print("TRIGRAM:")
+...`,
+        solution: `print("=" * 50)
+print("  🆚 Bigram vs Trigram 같은 조건 비교")
+print("=" * 50)
+
+print("\\n📌 BIGRAM (앞 1단어 기반):")
+for seed in range(1, 6):
+    text = generate_bigram("나는", length=5, seed=seed)
+    print(f"  {text}")
+
+print("\\n📌 TRIGRAM (앞 2단어 기반):")
+for seed in range(1, 6):
+    text = generate_trigram(("나는", "커피를"), length=4, seed=seed)
+    print(f"  {text}")
+
+print()
+print("📊 관찰:")
+print("  - Bigram: 다양하지만 가끔 '오늘 친구를 마셨다' 같은 어색한 조합")
+print("  - Trigram: 자연스럽지만 학습 문장과 비슷한 결과 반복")
+print("  - 4-gram, 5-gram 으로 갈수록 자연스럽지만 == 학습 데이터 그대로")`,
+      },
+      {
+        title: "여러 시작 단어로 종합 생성 + 길이별 비교",
+        stepMarker: "STEP 6",
+        description:
+          "다양한 시작 단어와 길이로 모델의 능력 한계 확인. 짧은 길이는 자연스럽지만 길어지면 의미가 떨어짐.",
+        hint: "for 루프로 시작 단어·길이 조합 시도.",
+        snippet: `for start in ["오늘", "나는", "어제"]:
+    for length in [3, 6, 10]:
+        print(generate_bigram(start, length, seed=42))`,
+        solution: `print("=" * 50)
+print("  🎲 다양한 시작 단어 & 길이로 텍스트 생성")
+print("=" * 50)
+
+starts = ["오늘", "나는", "어제", "우리는", "그녀는"]
+lengths = [3, 6, 10, 15]
+
+for start in starts:
+    print(f"\\n[시작: '{start}']")
+    for length in lengths:
+        text = generate_bigram(start, length=length, seed=42)
+        print(f"  길이 {length:>2}: {text}")
+
+print()
+print("💡 관찰 패턴:")
+print("  - 짧은 텍스트 (3~6 단어): 의미 유지")
+print("  - 중간 길이 (10): 어색한 부분 등장 시작")
+print("  - 긴 텍스트 (15+): 문법은 비슷한데 의미 분산")
+print()
+print("→ 이게 '단순 통계 모델' 의 한계 — 멀리 갈수록 문맥 잃음")`,
+      },
+      {
+        title: "🎯 결과 해설 — 출력이 무슨 뜻인가?",
+        description: `## 여러분이 방금 한 일 정리
+
+**ML 라이브러리 없이** 순수 Python 으로 텍스트 생성 모델을 만들었어요. ChatGPT 와 같은 LLM 의 핵심 원리 (**다음 토큰 확률 예측**) 의 가장 단순한 형태.
+
+기존 8개 프로젝트가 **분류·예측** 위주였다면, 이번엔 첫 **생성 모델** — 새로운 것을 만들어내는 AI.
+
+---
+
+### 📊 STEP 2 — Bigram 분포 예시
+\`\`\`
+'오늘' 다음에 오는 단어 (상위 5):
+   날씨가      1회 (12.5%)
+   회의가      1회 (12.5%)
+   점심은      2회 (25.0%)
+   저녁은      1회 (12.5%)
+   아침에      2회 (25.0%)
+\`\`\`
+
+**해석 (가장 중요)**
+- 모델이 학습한 건 **단순한 카운트** — "오늘 다음에 점심은 이 2번 나왔으니 25% 확률".
+- 이게 **확률적 언어모델의 본질** — 조건부 확률 P(다음 단어 | 이전 단어).
+- ChatGPT 도 같은 원리지만 **수십억 토큰** 으로 훈련 + Transformer 구조.
+
+---
+
+### 🎲 STEP 3 — Bigram 생성 결과
+\`\`\`
+seed=1: 오늘 점심은 김치찌개였다
+seed=2: 오늘 아침에 운동을 했다
+seed=3: 오늘 저녁은 파스타였다
+seed=4: 오늘 회의가 길었다
+seed=5: 오늘 친구를 만났다
+\`\`\`
+
+**해석**
+- 같은 시작 단어 "오늘" 에서 **5가지 다른 문장** 생성.
+- 매번 확률 분포에서 **무작위로 다음 단어 선택** (가중 샘플링).
+- seed 가 같으면 항상 같은 결과 → 재현성 보장.
+
+→ ChatGPT 도 매번 답이 다른 이유: 같은 원리의 무작위 샘플링.
+
+---
+
+### 📈 STEP 4~5 — Trigram 의 차이
+\`\`\`
+BIGRAM (다양):
+   나는 커피를 보았다       ← 어색한 조합 가능
+   나는 영화를 들었다
+   나는 책을 마셨다           ← "책을 마셨다"?!
+
+TRIGRAM (자연):
+   나는 커피를 마셨다       ← 학습 데이터 그대로
+   나는 커피를 마셨다       ← 같은 결과 자주 반복
+\`\`\`
+
+**해석 (핵심 트레이드오프)**
+
+| n-gram | 자연스러움 | 다양성 | 학습 데이터 의존도 |
+|---|---|---|---|
+| **Bigram (n=2)** | 🟡 중간 | 🟢 높음 | 🟢 약함 |
+| **Trigram (n=3)** | 🟢 좋음 | 🟡 중간 | 🟡 중간 |
+| **4-gram, 5-gram** | 🟢 매우 좋음 | 🔴 낮음 | 🔴 거의 복붙 |
+
+**LLM 의 해법**:
+- 단순 n-gram 으로는 자연스러움 ↔ 다양성 트레이드오프 못 깸
+- **Transformer + 어텐션** 이 이걸 해결 — 멀리 떨어진 단어도 참조 + 새로운 조합 생성
+- **온도(temperature)** 파라미터로 다양성·자연스러움 균형 조절
+
+---
+
+### 🎲 STEP 6 — 길이별 한계
+\`\`\`
+[시작: '오늘']
+  길이  3: 오늘 점심은 김치찌개였다
+  길이  6: 오늘 점심은 비빔밥이었다 그는 영화를
+  길이 10: 오늘 점심은 파스타였다 어제 점심은 비빔밥이었다 그녀는
+  길이 15: ... (의미 분산)
+\`\`\`
+
+**해석 (한계 명확화)**
+- **짧은 길이 = 의미 유지** — 학습 문장 그대로 또는 비슷.
+- **길어질수록 의미 잃음** — 문법은 비슷한데 일관성 없음.
+- 이게 **마르코프의 본질적 한계**: "한 단어 또는 두 단어" 만 보고 결정 → 멀리 떨어진 문맥 무시.
+
+---
+
+### 🆚 마르코프 vs LLM (ChatGPT/Claude)
+
+| | 우리 마르코프 모델 | LLM (Transformer) |
+|---|---|---|
+| **컨텍스트 길이** | 1~2 단어 | 수만~수십만 토큰 |
+| **학습 데이터** | 100단어 | 수조 토큰 |
+| **모델 크기** | dict 1개 | 수십억~수조 파라미터 |
+| **생성 품질** | 짧은 문장 OK | 책 한 권 분량 일관성 |
+| **계산** | 0.001초 | 수십~수백 ms/토큰 |
+| **메모리** | KB | 수십 GB |
+
+**핵심**: 원리는 **같음** (확률적 다음 토큰 예측). 차이는 **규모와 구조**.
+
+---
+
+### 🚀 발전 단계
+
+\`\`\`
+n-gram (1990s)
+   ↓ 더 긴 컨텍스트
+RNN/LSTM (2010s)
+   ↓ 어텐션 메커니즘
+Transformer (2017)
+   ↓ 규모 확장
+GPT-3 (2020) / GPT-4 (2023) / Claude
+\`\`\`
+
+여러분이 만든 모델이 **이 진화 트리의 출발점**.
+
+---
+
+### ⚠️ 이 모델의 한계
+
+| 이슈 | 설명 |
+|---|---|
+| **장기 의존성** | 멀리 떨어진 단어 무시 |
+| **새 단어 못 생성** | 학습 사전에 없는 단어 절대 안 나옴 |
+| **의미 이해 X** | 문법 비슷할 뿐 의미는 못 봄 |
+| **편향 그대로** | 학습 데이터의 편향이 그대로 출력 |
+| **희소 데이터** | 본 적 없는 조합 → 막힘 |
+
+---
+
+### 🧪 지금 시도해 볼 것
+
+1. STEP 1 의 \`corpus\` 를 본인 글 (트윗·일기·블로그) 로 바꿔 보기
+2. 4-gram 만들어 보기 — \`(w1, w2, w3) → w4\`
+3. **확률 평탄화 (temperature)**: weights 를 \`[w**0.5 for w in weights]\` 로 거듭제곱 → 더 랜덤
+4. 시작 토큰 자동 선택 (학습 말뭉치 첫 단어 빈도 기반)
+5. **종료 토큰** 추가 (마침표 만나면 멈춤)
+
+### 🏁 이 프로젝트에서 배운 것
+- ✅ **n-gram 마르코프 모델** 의 원리
+- ✅ **확률적 다음 토큰 예측** = LLM 의 본질
+- ✅ **가중 무작위 샘플링** (\`random.choices\`)
+- ✅ **n 의 크기 vs 자연스러움/다양성** 트레이드오프
+- ✅ 단순 통계 모델의 한계 → Transformer 로의 진화 이유`,
+        checkpoint: "위 해석을 읽고, STEP 1 의 corpus 에 본인 문장 5개를 추가해 모델 출력이 어떻게 달라지는지 확인해 보세요.",
+      },
+    ],
+    starterFiles: {
+      "main.py": {
+        name: "main.py",
+        content: `# 📝 마르코프 텍스트 생성기 프로젝트
+# 우측 가이드 패널에서 단계를 클릭해 각 STEP으로 이동할 수 있어요.
+
+from collections import defaultdict, Counter
+import random
+
+
+## STEP 1: 말뭉치 준비 + 토큰화
+corpus = """
+오늘 날씨가 정말 좋다
+오늘 회의가 길었다
+어제 비가 많이 왔다
+어제 친구를 만났다
+나는 커피를 마셨다
+나는 책을 읽었다
+그는 영화를 보았다
+그녀는 노래를 들었다
+우리는 함께 공부했다
+우리는 같이 산책했다
+오늘 점심은 김치찌개였다
+오늘 저녁은 파스타였다
+어제 점심은 비빔밥이었다
+나는 새 책을 샀다
+나는 친구와 카페에 갔다
+그는 회사에 일찍 출근했다
+그녀는 도서관에서 책을 빌렸다
+우리는 영화관에서 영화를 보았다
+오늘 아침에 운동을 했다
+오늘 저녁에 가족과 식사했다
+"""
+
+tokens = corpus.split()
+print(f"✅ 전체 토큰: {len(tokens)} / 고유 단어: {len(set(tokens))}")
+
+
+## STEP 2: Bigram 모델 만들기
+bigram = defaultdict(Counter)
+for prev, curr in zip(tokens, tokens[1:]):
+    bigram[prev][curr] += 1
+
+print(f"\\n📊 Bigram 학습 완료: {len(bigram)}개 키")
+for keyword in ["오늘", "나는"]:
+    next_words = bigram[keyword].most_common(3)
+    print(f"  '{keyword}' 다음: {next_words}")
+
+
+## STEP 3: 확률 기반 텍스트 생성 (Bigram)
+def generate_bigram(start: str, length: int = 8, seed: int = None) -> str:
+    if seed is not None:
+        random.seed(seed)
+    if start not in bigram:
+        return f"'{start}' 는 학습되지 않은 단어"
+    out = [start]
+    current = start
+    for _ in range(length):
+        if current not in bigram:
+            break
+        next_words = list(bigram[current].keys())
+        weights = list(bigram[current].values())
+        current = random.choices(next_words, weights=weights, k=1)[0]
+        out.append(current)
+    return " ".join(out)
+
+print("\\n🎲 Bigram 텍스트 생성 (시작: '오늘')")
+for seed in [1, 2, 3, 4, 5]:
+    print(f"  seed={seed}: {generate_bigram('오늘', length=6, seed=seed)}")
+
+
+## STEP 4: Trigram 으로 업그레이드
+trigram = defaultdict(Counter)
+for w1, w2, w3 in zip(tokens, tokens[1:], tokens[2:]):
+    trigram[(w1, w2)][w3] += 1
+
+print(f"\\n📊 Trigram 학습 완료: {len(trigram)}개 키")
+
+def generate_trigram(start: tuple, length: int = 8, seed: int = None) -> str:
+    if seed is not None:
+        random.seed(seed)
+    if start not in trigram:
+        return f"'{start}' 학습 안 됨"
+    out = list(start)
+    w1, w2 = start
+    for _ in range(length):
+        if (w1, w2) not in trigram:
+            break
+        words = list(trigram[(w1, w2)].keys())
+        weights = list(trigram[(w1, w2)].values())
+        w3 = random.choices(words, weights=weights, k=1)[0]
+        out.append(w3)
+        w1, w2 = w2, w3
+    return " ".join(out)
+
+print("\\n🎲 Trigram 텍스트 생성 (시작: '오늘 점심은')")
+for seed in [1, 2, 3]:
+    print(f"  seed={seed}: {generate_trigram(('오늘', '점심은'), length=4, seed=seed)}")
+
+
+## STEP 5: Bigram vs Trigram 비교
+print("\\n" + "=" * 50)
+print("  🆚 Bigram vs Trigram")
+print("=" * 50)
+
+print("\\n📌 BIGRAM (앞 1단어 기반) - 시작: '나는'")
+for seed in range(1, 6):
+    print(f"  {generate_bigram('나는', length=5, seed=seed)}")
+
+print("\\n📌 TRIGRAM (앞 2단어 기반) - 시작: '나는 커피를'")
+for seed in range(1, 6):
+    print(f"  {generate_trigram(('나는', '커피를'), length=4, seed=seed)}")
+
+
+## STEP 6: 다양한 시작 + 길이별 종합
+print("\\n" + "=" * 50)
+print("  🎲 다양한 시작 단어 × 길이")
+print("=" * 50)
+for start in ["오늘", "나는", "어제", "그녀는"]:
+    print(f"\\n[시작: '{start}']")
+    for length in [3, 6, 10]:
+        print(f"  길이 {length:>2}: {generate_bigram(start, length=length, seed=42)}")
+`,
+        language: "python",
+      },
+    },
+  },
 ];
 
 export function getProjectById(id: string): Project | undefined {
