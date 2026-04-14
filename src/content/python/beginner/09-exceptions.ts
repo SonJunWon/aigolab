@@ -89,14 +89,45 @@ print(safe_divide("10", 3))`,
       type: "markdown",
       source: `### 에러 메시지 가져오기
 
-\`except 에러타입 as 변수:\` 로 에러 메시지를 변수에 담을 수 있어요.`,
+\`except 에러타입 as 변수:\` 로 **에러 객체** 를 변수(\`e\`) 에 담을 수 있어요.
+\`e\` 를 \`f"..."\` 안에 넣으면 에러 메시지가 들어가요.
+
+> 🌐 **참고**: Python 의 에러 메시지는 **영어로 고정**돼 있어요.
+> (\`invalid literal for int() with base 10: '안녕'\` 같이)
+> 사용자에게 한국어로 보여주고 싶으면 직접 메시지를 작성해야 해요 — 다음 예제 참고.`,
     },
     {
       type: "code",
-      source: `try:
+      source: `# 방법 1: Python 의 원본 에러 메시지 그대로 (영어)
+try:
     number = int("안녕")
 except ValueError as e:
-    print(f"변환 실패: {e}")`,
+    print(f"변환 실패: {e}")
+    # 출력 → 변환 실패: invalid literal for int() with base 10: '안녕'
+    #         ↑ 한글 ↑   ↑ Python 이 만든 영어 메시지 ↑`,
+    },
+    {
+      type: "markdown",
+      source: `### 한국어로 친절하게 알려주기
+
+영어 메시지가 어색하면 **\`as e\` 를 빼고** 우리가 직접 한국어 메시지를 출력하면 돼요.`,
+    },
+    {
+      type: "code",
+      source: `# 방법 2: 우리가 한국어로 친절하게
+text = "안녕"
+try:
+    number = int(text)
+except ValueError:
+    print(f"'{text}' 는 숫자로 바꿀 수 없어요. 숫자로 된 문자열만 가능해요.")
+    # 출력 → '안녕' 는 숫자로 바꿀 수 없어요. 숫자로 된 문자열만 가능해요.
+
+# 두 방법을 합치면 — 사용자에겐 한국어, 로그엔 원본 영어
+try:
+    number = int("hello")
+except ValueError as e:
+    print("⚠️ 입력값이 숫자가 아니에요.")        # 사용자용
+    print(f"   (개발자 로그: {e})")              # 디버깅용`,
     },
     {
       type: "markdown",
