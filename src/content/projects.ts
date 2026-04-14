@@ -5967,6 +5967,296 @@ print(report)
       },
     },
   },
+  {
+    id: "iris-knn",
+    category: "classification",
+    title: "아이리스 KNN 분류 — 이웃에게 물어보기",
+    subtitle: "KNN 으로 다시 보는 머신러닝 공식 — 이웃 K 가 운명을 가른다",
+    icon: "🌼",
+    difficulty: "beginner",
+    estimatedMinutes: 40,
+    tags: ["scikit-learn", "KNN", "분류", "하이퍼파라미터"],
+    description: `## 🌼 KNN 으로 다시 보는 iris
+
+**목표**: 가장 단순한 분류기 **KNN (K-Nearest Neighbors)** 으로 iris 를 분류하면서,
+scikit-learn 의 **공통 공식** 과 **하이퍼파라미터 튜닝** 을 몸으로 익힙니다.
+
+결정 트리 버전의 iris 프로젝트를 이미 풀었다면, 이번엔 완전히 다른 가족의 모델로 같은 문제를 풀어보세요.
+"같은 데이터 · 다른 모델" 비교는 ML 공부의 핵심 훈련이에요.
+
+### 배울 것
+- **sklearn 모듈 지도**: 모델 family 별 import 패턴
+- **KNN 의 동작 원리**: 이웃 다수결
+- **train_test_split 의 실제 의미** (test_size, random_state, stratify)
+- **직접 정확도 계산** vs \`accuracy_score\` — 공식의 본질
+- **하이퍼파라미터 k 튜닝** — 과적합/과소적합 곡선`,
+    steps: [
+      {
+        title: "모델 family 한눈에 import",
+        stepMarker: "STEP 1",
+        description:
+          "scikit-learn 은 문제 유형별로 모듈이 나뉩니다. 실제로 다 쓰진 않아도 **어디에 뭐가 있는지** 한 번 펼쳐보세요. 나중에 새 모델을 만나도 당황하지 않아요.",
+        hint: "`from sklearn.{family} import {모델}` — family 는 linear_model, tree, ensemble, neighbors, svm ...",
+        snippet: `from sklearn.neighbors   import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree         import DecisionTreeClassifier`,
+        solution: `# 대표 family 한 번에 — 눈에 익혀두기
+from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.tree         import DecisionTreeClassifier
+from sklearn.ensemble     import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.neighbors    import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.svm          import SVC, SVR
+
+print("모든 모델은 .fit(X, y) → .predict(X) 공식 — 하나만 외우면 끝!")`,
+      },
+      {
+        title: "데이터 로드 + EDA (pairplot 대신 numpy 로)",
+        stepMarker: "STEP 2",
+        description:
+          "iris 를 불러오고, **특성별 평균·표준편차** 로 간단한 EDA. 강의에선 seaborn pairplot 을 쓰지만 Pyodide 엔 seaborn 이 없어요. 대신 numpy 기초로 데이터를 '느껴' 봅시다.",
+        hint: "`np.mean(X, axis=0)`, `np.std(X, axis=0)` 로 열별 통계를 계산하세요.",
+        snippet: `iris = load_iris()
+X, y = iris.data, iris.target`,
+        solution: `from sklearn.datasets import load_iris
+import numpy as np
+
+iris = load_iris()
+X, y = iris.data, iris.target
+
+print(f"샘플: {X.shape[0]}, 특성: {X.shape[1]}")
+print(f"클래스별 샘플: {np.bincount(y)}  → {list(iris.target_names)}")
+print()
+print("특성별 통계 (mean ± std):")
+for name, m, s in zip(iris.feature_names, X.mean(axis=0), X.std(axis=0)):
+    print(f"  {name:25s} {m:5.2f} ± {s:.2f}")`,
+        checkpoint: "샘플 150, 특성 4, 클래스당 50개씩 나오면 정상.",
+      },
+      {
+        title: "train_test_split — 왜 나누고, 옵션은 뭘 의미하나",
+        stepMarker: "STEP 3",
+        description: `**왜 나눌까?** 모델이 학습 데이터만 잘 맞히는 건 의미 없음. **처음 보는 데이터** 에서의 성능이 진짜 실력.
+
+- \`test_size=0.2\` → 20% 를 테스트용으로 빼두기
+- \`random_state=42\` → 같은 시드면 항상 같은 분할 (재현성)
+- \`stratify=y\` → 각 클래스의 비율을 훈련·테스트에 동일하게 유지`,
+        hint: "`stratify=y` 는 클래스 불균형이 있을 때 특히 중요 — iris 는 이미 균형이지만 습관 들이세요.",
+        snippet: `X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)`,
+        solution: `from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+print(f"훈련 {len(X_train)}개  /  테스트 {len(X_test)}개")
+print(f"훈련 클래스 분포: {np.bincount(y_train)}")
+print(f"테스트 클래스 분포: {np.bincount(y_test)}  ← stratify 로 비율 유지됨")`,
+      },
+      {
+        title: "KNN 학습 (k=3) — 3줄 공식",
+        stepMarker: "STEP 4",
+        description:
+          "**KNN 은 학습하지 않습니다.** 그냥 훈련 데이터를 기억만 해요. 예측 시점에 가장 가까운 **k=3 이웃** 을 찾아 다수결.",
+        hint: "`KNeighborsClassifier(n_neighbors=3)` → `.fit()` → `.predict()` — 세 줄이면 끝.",
+        snippet: `knn = KNeighborsClassifier(n_neighbors=3)
+knn.fit(X_train, y_train)
+y_pred = knn.predict(X_test)`,
+        solution: `from sklearn.neighbors import KNeighborsClassifier
+
+knn = KNeighborsClassifier(n_neighbors=3)
+knn.fit(X_train, y_train)
+y_pred = knn.predict(X_test)
+
+print(f"처음 10개 실제값: {y_test[:10]}")
+print(f"처음 10개 예측값: {y_pred[:10]}")
+print(f"일치 여부:       {(y_pred[:10] == y_test[:10]).astype(int)}")`,
+      },
+      {
+        title: "정확도 — 직접 계산 vs accuracy_score",
+        stepMarker: "STEP 5",
+        description: `정확도의 **정의** = \`맞힌 개수 / 전체 개수\`. 이걸 직접 계산해본 뒤, sklearn 의 편의 함수가 **같은 값** 을 내는지 확인하세요. 평가 지표의 본질을 손으로 만져봐야 나중에 새 지표를 만나도 당황하지 않아요.`,
+        hint: "`(y_pred == y_test).sum() / len(y_test)` 와 `accuracy_score(y_test, y_pred)` 를 둘 다 출력.",
+        snippet: `correct = (y_pred == y_test).sum()
+manual_acc = correct / len(y_test)`,
+        solution: `from sklearn.metrics import accuracy_score
+
+correct = (y_pred == y_test).sum()
+manual_acc = correct / len(y_test)
+sk_acc = accuracy_score(y_test, y_pred)
+
+print(f"맞힌 개수:        {correct} / {len(y_test)}")
+print(f"직접 계산:        {manual_acc:.6f}")
+print(f"accuracy_score:   {sk_acc:.6f}")
+print(f"같은가?           {manual_acc == sk_acc}")`,
+        checkpoint: "두 값이 정확히 같으면 '정확도의 정의' 를 몸에 익힌 것.",
+      },
+      {
+        title: "K 튜닝 — 최적의 이웃 수 찾기",
+        stepMarker: "STEP 6",
+        description: `이 프로젝트의 **하이라이트**. k 를 바꿔가며 훈련/테스트 정확도를 함께 추적하면 **과적합 → 적합 → 과소적합** 을 한눈에 볼 수 있어요.
+
+- k=1 이면 train 100% (자기 자신이 가장 가까움) — 전형적 과적합 신호
+- k 가 아주 크면 거의 "전체 다수결" 이 되어 둘 다 떨어짐 — 과소적합`,
+        hint: "for 문으로 k 에 따른 train / test 점수를 표로 출력하고, test 최고점의 k 를 찾으세요.",
+        snippet: `for k in [1, 3, 5, 7, 11, 21, 50]:
+    knn = KNeighborsClassifier(n_neighbors=k)
+    knn.fit(X_train, y_train)`,
+        solution: `best_k, best_acc = None, -1.0
+print(f"{'k':>4} | {'train':>7} | {'test':>7}")
+print("-" * 30)
+for k in [1, 3, 5, 7, 11, 21, 50, 100]:
+    knn = KNeighborsClassifier(n_neighbors=k)
+    knn.fit(X_train, y_train)
+    tr = knn.score(X_train, y_train)
+    te = knn.score(X_test, y_test)
+    print(f"{k:>4} | {tr:>7.4f} | {te:>7.4f}")
+    if te > best_acc:
+        best_k, best_acc = k, te
+
+print(f"\\n→ 최적 k = {best_k} (test 정확도 {best_acc:.4f})")`,
+      },
+      {
+        title: "새 꽃 예측 — 모델 실전 투입",
+        stepMarker: "STEP 7",
+        description:
+          "직접 측정한 값(또는 상상의 값)으로 예측. `predict_proba` 를 함께 보면 모델이 얼마나 확신하는지 알 수 있어요. KNN 의 확률은 **k 이웃 중 해당 클래스의 비율**.",
+        hint: "`model.predict_proba([[5.1, 3.5, 1.4, 0.2]])` — k=5 라면 확률은 모두 0/0.2/0.4/0.6/0.8/1.0 중 하나.",
+        snippet: `knn_final = KNeighborsClassifier(n_neighbors=best_k)
+knn_final.fit(X_train, y_train)`,
+        solution: `# 최적 k 로 최종 모델
+knn_final = KNeighborsClassifier(n_neighbors=best_k)
+knn_final.fit(X_train, y_train)
+
+samples = [
+    [5.1, 3.5, 1.4, 0.2],   # setosa 느낌
+    [6.3, 3.3, 4.7, 1.6],   # versicolor 느낌
+    [7.2, 3.2, 6.0, 1.8],   # virginica 느낌
+]
+for s in samples:
+    idx = knn_final.predict([s])[0]
+    probs = knn_final.predict_proba([s])[0]
+    name = iris.target_names[idx]
+    prob_str = ", ".join(f"{n}={p:.0%}" for n, p in zip(iris.target_names, probs))
+    print(f"{s} → {name}   ({prob_str})")`,
+      },
+      {
+        title: "🎯 배운 것 정리",
+        description: `## 이 프로젝트에서 확인한 것
+
+### ✅ sklearn 의 '하나의 공식'
+모델이 KNN 이든 DecisionTree 든 SVM 이든, 코드는 항상 세 줄:
+
+\`\`\`python
+model = SomeModel(...)
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+\`\`\`
+
+그래서 새 모델을 배우는 비용이 거의 **모델 이름과 하이퍼파라미터 외우기** 뿐이에요.
+
+### ✅ 정확도의 본질
+\`(y_pred == y_test).mean()\` 와 \`accuracy_score(y_test, y_pred)\` 는 **정확히 같은 값**. 라이브러리 함수는 편의일 뿐, 지표의 정의는 단순 공식.
+
+### ✅ 하이퍼파라미터의 힘
+같은 KNN 이라도 k=1 과 k=50 은 완전히 다른 모델처럼 행동합니다.
+- **k=1**: train 점수 완벽, test 점수 하락 → **과적합**
+- **k=너무 큼**: train/test 둘 다 하락 → **과소적합**
+- 중간 어딘가에 **최적 k** — 이게 튜닝의 목표
+
+### 🧪 더 해볼 것
+1. STEP 3 에서 \`stratify=y\` 를 빼고 재실행 → 결과가 어떻게 흔들리는지
+2. STEP 6 에서 \`random_state\` 를 바꿔가며 최적 k 가 얼마나 달라지는지
+3. iris 대신 \`load_wine\` 으로 같은 코드 실행 (힌트: wine 은 특성 스케일이 커서 StandardScaler 로 표준화하지 않으면 KNN 이 약함)
+
+### 🏁 다음 스텝
+- 회귀 문제라면 \`KNeighborsRegressor\` — 공식은 똑같음
+- 더 강력한 분류기: \`RandomForestClassifier\`, \`GradientBoostingClassifier\`
+- 성능이 부족할 땐 **전처리 (StandardScaler)** + **하이퍼파라미터 탐색 (GridSearchCV)** 이 다음 카드`,
+        checkpoint: "한 줄이라도 스스로 수정해보고 실행해보세요. 읽기만 하는 학습은 휘발됩니다.",
+      },
+    ],
+    starterFiles: {
+      "main.py": {
+        name: "main.py",
+        content: `# 🌼 아이리스 KNN 분류 프로젝트
+# 우측 가이드 패널의 단계를 클릭하면 해당 STEP 으로 스크롤됩니다.
+
+import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+
+
+## STEP 1: 모델 family 한눈에 import
+# (실제로 다 쓰진 않지만 어디 있는지 기억해두기)
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree         import DecisionTreeClassifier
+from sklearn.ensemble     import RandomForestClassifier
+
+print("sklearn 모델 family import 완료")
+
+
+## STEP 2: 데이터 로드 + 간단 EDA
+iris = load_iris()
+X, y = iris.data, iris.target
+print(f"\\n샘플: {X.shape[0]}, 특성: {X.shape[1]}, 클래스: {list(iris.target_names)}")
+print("특성별 평균 ± 표준편차:")
+for name, m, s in zip(iris.feature_names, X.mean(axis=0), X.std(axis=0)):
+    print(f"  {name:25s} {m:5.2f} ± {s:.2f}")
+
+
+## STEP 3: train/test 분할 (stratify 까지)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+print(f"\\n훈련 {len(X_train)}개 / 테스트 {len(X_test)}개")
+
+
+## STEP 4: KNN 학습 (k=3)
+knn = KNeighborsClassifier(n_neighbors=3)
+knn.fit(X_train, y_train)
+y_pred = knn.predict(X_test)
+
+
+## STEP 5: 정확도 — 직접 계산 vs accuracy_score
+correct = (y_pred == y_test).sum()
+manual_acc = correct / len(y_test)
+sk_acc = accuracy_score(y_test, y_pred)
+print(f"\\n직접 계산:       {correct}/{len(y_test)} = {manual_acc:.4f}")
+print(f"accuracy_score:  {sk_acc:.4f}")
+
+
+## STEP 6: K 튜닝 — 최적 이웃 수 찾기
+best_k, best_acc = None, -1.0
+print(f"\\n{'k':>4} | {'train':>7} | {'test':>7}")
+print("-" * 30)
+for k in [1, 3, 5, 7, 11, 21, 50, 100]:
+    m = KNeighborsClassifier(n_neighbors=k)
+    m.fit(X_train, y_train)
+    tr = m.score(X_train, y_train)
+    te = m.score(X_test, y_test)
+    print(f"{k:>4} | {tr:>7.4f} | {te:>7.4f}")
+    if te > best_acc:
+        best_k, best_acc = k, te
+print(f"\\n→ 최적 k = {best_k} (test {best_acc:.4f})")
+
+
+## STEP 7: 새 꽃 예측
+knn_final = KNeighborsClassifier(n_neighbors=best_k)
+knn_final.fit(X_train, y_train)
+sample = [[5.1, 3.5, 1.4, 0.2]]
+idx = knn_final.predict(sample)[0]
+probs = knn_final.predict_proba(sample)[0]
+print(f"\\n새 꽃 {sample[0]} → {iris.target_names[idx]}")
+for n, p in zip(iris.target_names, probs):
+    print(f"  {n}: {p:.0%}")
+`,
+        language: "python",
+      },
+    },
+  },
 ];
 
 export function getProjectById(id: string): Project | undefined {

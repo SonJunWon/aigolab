@@ -13,6 +13,43 @@
 
 ---
 
+## [3.19.0] - 2026-04-15
+
+### Added — ML 실습 트랙 보강 (아주대 lec05 인사이트 반영)
+외부 대학 강의(아주대 기계학습개론 lec05) 자료를 우리 ML 트랙에 흡수. 기존 챕터 3개 보강 + 14번째 AI 프로젝트 신설. 챕터 번호 재배치 없이 자연스럽게 확장.
+
+**Ch01 선형 회귀 — scikit-learn 모듈 지도 추가**
+- 'scikit-learn 한눈에 — 모델 family 지도' 섹션: linear_model / tree / ensemble / neighbors / svm / cluster / model_selection / metrics / datasets 의 역할을 표로 정리
+- 모든 모델이 `fit → predict` 의 **하나의 공식** 을 따른다는 것을 도입부에 명시
+- 대표 모델 종합 import 셀로 이름·경로 패턴 눈에 익히기
+
+**Ch02 분류 — KNN 섹션 신규**
+- '이웃을 보고 따라하는 분류기' 로 KNN 원리 설명 (lazy learning)
+- k=1/3/5/15/50 의 wine 분류 정확도 비교 — k 가 성능을 가르는 감각
+- `StandardScaler` 적용 전후 비교: 거리 기반 모델에서 전처리의 중요성 시연
+- Mission 2 를 2모델 → **3모델 (LogReg / DT / KNN) 비교** 로 확장, KNN 만 표준화된 X 를 받는 실전 패턴
+- 퀴즈 2문항 추가: KNN 원리 + 스케일링 이유
+
+**Ch03 모델 평가 — 적합성·일반화 + 정확도 본질**
+- '잠깐 — 정확도는 원래 어떻게 계산될까?' 섹션: \`(y_pred == y_test).mean()\` 과 \`accuracy_score\` 가 정확히 같은 값을 낸다는 것을 직접 확인
+- '적합성과 일반화 — 과적합 vs 과소적합' 섹션: 과소적합/적합/과적합 증상표 + KNN 의 k 를 바꿔가며 train vs test 점수 추적 → 자동 진단 (matplotlib 없이 숫자 기반으로 '그래프' 상상)
+- 퀴즈 2문항 추가: 과적합 진단 + k=1 의 train 100% 현상
+
+**14번째 AI 프로젝트 — 'iris KNN 분류 — 이웃에게 물어보기' 신설**
+- 기존 Decision Tree iris 프로젝트와 짝을 이루는 KNN 버전 (같은 데이터·다른 모델 비교 훈련용)
+- 8 STEP: 모델 family import → EDA → train_test_split 의미 → KNN 학습 → 직접 정확도 계산 vs accuracy_score → **k 튜닝(1~100)으로 최적 k 탐색** → 확률 기반 새 꽃 예측 → 배운 것 정리
+- stratify, random_state, predict_proba 등 lec05 흐름을 Pyodide 제약 하에서 재현 (seaborn 없는 환경에서 numpy EDA 로 대체)
+
+### Impact
+- ML 트랙 학습자가 `sklearn` 라이브러리 지도 → KNN → 하이퍼파라미터 튜닝의 흐름을 일관된 용어로 경험
+- 과적합/과소적합을 **수식·시각화 없이 숫자 표로 체감** 하는 방식 확립 (Pyodide 친화)
+- lec05 의 '직접 정확도 계산' 습관이 편의 함수의 **본질** 이라는 관점으로 흡수됨
+
+### 기존 사용자에게
+**새로고침 (Cmd/Ctrl+Shift+R)** → lessonHash 자동 갱신으로 Ch01/02/03 신규 셀이 즉시 반영됩니다 (v3.18.5 에 도입된 보호 로직).
+
+---
+
 ## [3.18.5] - 2026-04-15
 
 ### Fixed — lesson 콘텐츠 해시로 잘못된 IndexedDB 자동 무효화 (최종)

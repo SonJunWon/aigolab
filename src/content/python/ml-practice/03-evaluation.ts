@@ -64,6 +64,32 @@ print(f"정확도: {(y_pred == y_test).mean():.4f}")`,
     },
     {
       type: "markdown",
+      source: `### ✋ 잠깐 — 정확도는 원래 어떻게 계산될까?
+
+방금 \`(y_pred == y_test).mean()\` 으로 직접 계산했습니다. 이게 바로 **정확도의 정의** 입니다.
+sklearn 의 \`accuracy_score\` 는 이 계산을 대신해주는 **편의 함수** 일 뿐이에요.
+
+두 방법이 정확히 같은 값을 내는지 눈으로 확인해봅시다.`,
+    },
+    {
+      type: "code",
+      source: `# 방법 1: 직접 계산 — "맞힌 개수 / 전체 개수"
+correct = (y_pred == y_test).sum()
+total = len(y_test)
+manual_acc = correct / total
+
+# 방법 2: accuracy_score — 내부적으로 위 계산을 해줌
+from sklearn.metrics import accuracy_score
+sklearn_acc = accuracy_score(y_test, y_pred)
+
+print(f"직접 계산:          {correct}/{total} = {manual_acc:.6f}")
+print(f"accuracy_score():   {sklearn_acc:.6f}")
+print(f"두 값이 같은가?     {manual_acc == sklearn_acc}")
+print("\\n→ 라이브러리 함수도 결국 같은 공식. '정확도' 의 정의를 몸으로 익혀두면")
+print("   나중에 어떤 평가 지표를 만나도 공식만 보면 바로 이해할 수 있어요.")`,
+    },
+    {
+      type: "markdown",
       source: `## 📊 혼동 행렬 (Confusion Matrix)
 
 혼동 행렬은 **실제 클래스 vs 예측 클래스**를 표로 보여줍니다.
@@ -114,6 +140,64 @@ print("각 fold 정확도:", np.round(scores, 4))
 print(f"평균 정확도: {scores.mean():.4f}")
 print(f"표준편차: {scores.std():.4f}")
 print(f"\\n95% 신뢰 구간: {scores.mean():.4f} +/- {scores.std()*2:.4f}")`,
+    },
+    {
+      type: "markdown",
+      source: `## 🎭 적합성과 일반화 — 과적합 vs 과소적합
+
+좋은 모델은 "학습 데이터만 잘 맞히는" 것이 아니라 **처음 보는 데이터도 잘 맞혀야** 합니다.
+이걸 모델의 **일반화 성능(generalization)** 이라고 합니다.
+
+학습/테스트 점수를 함께 비교하면 두 가지 함정을 진단할 수 있어요.
+
+| 증상 | train 점수 | test 점수 | 이름 | 원인 |
+|---|---|---|---|---|
+| 너무 단순한 모델 | 낮음 | 낮음 | **과소적합 (underfitting)** | 데이터 패턴조차 못 잡음 |
+| 딱 좋은 모델 | 높음 | 높음 | **적합 (good fit)** | 패턴은 잡고 노이즈는 흘려보냄 |
+| 너무 복잡한 모델 | 아주 높음 | 떨어짐 | **과적합 (overfitting)** | 학습 데이터의 노이즈까지 외워버림 |
+
+KNN 의 **K 값** 으로 이 현상을 직접 보여줄 수 있습니다.
+- \`k=1\` → 이웃 1개만 봄 → 학습 데이터는 완벽히 맞힘 → **과적합**
+- \`k=매우 큼\` → 거의 전체 다수결 → **과소적합**`,
+    },
+    {
+      type: "code",
+      source: `# KNN 의 k 를 바꿔가며 train / test 정확도 추적
+from sklearn.neighbors import KNeighborsClassifier
+
+ks = [1, 3, 5, 10, 20, 40, 80]
+
+print(f"{'k':>4} | {'train':>7} | {'test':>7} | 진단")
+print("-" * 45)
+for k in ks:
+    knn = KNeighborsClassifier(n_neighbors=k)
+    knn.fit(X_train, y_train)
+    train_acc = knn.score(X_train, y_train)
+    test_acc  = knn.score(X_test, y_test)
+
+    gap = train_acc - test_acc
+    if train_acc < 0.85:
+        diagnosis = "과소적합 의심"
+    elif gap > 0.08:
+        diagnosis = "과적합 의심"
+    else:
+        diagnosis = "적합"
+
+    print(f"{k:>4} | {train_acc:>7.4f} | {test_acc:>7.4f} | {diagnosis}")
+
+print("\\n→ k 가 작으면 train 점수는 완벽한데 test 와 차이가 큼 (과적합).")
+print("   k 가 너무 크면 둘 다 떨어짐 (과소적합).")
+print("   '적합' 구간에서 최적 k 를 고르는 게 튜닝의 목표.")`,
+    },
+    {
+      type: "markdown",
+      source: `### 📈 시각화 없이 '그래프' 읽기
+
+위 표를 가로 축 = k, 세로 축 = 정확도로 상상해보세요.
+- **train 선** 은 k 가 커질수록 **완만히 하락** (단순해지니까)
+- **test 선** 은 중간 어디선가 **최고점** 을 찍고 양쪽으로 내려감
+
+train 과 test 선 사이의 **간격(gap)** 이 과적합의 크기입니다.`,
     },
     {
       type: "markdown",
@@ -259,6 +343,34 @@ print(f1_score(y_true, y_pred))`,
         correctIndex: 1,
         explanation:
           "교차 검증의 표준편차가 크면 데이터를 어떻게 나누느냐에 따라 성능 차이가 크다는 뜻으로, 모델이 불안정하다는 신호입니다.",
+      },
+      {
+        type: "multiple-choice",
+        question:
+          "학습 정확도 99%, 테스트 정확도 72% — 이 모델의 상태는?",
+        options: [
+          "적합 (good fit)",
+          "과소적합 (underfitting)",
+          "과적합 (overfitting)",
+          "데이터 누수 (data leakage)",
+        ],
+        correctIndex: 2,
+        explanation:
+          "학습에선 거의 완벽한데 테스트에선 크게 떨어진다면, 학습 데이터에만 지나치게 맞춰진 과적합(overfitting) 상태입니다. 모델을 단순화하거나 정규화/더 많은 데이터가 필요합니다.",
+      },
+      {
+        type: "multiple-choice",
+        question:
+          "KNN 에서 k=1 로 설정하면 학습 정확도는 거의 항상 어떻게 될까요?",
+        options: [
+          "낮다 (50% 근처)",
+          "중간 (약 70%)",
+          "거의 100%",
+          "랜덤하게 달라진다",
+        ],
+        correctIndex: 2,
+        explanation:
+          "k=1 이면 '자기 자신' 이 가장 가까운 이웃이 되어 항상 같은 클래스를 예측합니다. 그래서 학습 정확도는 거의 100% — 전형적인 과적합 신호입니다.",
       },
     ],
   } satisfies Quiz,

@@ -41,6 +41,46 @@ print("scikit-learn 준비 완료!")`,
     },
     {
       type: "markdown",
+      source: `## 🗺️ scikit-learn 한눈에 — 모델 family 지도
+
+scikit-learn 은 문제 유형별로 **모듈(family)** 이 나뉘어 있습니다.
+이름 규칙만 알면 어떤 모델이든 \`from sklearn.{family} import {모델}\` 로 불러올 수 있어요.
+
+| Family | 모듈 | 대표 모델 | 풀 수 있는 문제 |
+|---|---|---|---|
+| 선형 | \`sklearn.linear_model\` | LinearRegression, LogisticRegression, Ridge, Lasso | 회귀 · 분류 |
+| 트리 | \`sklearn.tree\` | DecisionTreeClassifier, DecisionTreeRegressor | 회귀 · 분류 |
+| 앙상블 | \`sklearn.ensemble\` | RandomForest, GradientBoosting | 회귀 · 분류 |
+| 이웃 | \`sklearn.neighbors\` | KNeighborsClassifier, KNeighborsRegressor | 회귀 · 분류 |
+| SVM | \`sklearn.svm\` | SVC, SVR | 회귀 · 분류 |
+| 군집 | \`sklearn.cluster\` | KMeans, DBSCAN | 비지도 |
+| 평가·분리 | \`sklearn.model_selection\` | train_test_split, cross_val_score | 공통 |
+| 지표 | \`sklearn.metrics\` | accuracy_score, r2_score, mean_squared_error | 공통 |
+| 데이터 | \`sklearn.datasets\` | load_iris, load_wine, make_regression | 공통 |
+
+그리고 모든 모델이 **같은 공식** 을 따릅니다:
+
+\`\`\`python
+model = SomeModel(...)     # 1) 생성
+model.fit(X_train, y_train) # 2) 학습
+y_pred = model.predict(X_test)  # 3) 예측
+\`\`\`
+
+이 패턴만 외우면 어떤 모델이든 바로 써볼 수 있습니다.`,
+    },
+    {
+      type: "code",
+      source: `# 대표 모델 한눈에 import — 실제로 다 쓰진 않지만, 이름과 모듈 패턴을 눈에 익혀두세요
+from sklearn.linear_model   import LinearRegression, LogisticRegression, Ridge, Lasso
+from sklearn.tree           import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.ensemble       import RandomForestClassifier, GradientBoostingRegressor
+from sklearn.neighbors      import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.svm            import SVC, SVR
+
+print("모든 모델은 .fit(X, y) 로 학습하고 .predict(X) 로 예측합니다 — 공식은 하나!")`,
+    },
+    {
+      type: "markdown",
       source: `## 📊 선형 회귀란?
 
 선형 회귀는 **입력(X)과 출력(y) 사이의 직선 관계**를 찾는 알고리즘입니다.
