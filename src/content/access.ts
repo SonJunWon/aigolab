@@ -57,13 +57,19 @@ export function canAccessProject(
   );
 }
 
-/** 코딩 실습 레슨 접근 가능 여부 (트랙 단위) */
+/**
+ * 코딩 실습 레슨 접근 가능 여부.
+ *
+ * `lessonId` 는 ai-engineering 처럼 트랙 내 일부 레슨만 무료인 경우에 필요.
+ * Python/JavaScript/SQL 트랙에선 무시되므로 optional.
+ */
 export function canAccessLesson(
   lang: Language,
   track: Track,
-  entitlements: Entitlement[]
+  entitlements: Entitlement[],
+  lessonId?: string,
 ): boolean {
-  if (!isLessonPro(lang, track)) return true;
+  if (!isLessonPro(lang, track, lessonId)) return true;
   if (isAdmin(entitlements)) return true;
   // Python 의 pro 트랙은 python-advanced 번들로 열림
   if (lang === "python" && track !== "beginner") {

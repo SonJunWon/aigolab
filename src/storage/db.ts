@@ -13,7 +13,7 @@ import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 
 export interface StoredCell {
   /** 로컬 생성 id는 세션마다 바뀌므로 저장하지 않고, 배열 순서로 식별 */
-  type: "code" | "markdown";
+  type: "code" | "markdown" | "llm-code";
   source: string;
 }
 

@@ -25,6 +25,14 @@ export const LANGUAGES: LanguageInfo[] = [
     status: "available",
     color: "from-emerald-400 to-teal-500",
   },
+  {
+    id: "ai-engineering",
+    name: "AI 엔지니어링",
+    icon: "🤖",
+    description: "브라우저 내 LLM 부터 Agent·RAG·CoT 까지. 무료 API 키만으로 12강 완주.",
+    status: "available",
+    color: "from-violet-500 to-fuchsia-500",
+  },
 ];
 
 export const TRACKS: TrackInfo[] = [

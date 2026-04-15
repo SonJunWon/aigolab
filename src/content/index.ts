@@ -27,6 +27,10 @@ import {
   LESSONS as SQL_BEGINNER,
   LESSON_SUMMARIES as SQL_BEGINNER_SUMMARIES,
 } from "./sql/beginner";
+import {
+  LESSONS as AIENG_BEGINNER,
+  LESSON_SUMMARIES as AIENG_BEGINNER_SUMMARIES,
+} from "./ai-engineering/beginner";
 
 type Curriculum = {
   lessons: Lesson[];
@@ -65,6 +69,13 @@ const CURRICULA: Partial<Record<Language, Partial<Record<Track, Curriculum>>>> =
       summaries: SQL_BEGINNER_SUMMARIES,
     },
     // SQL은 입문만 (현재)
+  },
+  "ai-engineering": {
+    beginner: {
+      lessons: AIENG_BEGINNER,
+      summaries: AIENG_BEGINNER_SUMMARIES,
+    },
+    // Ch03~12 는 후속 Phase 에서 추가
   },
 };
 

@@ -13,14 +13,24 @@ import {
   analyzeCellShadowing,
   formatConflictMessage,
 } from "./lessonAnalysis";
+import { runLlmCode, LlmRuntimeError } from "../lib/llm";
 
 export async function runCell(cellId: string): Promise<void> {
   const store = useNotebookStore.getState();
   const cell = store.cells.find((c) => c.id === cellId);
 
-  // 코드 셀이 아니거나, 이미 실행 중이거나, 존재하지 않으면 무시
-  if (!cell || cell.type !== "code") return;
+  // 존재하지 않거나, 이미 실행 중이면 무시
+  if (!cell) return;
   if (cell.status === "running") return;
+
+  // ─── LLM 셀은 별도 파이프라인 ─────────────────────
+  if (cell.type === "llm-code") {
+    await runLlmCellPath(cellId, cell.source, cell.simulation?.traces);
+    return;
+  }
+
+  // 이하 일반 코드 셀 (Python/JS/SQL)
+  if (cell.type !== "code") return;
 
   // 등록되지 않은 언어면 무시
   if (!isLanguageSupported(store.language)) return;
@@ -103,5 +113,78 @@ export async function runCell(cellId: string): Promise<void> {
     useNotebookStore
       .getState()
       .finalizeExecution(cellId, error.timeMs ?? 0, false);
+  }
+}
+
+/**
+ * 전역 녹화 버퍼 — T10.
+ * 최근 실행된 LLM 셀들의 녹화 trace 를 cell 별로 보관.
+ * 관리자 다운로드 UI (후속 작업) 에서 이걸 조회해 JSON 으로 내보냄.
+ */
+const recordedTracesByCell = new Map<string, import("../lib/llm/types").Trace[]>();
+
+export function getRecordedTraces(cellId: string) {
+  return recordedTracesByCell.get(cellId) ?? [];
+}
+
+/**
+ * LLM 셀 전용 실행 경로 — TypeScript 컴파일 + chat API 주입.
+ * 기존 Python/JS/SQL 런타임과는 독립적.
+ *
+ * @param replayTraces — 셀에 simulation 이 붙어 있으면 순서대로 주입해
+ *   학생이 키 없이도 예상 결과 그대로 진행 가능.
+ */
+async function runLlmCellPath(
+  cellId: string,
+  source: string,
+  replayTraces?: import("../lib/llm/types").Trace[],
+): Promise<void> {
+  const store = useNotebookStore.getState();
+  store.clearOutputs(cellId);
+  store.setStatus(cellId, "running");
+
+  try {
+    const result = await runLlmCode(source, {
+      onStdout: (text) =>
+        useNotebookStore
+          .getState()
+          .appendOutput(cellId, { stream: "stdout", text }),
+      onStderr: (text) =>
+        useNotebookStore
+          .getState()
+          .appendOutput(cellId, { stream: "stderr", text }),
+      replayTraces,
+    });
+
+    if (result.replayed) {
+      // 재생 사실을 학생에게 알림 — 가짜 네트워크 호출 아님을 명확히
+      useNotebookStore.getState().appendOutput(cellId, {
+        stream: "warning",
+        text: "📼 시뮬레이션 재생 중 — 실제 네트워크 호출 없이 녹화된 응답을 사용합니다.\n",
+      });
+    }
+
+    if (result.traces.length > 0) {
+      recordedTracesByCell.set(cellId, result.traces);
+    }
+
+    if (result.value !== undefined) {
+      useNotebookStore
+        .getState()
+        .appendOutput(cellId, { stream: "result", text: result.value });
+    }
+
+    useNotebookStore.getState().finalizeExecution(cellId, result.timeMs, true);
+  } catch (err) {
+    const isKnown = err instanceof LlmRuntimeError;
+    const message = err instanceof Error ? err.message : String(err);
+    const timeMs = isKnown ? err.timeMs : 0;
+    useNotebookStore.getState().appendOutput(cellId, {
+      stream: "error",
+      text: message,
+    });
+    useNotebookStore
+      .getState()
+      .finalizeExecution(cellId, timeMs, false);
   }
 }

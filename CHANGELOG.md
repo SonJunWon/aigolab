@@ -13,6 +13,68 @@
 
 ---
 
+## [4.0.0] - 2026-04-15
+
+### Added — v4 메이저 릴리즈: AI 엔지니어링 트랙 Phase 1 (통합 LLM SDK + Ch01·Ch02)
+
+v4 사이클의 첫 메이저 릴리즈. 12강짜리 "AI 엔지니어링" 트랙을 새 언어로 추가하고, 그 기반이 되는 **통합 LLM SDK** 를 함께 출시합니다. Phase 1 범위는 Ch01~02 두 챕터.
+
+**🤖 신규 언어 트랙: AI 엔지니어링**
+- `Language` 유니온에 `"ai-engineering"` 추가 (🤖, 바이올렛→푸시아 그라데이션)
+- 홈에 Featured 배너로 노출, NEW 배지 + 학습 로드맵 끝에 🦙 스텝 추가
+- Ch01 `ai-eng-01-webllm-intro` **"AI 가 브라우저에 산다"** — WebLLM (Llama 3.2 1B, 약 879MB) 로 설치·키·네트워크 없이 첫 AI 대화. Built with Llama 배지 + Meta 라이선스 링크
+- Ch02 `ai-eng-02-gemini-prompting` **"프롬프트 엔지니어링의 시작"** — Google Gemini 키 5분 발급 → System prompt / Few-shot / Temperature 3대 기법 → 제품 설명 생성기 미션 (solution 포함)
+- Phase 1 은 Ch01~02 무료 (`FREE_AI_ENG_LESSON_IDS`), 나머지 Ch03~12 는 후속 Phase 에서 추가 예정
+
+**🧩 통합 LLM SDK (`src/lib/llm/`) — BYOK 기반 멀티 provider**
+- `chat({messages, task?, provider?, simulation?})` 단일 API 로 Gemini / Groq / WebLLM 라우팅
+- `task: "fast"` → Groq → Gemini 페일오버, `task: "offline"` → WebLLM 고정, `task: "multimodal"` → Gemini
+- Provider adapter 3종:
+  - **Gemini** (`@google/genai` 1.50.0) — 신 SDK (구 `@google/generative-ai` 는 2025-11-30 deprecated)
+  - **Groq** (`groq-sdk` 1.1.2) — `dangerouslyAllowBrowser:true`, Llama 3.3 70B
+  - **WebLLM** (`@mlc-ai/web-llm` 0.2.82) — 브라우저 내 실행, WebGPU 필요, 동적 import 로 Ch01 열 때만 로드
+- 모든 호출 BYOK — 플랫폼 비용 0원, 키는 각 학생 브라우저에 **암호화 저장**
+
+**🔐 키 암호화 저장 (AES-GCM)**
+- 디바이스별 256-bit AES-GCM CryptoKey 를 별도 IndexedDB(`aigolab-llm-crypto`) 에 **non-extractable** 로 저장 → XSS 정적 dump 로 키 유출 불가
+- 96-bit IV 매 호출마다 새로 — AES-GCM 재사용 금지 규칙 준수
+- localStorage(`aigolab.llm.keys.v1`) 에는 `{iv, ct}` base64 만 저장
+- 디바이스 키 분실 시 자동 삭제 + 재입력 유도
+
+**🔑 KeySetupModal** (`src/components/llm/KeySetupModal.tsx`)
+- 3단계 캐러셀: Gemini → Groq → 완료. 각 단계 발급 링크 + 패턴 검증(`AIza...` / `gsk_...`)
+- "저장 & 테스트" — `chat()` ping 호출로 실제 유효성 확인, 실패 시 키 자동 롤백
+- Groq 브라우저 키 노출 경고 박스 포함
+- "키 없이 시뮬레이션 모드로" 탈출구 제공 (T10 녹화본 재생 유도)
+
+**🧠 LLM 셀 & TS 런타임** (`type: "llm-code"`)
+- 새 셀 타입 `llm-code` — Monaco TypeScript 모드, 보라색 좌측 보더, 🤖 거터 배지
+- **sucrase** 로 TS→JS 런타임 트랜스파일 (PLAN 초안의 esbuild-wasm 대체 — 순수 JS, WASM 초기화 불필요)
+- `new AsyncFunction` 으로 top-level await 자연스럽게 허용
+- `chat` / `console` 주입, `import` 라인은 자동 스트리핑 (학생이 실수로 import 적어도 동작)
+- `console.log/info/debug → stdout`, `warn/error → stderr`, 순환 참조 대응 stringify
+
+**📼 시뮬레이션 녹화/재생 (T10)**
+- `Cell.simulation.traces: Trace[]` — 키 없는 학생용 녹화본. 셀 내 `chat()` 호출마다 하나씩 소비
+- 런타임의 `wrappedChat` 이 대칭으로 동작: 큐에 Trace 있으면 재생(`replayTrace`), 없으면 실제 호출 + 자동 `exportTrace` 로 녹화
+- 재생 시 셀에 `📼 시뮬레이션 재생 중` 배지 + warning 스트림으로 명시
+- 관리자 녹화 다운로드 UI 는 후속 작업 (`getRecordedTraces` / `serializeTraces` 는 이미 export)
+
+**🧪 타입·tier·접근제어 확장**
+- `CellType`: `"code" | "markdown" | "llm-code"` 3-way union
+- `LessonCell` 을 discriminated union 으로 재정의: `LessonMarkdownCell` / `LessonCodeCell` / `LessonLlmCodeCell`
+- `isLessonPro(lang, track, lessonId?)` — lessonId 옵셔널 추가, 기존 호출부 무영향
+- `canAccessLesson` 도 lessonId 옵셔널 확장, `ai-engineering` 트랙 레슨별 차등 접근
+
+**📦 번들 영향**
+- 메인 JS: +270KB (gzip +91KB) — PLAN 목표 +500KB 대비 안정적
+- WebLLM 청크 (6MB / gzip 2.16MB): **동적 import**, Ch01 열 때만 로드 → 초기 로드 무영향
+- groq-sdk: 30KB 독립 청크
+
+**⚠️ Breaking 없음** — 기존 Python/JS/SQL 트랙·레슨·기능 전부 무영향. 순수 추가형 메이저.
+
+---
+
 ## [3.21.0] - 2026-04-15
 
 ### Added — ML 트랙 Ch11 신설: 차원 축소와 PCA + 16번째 AI 프로젝트 (아주대 lec07 인사이트)

@@ -2,7 +2,9 @@
  * 노트북 도메인 타입 정의
  */
 
-export type CellType = "code" | "markdown";
+import type { Trace } from "../lib/llm/types";
+
+export type CellType = "code" | "markdown" | "llm-code";
 
 export type CellStatus = "idle" | "queued" | "running" | "success" | "error";
 
@@ -51,6 +53,14 @@ export interface Cell {
   hints?: string[];
   /** 레슨의 정답 코드 (선택적, 저장되지 않음) */
   solution?: string;
+  /**
+   * LLM 셀 전용 — 키 없는 학생용 녹화본 (T10).
+   * 셀 실행 시 순서대로 소비되어 실제 네트워크 호출 대신 trace.output 이 반환됨.
+   */
+  simulation?: {
+    traces: Trace[];
+    note?: string;
+  };
 }
 
 export interface Notebook {

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { Cell, CellStatus, CellType, OutputChunk } from "../types/notebook";
 import type { SupportedLanguage } from "../runtime/types";
+import type { Trace } from "../lib/llm/types";
 
 /**
  * 노트북 상태 스토어 (Zustand).
@@ -39,6 +40,11 @@ interface NotebookState {
       source: string;
       hints?: string[];
       solution?: string;
+      /** LLM 셀 전용 — 키 없는 학생용 녹화본 (T10) */
+      simulation?: {
+        traces: Trace[];
+        note?: string;
+      };
     }>,
     language?: SupportedLanguage
   ) => void;
@@ -94,13 +100,14 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       ...createCell(s.type, s.source),
       hints: s.hints,
       solution: s.solution,
+      simulation: s.simulation,
     }));
     set({
       cells: newCells,
       executionCounter: 0,
       // 첫 번째 코드 셀을 기본 선택, 없으면 첫 셀
       selectedCellId:
-        newCells.find((c) => c.type === "code")?.id ??
+        newCells.find((c) => c.type === "code" || c.type === "llm-code")?.id ??
         newCells[0]?.id ??
         null,
       // 명시 시만 변경, 미지정 시 기존값 유지

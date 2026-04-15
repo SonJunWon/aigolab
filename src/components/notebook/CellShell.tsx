@@ -3,6 +3,7 @@ import type { Cell } from "../../types/notebook";
 import { useNotebookStore } from "../../store/notebookStore";
 import { runCell } from "../../runtime/runCell";
 import { CodeCell } from "./CodeCell";
+import { LlmCodeCell } from "./LlmCodeCell";
 import { MarkdownCell } from "./MarkdownCell";
 
 interface Props {
@@ -46,6 +47,8 @@ export function CellShell({ cell, isSelected, onSelect }: Props) {
       {/* 셀 본문 */}
       {cell.type === "code" ? (
         <CodeCell cell={cell} isSelected={isSelected} />
+      ) : cell.type === "llm-code" ? (
+        <LlmCodeCell cell={cell} isSelected={isSelected} />
       ) : (
         <MarkdownCell cell={cell} isSelected={isSelected} />
       )}
@@ -57,7 +60,7 @@ export function CellShell({ cell, isSelected, onSelect }: Props) {
           ${isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
         onClick={(e) => e.stopPropagation()}
       >
-        {cell.type === "code" && (
+        {(cell.type === "code" || cell.type === "llm-code") && (
           <ActionButton
             title="실행 (Cmd/Ctrl+Enter)"
             onClick={() => runCell(cell.id)}
@@ -84,13 +87,16 @@ export function CellShell({ cell, isSelected, onSelect }: Props) {
           onClick={() => insertCellBelow(cell.id, "code")}
           icon="+↓"
         />
-        <ActionButton
-          title={cell.type === "code" ? "텍스트 셀로 변환 (Ctrl+M, M)" : "코드 셀로 변환 (Ctrl+M, Y)"}
-          onClick={() =>
-            changeCellType(cell.id, cell.type === "code" ? "markdown" : "code")
-          }
-          icon={cell.type === "code" ? "T" : "{ }"}
-        />
+        {/* llm-code 셀은 레슨 전용이라 사용자가 토글로 변환하지 않음 */}
+        {cell.type !== "llm-code" && (
+          <ActionButton
+            title={cell.type === "code" ? "텍스트 셀로 변환 (Ctrl+M, M)" : "코드 셀로 변환 (Ctrl+M, Y)"}
+            onClick={() =>
+              changeCellType(cell.id, cell.type === "code" ? "markdown" : "code")
+            }
+            icon={cell.type === "code" ? "T" : "{ }"}
+          />
+        )}
         <ActionButton
           title="셀 삭제 (Ctrl+M, D, D)"
           onClick={() => deleteCell(cell.id)}
@@ -133,3 +139,4 @@ function PlayIcon() {
     </svg>
   );
 }
+

@@ -25,6 +25,40 @@ export function MainHomePage() {
           </p>
         </section>
 
+        {/* ─── 🌟 신규 플래그십: AI 엔지니어링 ─── */}
+        <section className="pb-10">
+          <Link
+            to="/coding/learn/ai-engineering/beginner"
+            className="group block p-6 rounded-xl border border-brand-primary/40 bg-gradient-to-r from-violet-500/10 via-fuchsia-500/5 to-cyan-500/10
+                       hover:border-brand-primary hover:shadow-lg hover:shadow-brand-primary/10 transition-all"
+          >
+            <div className="flex items-center gap-5">
+              <div className="shrink-0 text-5xl">🤖</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-xl font-semibold group-hover:text-brand-primary transition-colors">
+                    AI 엔지니어링 트랙
+                  </h3>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-primary text-white font-semibold tracking-wider">
+                    NEW
+                  </span>
+                </div>
+                <p className="text-sm text-brand-textDim mb-2">
+                  브라우저 내 LLM 부터 Agent · RAG · CoT 까지 — 무료 API 키만으로 12강 완주.
+                </p>
+                <div className="flex items-center gap-4 text-xs text-brand-textDim">
+                  <span>🦙 WebLLM 로컬 실행</span>
+                  <span>✨ Google Gemini</span>
+                  <span>⚡ Groq Llama 3.3</span>
+                </div>
+              </div>
+              <span className="shrink-0 text-brand-textDim group-hover:text-brand-primary group-hover:translate-x-1 transition-all text-2xl">
+                →
+              </span>
+            </div>
+          </Link>
+        </section>
+
         {/* ─── 4대 코너 ─── */}
         <section className="pb-16">
           <h2 className="text-sm font-medium text-brand-textDim uppercase tracking-wider mb-6 text-center">
@@ -119,6 +153,7 @@ export function MainHomePage() {
               { label: "데이터 분석", icon: "📊", active: true },
               { label: "머신러닝", icon: "🤖", active: true },
               { label: "딥러닝", icon: "🧬", active: true },
+              { label: "AI 엔지니어링", icon: "🦙", active: true },
             ].map((step, i) => (
               <div key={i} className="flex items-center gap-3">
                 <div
