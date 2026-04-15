@@ -14,6 +14,7 @@
 import { transform } from "sucrase";
 import { chat } from "./router";
 import { exportTrace, replayTrace } from "./simulation";
+import { LlmError } from "./types";
 import type {
   ChatRequest,
   ChatResponse,
@@ -135,6 +136,8 @@ export async function runLlmCode(
     };
   } catch (err) {
     const timeMs = Math.round(performance.now() - startedAt);
+    // LlmError 는 타입 정보를 그대로 보존해서 상위(runCell)가 provider/reason 으로 UI 분기 가능하게
+    if (err instanceof LlmError) throw err;
     const message =
       err instanceof Error ? `${err.name}: ${err.message}` : String(err);
     throw new LlmRuntimeError(message, "runtime", timeMs);

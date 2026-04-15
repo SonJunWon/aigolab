@@ -30,6 +30,8 @@ import { PrivacyPage } from "./pages/PrivacyPage";
 import { TermsPage } from "./pages/TermsPage";
 import { AdminPage } from "./pages/AdminPage";
 import { useProgressStore } from "./store/progressStore";
+import { useKeyModalStore } from "./store/keyModalStore";
+import { KeySetupModal } from "./components/llm/KeySetupModal";
 
 /**
  * NavBar/Footer를 표시할지 결정하는 레이아웃.
@@ -127,8 +129,21 @@ function AppInner() {
       </Routes>
 
       <ShortcutsHelp />
+      <GlobalKeyModal />
     </Layout>
   );
+}
+
+/**
+ * 전역 KeySetupModal — `useKeyModalStore` 구독.
+ * `chat()` 실패나 레슨 🔑 버튼에서 트리거.
+ */
+function GlobalKeyModal() {
+  const isOpen = useKeyModalStore((s) => s.isOpen);
+  const initialProvider = useKeyModalStore((s) => s.initialProvider);
+  const close = useKeyModalStore((s) => s.close);
+  if (!isOpen) return null;
+  return <KeySetupModal initialProvider={initialProvider} onClose={close} />;
 }
 
 

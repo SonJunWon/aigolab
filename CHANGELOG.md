@@ -13,6 +13,38 @@
 
 ---
 
+## [4.1.0] - 2026-04-15
+
+### Added — v4.0 UAT 보강: Ch02 를 실제로 테스트 가능한 상태로 끌어올림
+
+v4.0.1 배포 후 남아있던 **"Ch02 에 🔑 버튼이 없어 키 등록 진입이 불가능"** UX 갭을 해소. 학생이 콘솔 명령 없이도 Ch02 를 완주할 수 있도록 3개 기능을 추가.
+
+**🆕 KeySetupModal 전역 상태 (`store/keyModalStore.ts`)**
+- zustand 기반 단일 스토어 — `open(initialProvider?)` / `openForMissingKey(provider)` / `close()`
+- App 레벨에 `<GlobalKeyModal>` 마운트 → 어디서든 오픈 가능
+- `openForMissingKey` 는 provider 가 Gemini/Groq 일 때만 동작 — WebLLM 등 noop
+
+**🔑 LessonPage 에 키 등록 버튼**
+- `lesson.language === "ai-engineering"` 일 때만 헤더에 "🔑 키 등록" 버튼 노출
+- 클릭 → `keyModalStore.open()` → 모달 열림
+- 브랜드 primary 보더로 시각적 강조 + 모바일/데스크탑 반응형
+
+**🤖 `LlmError("missing-key")` 자동 모달 오픈**
+- `runtime.ts` 의 catch 가 `LlmError` 는 **타입 보존** 하며 재전파 (기존엔 `LlmRuntimeError` 로 감싸져 reason/provider 소실)
+- `runCell` catch 블록에서 `err.reason === "missing-key"` 이면 `keyModalStore.openForMissingKey(err.provider)` 호출
+- 학생이 키 없이 Ch02 첫 셀 실행 → 자동으로 Gemini 단계부터 모달 오픈 → 등록 후 재실행하면 바로 성공
+
+**💾 CurriculumPage 로컬 진도 안내**
+- 진행률 바 하단에 한 줄 라벨:
+  - 비로그인: "💾 로그인 없이도 이 브라우저에 진도가 자동 저장돼요"
+  - 로그인: "☁️ 로그인 중 — 진도가 계정에 동기화됩니다"
+- MyPage 가 Supabase 전용이라 비로그인 학생이 진도 확인 경로를 잃던 혼란 해소
+
+### Fixed
+- `runtime.ts` 에러 래핑 로직 — `LlmError` 은 그대로 통과시켜 상위 핸들러가 `reason` / `provider` 로 UI 분기 가능
+
+---
+
 ## [4.0.1] - 2026-04-15
 
 ### Fixed — UAT 중 발견된 치명 버그 + UX 폴리시

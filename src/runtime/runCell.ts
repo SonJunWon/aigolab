@@ -13,7 +13,8 @@ import {
   analyzeCellShadowing,
   formatConflictMessage,
 } from "./lessonAnalysis";
-import { runLlmCode, LlmRuntimeError } from "../lib/llm";
+import { runLlmCode, LlmRuntimeError, LlmError } from "../lib/llm";
+import { useKeyModalStore } from "../store/keyModalStore";
 
 export async function runCell(cellId: string): Promise<void> {
   const store = useNotebookStore.getState();
@@ -184,8 +185,15 @@ async function runLlmCellPath(
     useNotebookStore.getState().finalizeExecution(cellId, result.timeMs, true);
   } catch (err) {
     const isKnown = err instanceof LlmRuntimeError;
+    const isLlm = err instanceof LlmError;
     const message = err instanceof Error ? err.message : String(err);
     const timeMs = isKnown ? err.timeMs : 0;
+
+    // 키 누락 → 전역 모달 자동 오픈 (학생이 🔑 위치를 몰라도 바로 등록 경로 진입)
+    if (isLlm && err.reason === "missing-key") {
+      useKeyModalStore.getState().openForMissingKey(err.provider);
+    }
+
     useNotebookStore.getState().appendOutput(cellId, {
       stream: "error",
       text: message,

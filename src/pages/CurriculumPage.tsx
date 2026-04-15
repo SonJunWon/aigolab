@@ -8,6 +8,7 @@ import { useEntitlements } from "../hooks/useEntitlements";
 import { ProBadge } from "../components/paywall/ProBadge";
 import { usePaywall } from "../components/paywall/usePaywall";
 import { useProgressStore } from "../store/progressStore";
+import { useAuthStore } from "../store/authStore";
 import type { Language, Track } from "../types/lesson";
 
 export function CurriculumPage() {
@@ -24,6 +25,7 @@ export function CurriculumPage() {
   const getProgress = useProgressStore((s) => s.getProgress);
   // 스토어 data를 구독해서 rerender되게 함
   useProgressStore((s) => s.data);
+  const user = useAuthStore((s) => s.user);
 
   useEffect(() => {
     if (lang && trk) {
@@ -111,6 +113,13 @@ export function CurriculumPage() {
                 className="h-full bg-colab-green transition-all duration-300"
                 style={{ width: `${percent}%` }}
               />
+            </div>
+            <div className="mt-2 text-[11px] text-colab-textDim">
+              {user ? (
+                <>☁️ 로그인 중 — 진도가 계정에 동기화됩니다.</>
+              ) : (
+                <>💾 로그인 없이도 이 브라우저(IndexedDB)에 진도가 자동 저장돼요. 로그인하면 계정으로 옮겨집니다.</>
+              )}
             </div>
           </div>
         )}

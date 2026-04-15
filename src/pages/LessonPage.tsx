@@ -9,6 +9,7 @@ import { Notebook } from "../components/notebook/Notebook";
 import { QuizPanel } from "../components/quiz/QuizPanel";
 import { useLanguageRuntime } from "../hooks/useLanguageRuntime";
 import { getRuntime, isLanguageSupported } from "../runtime/registry";
+import { useKeyModalStore } from "../store/keyModalStore";
 import { useAutoSave } from "../hooks/useAutoSave";
 import { useStudyTimeTracking } from "../hooks/useStudyTimeTracking";
 import {
@@ -302,6 +303,17 @@ export function LessonPage() {
               className={`w-2 h-2 rounded-full ${statusDot.cls}`}
               title={statusDot.title}
             />
+
+            {/* ai-engineering 트랙 전용: 🔑 키 등록 모달 진입 */}
+            {lesson.language === "ai-engineering" && (
+              <button
+                onClick={() => useKeyModalStore.getState().open()}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs rounded border border-brand-primary/40 text-brand-primary hover:bg-brand-primary/10 hover:border-brand-primary transition-colors"
+                title="AI API 키 등록 / 관리"
+              >
+                🔑 <span className="hidden sm:inline">키 등록</span>
+              </button>
+            )}
 
             {/* 데스크탑: .ipynb + 런타임 재시작 + 리셋 */}
             <button
