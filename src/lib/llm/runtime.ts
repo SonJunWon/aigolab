@@ -15,12 +15,14 @@ import { transform } from "sucrase";
 import { chat } from "./router";
 import { exportTrace, replayTrace } from "./simulation";
 import { LlmError } from "./types";
+import { chatWithTools as baseChatWithTools } from "./toolLoop";
 import type {
   ChatRequest,
   ChatResponse,
   ProgressCallback,
   Trace,
 } from "./types";
+import type { ChatWithToolsOptions } from "./toolLoop";
 
 export interface LlmRunCallbacks {
   onStdout?: (text: string) => void;
@@ -133,8 +135,15 @@ export async function runLlmCode(
       ...params: unknown[]
     ) => Promise<unknown>;
 
-    const fn = new AsyncFunction("chat", "console", compiled);
-    const value = await fn(wrappedChat, capturedConsole);
+    // chatWithTools 도 주입 — 내부에서 chat 을 거치지만, Ch05 학생 코드가 import 없이
+    // 이 헬퍼를 직접 호출할 수 있도록 AsyncFunction 파라미터로 노출.
+    const wrappedChatWithTools = (
+      req: ChatRequest,
+      toolOpts?: ChatWithToolsOptions,
+    ) => baseChatWithTools(req, toolOpts);
+
+    const fn = new AsyncFunction("chat", "chatWithTools", "console", compiled);
+    const value = await fn(wrappedChat, wrappedChatWithTools, capturedConsole);
     const timeMs = Math.round(performance.now() - startedAt);
     return {
       value: value === undefined ? undefined : stringify(value),

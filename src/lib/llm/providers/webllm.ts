@@ -118,31 +118,31 @@ export class WebLlmAdapter implements ProviderAdapter {
     const modelId = PROVIDER_MODELS.webllm.default;
     const engine = await getEngine(modelId, opts.onProgress);
 
+    // Phase 2 structured output — WebLLM 도 OpenAI 호환 response_format 수용하지만
+    // 1B 모델이라 스키마 준수율은 낮음 (best-effort).
+    const responseFormat = req.responseSchema
+      ? {
+          type: "json_schema" as const,
+          json_schema: {
+            name: "structured_response",
+            schema: req.responseSchema,
+          },
+        }
+      : undefined;
+
+    const baseParams = {
+      messages: toOpenAIMessages(req.messages),
+      temperature: req.temperature,
+      max_tokens: req.maxTokens,
+      ...(responseFormat ? { response_format: responseFormat } : {}),
+    };
+
     const startedAt = performance.now();
     try {
-      const completion = await engine.chat.completions.create({
-        messages: toOpenAIMessages(req.messages),
-        temperature: req.temperature,
-        max_tokens: req.maxTokens,
-        stream: false,
-      });
-
-      const text = completion.choices[0]?.message?.content ?? "";
-      const latencyMs = Math.round(performance.now() - startedAt);
-
-      return {
-        text,
-        provider: "webllm",
-        model: modelId,
-        tokensUsed: completion.usage
-          ? {
-              input: completion.usage.prompt_tokens ?? 0,
-              output: completion.usage.completion_tokens ?? 0,
-            }
-          : undefined,
-        latencyMs,
-        raw: completion,
-      };
+      if (req.stream) {
+        return await this.runStreaming(engine, baseParams, opts, modelId, startedAt);
+      }
+      return await this.runOnce(engine, baseParams, modelId, startedAt);
     } catch (err) {
       throw new LlmError(
         "network",
@@ -151,5 +151,88 @@ export class WebLlmAdapter implements ProviderAdapter {
         err,
       );
     }
+  }
+
+  // ── 일반 호출 ────────────────────────────────────
+  private async runOnce(
+    engine: MLCEngineInterface,
+    baseParams: Record<string, unknown>,
+    modelId: string,
+    startedAt: number,
+  ): Promise<ChatResponse> {
+    const completion = (await engine.chat.completions.create({
+      ...baseParams,
+      stream: false,
+    } as Parameters<typeof engine.chat.completions.create>[0])) as {
+      choices: Array<{ message: { content: string | null } }>;
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+    };
+
+    const text = completion.choices[0]?.message?.content ?? "";
+    const latencyMs = Math.round(performance.now() - startedAt);
+    return this.buildResponse(text, completion.usage, completion, latencyMs, modelId);
+  }
+
+  // ── 스트리밍 호출 ─────────────────────────────────
+  private async runStreaming(
+    engine: MLCEngineInterface,
+    baseParams: Record<string, unknown>,
+    opts: AdapterCallOptions,
+    modelId: string,
+    startedAt: number,
+  ): Promise<ChatResponse> {
+    const stream = (await engine.chat.completions.create({
+      ...baseParams,
+      stream: true,
+    } as Parameters<typeof engine.chat.completions.create>[0])) as AsyncIterable<{
+      choices: Array<{ delta: { content?: string } }>;
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+    }>;
+
+    let accumulated = "";
+    let lastUsage: { prompt_tokens?: number; completion_tokens?: number } | undefined;
+    for await (const chunk of stream) {
+      const delta = chunk.choices[0]?.delta?.content;
+      if (delta) {
+        accumulated += delta;
+        opts.onToken?.(delta);
+      }
+      if (chunk.usage) lastUsage = chunk.usage;
+    }
+
+    const latencyMs = Math.round(performance.now() - startedAt);
+    return this.buildResponse(accumulated, lastUsage, { accumulated }, latencyMs, modelId);
+  }
+
+  // ── 공통 응답 조립 ───────────────────────────────
+  private buildResponse(
+    text: string,
+    usage: { prompt_tokens?: number; completion_tokens?: number } | undefined,
+    raw: unknown,
+    latencyMs: number,
+    modelId: string,
+  ): ChatResponse {
+    let json: unknown;
+    if (text) {
+      try {
+        json = JSON.parse(text);
+      } catch {
+        json = undefined;
+      }
+    }
+    return {
+      text,
+      provider: "webllm",
+      model: modelId,
+      tokensUsed: usage
+        ? {
+            input: usage.prompt_tokens ?? 0,
+            output: usage.completion_tokens ?? 0,
+          }
+        : undefined,
+      latencyMs,
+      json,
+      raw,
+    };
   }
 }

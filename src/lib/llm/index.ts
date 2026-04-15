@@ -25,6 +25,8 @@ export { exportTrace, replayTrace } from "./simulation";
 export { getKey, setKey, removeKey, listKeys, requireKey } from "./keys";
 export { runLlmCode, LlmRuntimeError, serializeTraces } from "./runtime";
 export type { LlmRunCallbacks, LlmRunResult } from "./runtime";
+export { chatWithTools } from "./toolLoop";
+export type { ChatWithToolsOptions, ToolLoopStep } from "./toolLoop";
 export type {
   Role,
   Message,
@@ -33,8 +35,15 @@ export type {
   ChatRequest,
   ChatResponse,
   Trace,
+  TraceV1,
+  TraceV2,
   ProgressEvent,
   ProgressCallback,
+  JsonSchema,
+  ToolDefinition,
+  ToolCall,
+  ToolChoice,
+  LlmErrorReason,
 } from "./types";
 export { LlmError } from "./types";
 export type { ProviderAdapter } from "./providers/base";
