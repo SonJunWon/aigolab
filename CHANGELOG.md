@@ -13,6 +13,33 @@
 
 ---
 
+## [4.0.1] - 2026-04-15
+
+### Fixed — UAT 중 발견된 치명 버그 + UX 폴리시
+
+**🔴 Critical bug fix — AI 엔지니어링 레슨 진입 시 LessonPage 크래시**
+- `useLanguageRuntime` 이 `getRuntime("ai-engineering")` 호출 → 등록된 런타임 없어 throw
+- `isLanguageSupported` 가드 추가 — 언어 수준 런타임이 없는 트랙(=ai-engineering, 셀 단위 LLM 런타임 사용)은 즉시 `{status:"ready", version:null}` 반환
+- `LessonPage.handleRestartRuntime` 도 동일 가드로 보호
+
+**🆕 WebLLM 진행률 바 UI**
+- `OutputChunk.stream` 에 `"progress"` 추가 + `progress: number` / `phase` 선택 필드
+- `updateProgressOutput` store 액션 — 기존 progress chunk in-place 교체
+- `LlmRunCallbacks.onProgress?: ProgressCallback` 옵션 추가, `runCell` 가 store 에 전파
+- CellOutput 에 Phase 색상(🟣 다운로드 / 🔵 로딩 / 🟢 완료) + 퍼센트 + WebLLM 메시지 스트리밍 + "탭 닫지 마세요" 안내. 2~3분 대기 중 시각 피드백 확보
+
+**📝 Ch01 콘텐츠 개선 — 1B 모델 한계를 학습 포인트로 프레이밍**
+- 기존 "호랑이 3줄 이야기" (한국어 창작 + temp 1.0) 가 1B 모델에서 토큰 폭주 (영어·SQL 조각 섞여 붕괴)
+- 짧은 과제 ("고양이 이름 하나만") + 3단 비교 (0.2 / 0.7 / 1.2) + maxTokens 제한
+- 실험 전 스포일러 ("일부러 엉망 나올 거예요, 이게 학습 포인트") + 실험 후 해설 (실무 temperature 권장 범위, Ch02 Gemini 와 대비 예고)
+- system prompt 셀에도 temperature 0.4 + maxTokens 120 안전벨트
+- 퀴즈 5번 추가 — "부서짐 원인은? (temperature × 모델 크기)"
+
+**📢 Ch01 인트로 강조**
+- "첫 실행 2~3분" 경고가 묻혀 스킵되던 문제 → 독립 마크다운 셀 "⏰ 잠깐! 꼭 읽고 실행하세요" + 표 + 중단 금지 경고 박스로 분리
+
+---
+
 ## [4.0.0] - 2026-04-15
 
 ### Added — v4 메이저 릴리즈: AI 엔지니어링 트랙 Phase 1 (통합 LLM SDK + Ch01·Ch02)

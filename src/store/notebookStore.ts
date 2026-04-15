@@ -69,6 +69,12 @@ interface NotebookState {
   // ── 실행 결과 업데이트 ───────────────────────────
   setStatus: (cellId: string, status: CellStatus) => void;
   appendOutput: (cellId: string, chunk: OutputChunk) => void;
+  /**
+   * progress 스트림 전용 — 기존 progress chunk 가 있으면 in-place 교체,
+   * 없으면 outputs 맨 앞에 삽입. WebLLM 모델 다운로드 진행률처럼 "하나의 지표가
+   * 계속 갱신" 되는 케이스용.
+   */
+  updateProgressOutput: (cellId: string, chunk: OutputChunk) => void;
   clearOutputs: (cellId: string) => void;
   finalizeExecution: (cellId: string, executionTime: number, success: boolean) => void;
 }
@@ -230,6 +236,21 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       cells: state.cells.map((c) =>
         c.id === cellId ? { ...c, outputs: [...c.outputs, chunk] } : c
       ),
+    })),
+
+  updateProgressOutput: (cellId, chunk) =>
+    set((state) => ({
+      cells: state.cells.map((c) => {
+        if (c.id !== cellId) return c;
+        const idx = c.outputs.findIndex((o) => o.stream === "progress");
+        if (idx === -1) {
+          // progress 를 outputs 맨 앞에 두면 실행 로그와 분리되어 잘 보임
+          return { ...c, outputs: [chunk, ...c.outputs] };
+        }
+        const next = [...c.outputs];
+        next[idx] = chunk;
+        return { ...c, outputs: next };
+      }),
     })),
 
   clearOutputs: (cellId) =>

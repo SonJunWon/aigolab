@@ -16,26 +16,34 @@ const streamColor: Record<OutputChunk["stream"], string> = {
   error:  "text-colab-red",
   result: "text-colab-text",
   warning: "text-colab-yellow",
-  table: "text-colab-text",  // table은 SqlTable 컴포넌트로 따로 렌더, 색은 사용 안 함
-  figure: "text-colab-text", // figure 도 별도 렌더, 색 미사용
+  table: "text-colab-text",   // table은 SqlTable 컴포넌트로 따로 렌더, 색은 사용 안 함
+  figure: "text-colab-text",  // figure 도 별도 렌더, 색 미사용
+  progress: "text-colab-text", // progress 도 별도 렌더
 };
 
 export function CellOutput({ outputs, executionTime }: Props) {
   if (outputs.length === 0) return null;
 
   // 종류별 분리
+  const progressChunk = outputs.find((c) => c.stream === "progress");
   const tableChunks = outputs.filter((c) => c.stream === "table");
   const figureChunks = outputs.filter((c) => c.stream === "figure");
   const errorChunks = outputs.filter((c) => c.stream === "error");
   const textChunks = outputs.filter(
     (c) =>
-      c.stream !== "error" && c.stream !== "table" && c.stream !== "figure"
+      c.stream !== "error" &&
+      c.stream !== "table" &&
+      c.stream !== "figure" &&
+      c.stream !== "progress"
   );
   const errorText = errorChunks.map((c) => c.text).join("\n");
   const translated = errorText ? translateError(errorText) : null;
 
   return (
     <div className="border-t border-colab-subtle bg-colab-bg">
+      {/* WebLLM 다운로드·로딩 진행률 바 */}
+      {progressChunk && <ProgressBar chunk={progressChunk} />}
+
       {/* 일반 텍스트 출력 (print, console.log, 경고 등) */}
       {textChunks.length > 0 && (
         <div className="px-4 py-3 font-mono text-[13px] leading-relaxed">
@@ -74,6 +82,58 @@ export function CellOutput({ outputs, executionTime }: Props) {
       {executionTime !== undefined && (
         <div className="px-4 pb-2 text-[11px] text-colab-textDim">
           실행 시간: {executionTime.toFixed(0)}ms
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// WebLLM 진행률 바 — 첫 실행 2~3분 시각화
+// ─────────────────────────────────────────────────────────
+
+function ProgressBar({ chunk }: { chunk: OutputChunk }) {
+  const pct = Math.max(0, Math.min(1, chunk.progress ?? 0));
+  const pctLabel = `${Math.floor(pct * 100)}%`;
+  const isDone = chunk.phase === "ready" || pct >= 1;
+
+  const phaseLabel =
+    chunk.phase === "downloading"
+      ? "📥 모델 다운로드 중"
+      : chunk.phase === "loading"
+        ? "⚙️ 모델 로딩 중"
+        : chunk.phase === "ready"
+          ? "✅ 준비 완료"
+          : "🔄 준비 중";
+
+  const barColor = isDone
+    ? "bg-colab-green"
+    : chunk.phase === "loading"
+      ? "bg-brand-accent"
+      : "bg-brand-primary";
+
+  return (
+    <div className="px-4 py-3 border-b border-colab-subtle/60">
+      <div className="flex items-center justify-between mb-2 text-[12px]">
+        <span className="font-medium text-colab-text">{phaseLabel}</span>
+        <span className="font-mono text-colab-textDim">{pctLabel}</span>
+      </div>
+      <div className="h-2.5 rounded-full bg-colab-subtle/50 overflow-hidden">
+        <div
+          className={`h-full ${barColor} transition-[width] duration-300 ${
+            !isDone && pct < 0.02 ? "animate-pulse" : ""
+          }`}
+          style={{ width: `${Math.max(2, pct * 100)}%` }}
+        />
+      </div>
+      {chunk.text && (
+        <div className="mt-2 text-[11px] text-colab-textDim font-mono truncate">
+          {chunk.text}
+        </div>
+      )}
+      {!isDone && (
+        <div className="mt-1 text-[11px] text-colab-textDim">
+          💡 첫 실행은 879MB 모델 다운로드라 2~3분 걸립니다. 탭 닫지 마세요.
         </div>
       )}
     </div>

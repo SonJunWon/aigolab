@@ -8,7 +8,7 @@ import { useAutoSaveStore } from "../store/autoSaveStore";
 import { Notebook } from "../components/notebook/Notebook";
 import { QuizPanel } from "../components/quiz/QuizPanel";
 import { useLanguageRuntime } from "../hooks/useLanguageRuntime";
-import { getRuntime } from "../runtime/registry";
+import { getRuntime, isLanguageSupported } from "../runtime/registry";
 import { useAutoSave } from "../hooks/useAutoSave";
 import { useStudyTimeTracking } from "../hooks/useStudyTimeTracking";
 import {
@@ -250,7 +250,10 @@ export function LessonPage() {
     }
     setRestarting(true);
     try {
-      await getRuntime(lesson.language).terminate();
+      // ai-engineering 처럼 언어 수준 런타임이 없는 트랙은 재시작할 대상이 없음
+      if (isLanguageSupported(lesson.language)) {
+        await getRuntime(lesson.language).terminate();
+      }
     } finally {
       setRestarting(false);
     }

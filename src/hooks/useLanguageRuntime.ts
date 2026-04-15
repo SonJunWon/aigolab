@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getRuntime } from "../runtime/registry";
+import { getRuntime, isLanguageSupported } from "../runtime/registry";
 import type { RunStatus, SupportedLanguage } from "../runtime/types";
 
 /**
@@ -7,15 +7,29 @@ import type { RunStatus, SupportedLanguage } from "../runtime/types";
  *
  * 마운트 시 자동으로 init() 호출 (이미 호출됐으면 중복 무시).
  * language가 바뀌면 새 런타임을 init하고 상태를 다시 구독.
+ *
+ * **언어 수준 런타임이 없는 언어** (예: ai-engineering — 셀 단위 LLM 런타임 사용)
+ * 는 즉시 "ready" 로 리포트. 전역 초기화 불필요.
  */
 export function useLanguageRuntime(language: SupportedLanguage = "python") {
-  const runtime = getRuntime(language);
+  const supported = isLanguageSupported(language);
+  const runtime = supported ? getRuntime(language) : null;
 
-  const [status, setStatus] = useState<RunStatus>(runtime.getStatus());
-  const [version, setVersion] = useState<string | null>(runtime.getVersion());
+  const [status, setStatus] = useState<RunStatus>(
+    runtime ? runtime.getStatus() : "ready",
+  );
+  const [version, setVersion] = useState<string | null>(
+    runtime ? runtime.getVersion() : null,
+  );
 
   useEffect(() => {
-    // 컴포넌트 마운트 시 (또는 language 변경 시) 초기화 시작
+    if (!runtime) {
+      // 셀 단위 런타임 (ai-engineering 등) — 전역 init 불필요
+      setStatus("ready");
+      setVersion(null);
+      return;
+    }
+
     runtime.init().catch(() => {
       // 에러는 statusListener에서 처리
     });

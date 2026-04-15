@@ -265,6 +265,7 @@ function InlineCellOutput({
     warning: "text-brand-yellow",
     table: "text-brand-text",
     figure: "text-brand-text",
+    progress: "text-brand-text", // InlineCodeRunner 는 LLM 셀 미사용, 사용 안 됨
   };
 
   return (

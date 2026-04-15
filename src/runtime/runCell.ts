@@ -153,6 +153,13 @@ async function runLlmCellPath(
         useNotebookStore
           .getState()
           .appendOutput(cellId, { stream: "stderr", text }),
+      onProgress: (evt) =>
+        useNotebookStore.getState().updateProgressOutput(cellId, {
+          stream: "progress",
+          text: evt.message ?? "",
+          progress: evt.progress,
+          phase: evt.phase,
+        }),
       replayTraces,
     });
 

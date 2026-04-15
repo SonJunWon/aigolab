@@ -14,11 +14,21 @@
 import { transform } from "sucrase";
 import { chat } from "./router";
 import { exportTrace, replayTrace } from "./simulation";
-import type { ChatRequest, ChatResponse, Trace } from "./types";
+import type {
+  ChatRequest,
+  ChatResponse,
+  ProgressCallback,
+  Trace,
+} from "./types";
 
 export interface LlmRunCallbacks {
   onStdout?: (text: string) => void;
   onStderr?: (text: string) => void;
+  /**
+   * WebLLM 모델 다운로드·로딩 진행률 콜백.
+   * 제공자 초기화 단계 (첫 chat 호출) 에만 의미 있음.
+   */
+  onProgress?: ProgressCallback;
   /**
    * T10 재생 — 학생이 키 없이도 진도 나갈 수 있게, 녹화본을 순서대로 주입.
    * 셀 내 chat() 호출마다 하나씩 소비.
@@ -96,7 +106,8 @@ export async function runLlmCode(
       const trace = replayQueue.shift() as Trace;
       return replayTrace(trace);
     }
-    const res = await chat(req);
+    // onProgress 전달 — WebLLM 첫 다운로드 시 UI 에 진행률 흘리기 위함
+    const res = await chat(req, callbacks.onProgress);
     recordedTraces.push(exportTrace(req, res));
     return res;
   };
