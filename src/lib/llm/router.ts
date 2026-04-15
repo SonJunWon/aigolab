@@ -7,10 +7,10 @@
  * 3. task 기반이면 DEFAULT_ROUTES 순서대로 페일오버
  */
 
-import type { ChatRequest, ChatResponse, Provider, ProgressCallback } from "./types";
+import type { ChatRequest, ChatResponse, Provider } from "./types";
 import { LlmError } from "./types";
 import { DEFAULT_ROUTES } from "./routes";
-import type { ProviderAdapter } from "./providers/base";
+import type { AdapterCallOptions, ProviderAdapter } from "./providers/base";
 import { NotImplementedAdapter } from "./providers/base";
 import { replayTrace } from "./simulation";
 
@@ -33,14 +33,26 @@ export function getAdapter(name: Provider): ProviderAdapter {
   return adapters[name];
 }
 
-/** 주요 공개 함수 */
+/**
+ * 주요 공개 함수.
+ *
+ * 2번째 인자는 **옵션 객체** — Phase 2 이전엔 `ProgressCallback` 하나였으나
+ * 스트리밍 `onToken` 이 추가되며 객체로 통일. 하위 호환을 위해 function 을 넘기면
+ * `onProgress` 로 해석 (runtime 이 구버전 호출 하고 있어도 동작).
+ */
 export async function chat(
   req: ChatRequest,
-  onProgress?: ProgressCallback,
+  optsOrLegacyProgress?: AdapterCallOptions | ((evt: Parameters<NonNullable<AdapterCallOptions["onProgress"]>>[0]) => void),
 ): Promise<ChatResponse> {
-  // 1. 시뮬레이션 재생 최우선
+  // 함수형 구버전 호출 하위 호환
+  const opts: AdapterCallOptions =
+    typeof optsOrLegacyProgress === "function"
+      ? { onProgress: optsOrLegacyProgress }
+      : (optsOrLegacyProgress ?? {});
+
+  // 1. 시뮬레이션 재생 최우선 (Phase 2: onToken 도 forward)
   if (req.simulation) {
-    return replayTrace(req.simulation);
+    return replayTrace(req.simulation, { onToken: opts.onToken });
   }
 
   // 2. 호출 대상 provider 결정
@@ -60,7 +72,7 @@ export async function chat(
   for (const name of targets) {
     const adapter = adapters[name];
     try {
-      return await adapter.chat(req, onProgress);
+      return await adapter.chat(req, opts);
     } catch (err) {
       lastError = err;
       // provider 강제 지정이었으면 페일오버 금지 — 즉시 던지기

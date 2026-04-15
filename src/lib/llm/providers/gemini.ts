@@ -9,14 +9,10 @@
  * - role "user"/"assistant" → `contents` 배열 (assistant 는 "model" 로 매핑)
  */
 
-import type {
-  ChatRequest,
-  ChatResponse,
-  Message,
-} from "../types";
+import type { ChatRequest, ChatResponse, Message } from "../types";
 import { LlmError } from "../types";
 import { PROVIDER_MODELS } from "../routes";
-import type { ProviderAdapter } from "./base";
+import type { AdapterCallOptions, ProviderAdapter } from "./base";
 import { getKey, requireKey } from "../keys";
 
 // type-only import — 번들 시 실제 사용처에서 import() 로도 OK
@@ -52,7 +48,11 @@ export class GeminiAdapter implements ProviderAdapter {
     return Boolean(await getKey("gemini"));
   }
 
-  async chat(req: ChatRequest): Promise<ChatResponse> {
+  async chat(
+    req: ChatRequest,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _opts: AdapterCallOptions = {},
+  ): Promise<ChatResponse> {
     const apiKey = await requireKey("gemini");
 
     // Dynamic import 로 번들 sideload — 페이지 초기 로드 시 끌고 오지 않게

@@ -31,6 +31,11 @@ export interface LlmRunCallbacks {
    */
   onProgress?: ProgressCallback;
   /**
+   * Phase 2 스트리밍 콜백 — `chat({ stream: true })` 호출 시 토큰 단위 chunk 가 흘러옴.
+   * Ch04 Thought Stream UI 가 이걸 구독해 토큰 단위로 화면 갱신.
+   */
+  onToken?: (chunk: string) => void;
+  /**
    * T10 재생 — 학생이 키 없이도 진도 나갈 수 있게, 녹화본을 순서대로 주입.
    * 셀 내 chat() 호출마다 하나씩 소비.
    */
@@ -105,10 +110,13 @@ export async function runLlmCode(
   const wrappedChat = async (req: ChatRequest): Promise<ChatResponse> => {
     if (replayQueue.length > 0) {
       const trace = replayQueue.shift() as Trace;
-      return replayTrace(trace);
+      return replayTrace(trace, { onToken: callbacks.onToken });
     }
-    // onProgress 전달 — WebLLM 첫 다운로드 시 UI 에 진행률 흘리기 위함
-    const res = await chat(req, callbacks.onProgress);
+    // 어댑터에 onProgress + onToken 옵션 함께 전달
+    const res = await chat(req, {
+      onProgress: callbacks.onProgress,
+      onToken: callbacks.onToken,
+    });
     recordedTraces.push(exportTrace(req, res));
     return res;
   };

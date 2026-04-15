@@ -9,14 +9,31 @@
  * OpenAI 호환 API 라 변환 부담이 가장 적다.
  */
 
-import type {
-  ChatRequest,
-  ChatResponse,
-} from "../types";
+import type { ChatRequest, ChatResponse, Message } from "../types";
 import { LlmError } from "../types";
 import { PROVIDER_MODELS } from "../routes";
-import type { ProviderAdapter } from "./base";
+import type { AdapterCallOptions, ProviderAdapter } from "./base";
 import { getKey, requireKey } from "../keys";
+
+/**
+ * OpenAI 호환 메시지 포맷으로 변환 — tool role 은 tool_call_id 가 필수.
+ * Phase 2 tool loop 구현 시 assistant 의 tool_calls 도 여기서 매핑 확장.
+ */
+function toOpenAIMessages(messages: Message[]) {
+  return messages.map((m) => {
+    if (m.role === "tool") {
+      return {
+        role: "tool" as const,
+        content: m.content,
+        tool_call_id: m.toolCallId ?? "",
+      };
+    }
+    return {
+      role: m.role,
+      content: m.content,
+    };
+  });
+}
 
 export class GroqAdapter implements ProviderAdapter {
   readonly name = "groq" as const;
@@ -25,7 +42,11 @@ export class GroqAdapter implements ProviderAdapter {
     return Boolean(await getKey("groq"));
   }
 
-  async chat(req: ChatRequest): Promise<ChatResponse> {
+  async chat(
+    req: ChatRequest,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _opts: AdapterCallOptions = {},
+  ): Promise<ChatResponse> {
     const apiKey = await requireKey("groq");
 
     // Dynamic import — 번들 크기 관리
@@ -41,10 +62,7 @@ export class GroqAdapter implements ProviderAdapter {
     try {
       const completion = await client.chat.completions.create({
         model,
-        messages: req.messages.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
+        messages: toOpenAIMessages(req.messages),
         temperature: req.temperature,
         max_tokens: req.maxTokens,
         stream: false,

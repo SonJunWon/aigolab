@@ -10,14 +10,27 @@
  * import 를 dynamic import 로 지연 — Ch01 레슨이 열릴 때만 로드.
  */
 
-import type {
-  ChatRequest,
-  ChatResponse,
-  ProgressCallback,
-} from "../types";
+import type { ChatRequest, ChatResponse, Message, ProgressCallback } from "../types";
 import { LlmError } from "../types";
 import { PROVIDER_MODELS } from "../routes";
-import type { ProviderAdapter } from "./base";
+import type { AdapterCallOptions, ProviderAdapter } from "./base";
+
+/** WebLLM 도 OpenAI 호환 포맷 — Groq 와 동일하게 tool role 은 tool_call_id 필수 */
+function toOpenAIMessages(messages: Message[]) {
+  return messages.map((m) => {
+    if (m.role === "tool") {
+      return {
+        role: "tool" as const,
+        content: m.content,
+        tool_call_id: m.toolCallId ?? "",
+      };
+    }
+    return {
+      role: m.role,
+      content: m.content,
+    };
+  });
+}
 
 // dynamic import 로만 접근하므로 type-only import
 import type {
@@ -83,7 +96,7 @@ export class WebLlmAdapter implements ProviderAdapter {
 
   async chat(
     req: ChatRequest,
-    onProgress?: ProgressCallback,
+    opts: AdapterCallOptions = {},
   ): Promise<ChatResponse> {
     if (!(await this.isAvailable())) {
       throw new LlmError(
@@ -93,13 +106,22 @@ export class WebLlmAdapter implements ProviderAdapter {
       );
     }
 
+    // Phase 2: WebLLM 은 tool calling 미지원
+    if (req.tools && req.tools.length > 0) {
+      throw new LlmError(
+        "unsupported-env",
+        "WebLLM (Llama 3.2 1B) 은 tool calling 을 지원하지 않습니다. Gemini/Groq 로 전환하세요.",
+        "webllm",
+      );
+    }
+
     const modelId = PROVIDER_MODELS.webllm.default;
-    const engine = await getEngine(modelId, onProgress);
+    const engine = await getEngine(modelId, opts.onProgress);
 
     const startedAt = performance.now();
     try {
       const completion = await engine.chat.completions.create({
-        messages: req.messages,
+        messages: toOpenAIMessages(req.messages),
         temperature: req.temperature,
         max_tokens: req.maxTokens,
         stream: false,
