@@ -161,8 +161,17 @@ async function runLlmCellPath(
           progress: evt.progress,
           phase: evt.phase,
         }),
+      onToken: (chunk) =>
+        useNotebookStore.getState().appendThoughtToken(cellId, chunk, true),
       replayTraces,
     });
+
+    // 스트리밍이 있었으면 마지막 thought chunk 의 streaming 플래그를 false 로
+    const finalState = useNotebookStore.getState();
+    const finalCell = finalState.cells.find((c) => c.id === cellId);
+    if (finalCell?.outputs.some((o) => o.stream === "thought" && o.streaming)) {
+      finalState.appendThoughtToken(cellId, "", false);
+    }
 
     if (result.replayed) {
       // 재생 사실을 학생에게 알림 — 가짜 네트워크 호출 아님을 명확히

@@ -19,7 +19,8 @@ export interface TableData {
 export interface OutputChunk {
   /**
    * stdout / stderr / result / error / warning(선제 경고) / table(SQL 결과) /
-   * figure(matplotlib 그래프 PNG) / progress(WebLLM 다운로드·로딩 진행률)
+   * figure(matplotlib 그래프 PNG) / progress(WebLLM 다운로드·로딩 진행률) /
+   * thought(Ch04 LLM 스트리밍 중간 토큰 누적)
    */
   stream:
     | "stdout"
@@ -29,7 +30,8 @@ export interface OutputChunk {
     | "warning"
     | "table"
     | "figure"
-    | "progress";
+    | "progress"
+    | "thought";
   /** 텍스트 출력 — table·figure 일 때는 사용 안 함 */
   text: string;
   /** table 일 때만 사용 */
@@ -40,6 +42,8 @@ export interface OutputChunk {
   progress?: number;
   /** progress 일 때만 사용 — "downloading" / "loading" / "ready" */
   phase?: "downloading" | "loading" | "ready";
+  /** thought 일 때만 사용 — 아직 스트리밍 중이면 true (커서 깜빡임) */
+  streaming?: boolean;
 }
 
 export interface Cell {

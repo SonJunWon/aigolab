@@ -19,6 +19,7 @@ const streamColor: Record<OutputChunk["stream"], string> = {
   table: "text-colab-text",   // table은 SqlTable 컴포넌트로 따로 렌더, 색은 사용 안 함
   figure: "text-colab-text",  // figure 도 별도 렌더, 색 미사용
   progress: "text-colab-text", // progress 도 별도 렌더
+  thought: "text-brand-primary", // LLM 스트리밍 토큰 — 보라색 이탤릭
 };
 
 export function CellOutput({ outputs, executionTime }: Props) {
@@ -26,6 +27,7 @@ export function CellOutput({ outputs, executionTime }: Props) {
 
   // 종류별 분리
   const progressChunk = outputs.find((c) => c.stream === "progress");
+  const thoughtChunks = outputs.filter((c) => c.stream === "thought");
   const tableChunks = outputs.filter((c) => c.stream === "table");
   const figureChunks = outputs.filter((c) => c.stream === "figure");
   const errorChunks = outputs.filter((c) => c.stream === "error");
@@ -34,7 +36,8 @@ export function CellOutput({ outputs, executionTime }: Props) {
       c.stream !== "error" &&
       c.stream !== "table" &&
       c.stream !== "figure" &&
-      c.stream !== "progress"
+      c.stream !== "progress" &&
+      c.stream !== "thought"
   );
   const errorText = errorChunks.map((c) => c.text).join("\n");
   const translated = errorText ? translateError(errorText) : null;
@@ -43,6 +46,11 @@ export function CellOutput({ outputs, executionTime }: Props) {
     <div className="border-t border-colab-subtle bg-colab-bg">
       {/* WebLLM 다운로드·로딩 진행률 바 */}
       {progressChunk && <ProgressBar chunk={progressChunk} />}
+
+      {/* LLM 스트리밍 토큰 (Ch04 Thought Stream) */}
+      {thoughtChunks.map((chunk, i) => (
+        <ThoughtBlock key={`thought-${i}`} chunk={chunk} />
+      ))}
 
       {/* 일반 텍스트 출력 (print, console.log, 경고 등) */}
       {textChunks.length > 0 && (
@@ -136,6 +144,28 @@ function ProgressBar({ chunk }: { chunk: OutputChunk }) {
           💡 첫 실행은 879MB 모델 다운로드라 2~3분 걸립니다. 탭 닫지 마세요.
         </div>
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// LLM 스트리밍 토큰 렌더링 — 토큰이 누적되며 커서 깜빡임
+// ─────────────────────────────────────────────────────────
+
+function ThoughtBlock({ chunk }: { chunk: OutputChunk }) {
+  const isStreaming = chunk.streaming === true;
+  return (
+    <div className="px-4 py-3 border-b border-colab-subtle/40 bg-brand-primary/5">
+      <div className="flex items-center gap-1.5 mb-1 text-[11px] text-brand-primary font-medium">
+        <span>🧠</span>
+        <span>{isStreaming ? "생각 중..." : "생각 완료"}</span>
+      </div>
+      <pre className="m-0 whitespace-pre-wrap break-words font-mono text-[13px] italic leading-relaxed text-brand-text">
+        {chunk.text}
+        {isStreaming && (
+          <span className="inline-block w-2 h-4 ml-0.5 bg-brand-primary animate-pulse align-middle" />
+        )}
+      </pre>
     </div>
   );
 }

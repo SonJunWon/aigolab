@@ -75,6 +75,12 @@ interface NotebookState {
    * 계속 갱신" 되는 케이스용.
    */
   updateProgressOutput: (cellId: string, chunk: OutputChunk) => void;
+  /**
+   * thought 스트림 전용 — LLM 토큰 스트리밍.
+   * 기존 thought chunk 가 있으면 text 끝에 이어붙이기, 없으면 새 chunk 생성.
+   * streaming=false 로 호출하면 "완료" 상태로 고정 (커서 애니메이션 중지).
+   */
+  appendThoughtToken: (cellId: string, chunk: string, streaming?: boolean) => void;
   clearOutputs: (cellId: string) => void;
   finalizeExecution: (cellId: string, executionTime: number, success: boolean) => void;
 }
@@ -249,6 +255,32 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
         }
         const next = [...c.outputs];
         next[idx] = chunk;
+        return { ...c, outputs: next };
+      }),
+    })),
+
+  appendThoughtToken: (cellId, chunk, streaming = true) =>
+    set((state) => ({
+      cells: state.cells.map((c) => {
+        if (c.id !== cellId) return c;
+        const idx = c.outputs.findIndex((o) => o.stream === "thought");
+        if (idx === -1) {
+          // 새 thought chunk
+          return {
+            ...c,
+            outputs: [
+              ...c.outputs,
+              { stream: "thought", text: chunk, streaming },
+            ],
+          };
+        }
+        // 기존 chunk 에 이어붙이기
+        const next = [...c.outputs];
+        next[idx] = {
+          ...next[idx],
+          text: next[idx].text + chunk,
+          streaming,
+        };
         return { ...c, outputs: next };
       }),
     })),
