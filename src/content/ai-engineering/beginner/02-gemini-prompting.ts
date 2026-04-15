@@ -12,6 +12,23 @@ import type { Quiz } from "../../../types/quiz";
  *
  * 실행 라우팅: task 미지정 시 DEFAULT_ROUTES.fast = ["groq", "gemini"] — Groq 있으면 먼저 가지만,
  * 본 레슨은 Gemini 에 집중하고자 `provider: "gemini"` 강제. 학생은 Gemini 키 하나만 있으면 됨.
+ *
+ * ─── 강사 녹화본 첨부 (키 없는 학생의 시뮬레이션 재생) ───────────────
+ * 1. admin 또는 `localStorage["aigolab.dev.recording"]="1"` 토글 후 새로고침
+ * 2. Gemini 키 등록 → 각 LLM 셀 실행
+ * 3. 셀 결과 영역의 "↓ Trace JSON (N)" 버튼으로 JSON 다운로드
+ * 4. 다운로드 파일을 `app/src/content/ai-engineering/beginner/traces/` 등에 두고
+ *    아래 셀 정의에 다음과 같이 import:
+ *
+ *    import trace_first from "./traces/02-first-call.json" with { type: "json" };
+ *
+ *    {
+ *      type: "llm-code",
+ *      ...
+ *      simulation: { traces: trace_first, note: "강사 녹화본 재생 중" }
+ *    }
+ *
+ * 이러면 키 없는 학생이 실행해도 wrappedChat 이 trace 를 순서대로 소비해 동일 응답 반환.
  */
 export const lesson02: Lesson = {
   id: "ai-eng-02-gemini-prompting",

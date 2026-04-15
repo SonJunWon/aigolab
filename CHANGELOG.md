@@ -13,6 +13,34 @@
 
 ---
 
+## [4.2.0] - 2026-04-15
+
+### Added — 강사용 녹화 다운로드 UI
+
+키 없는 학생을 위한 시뮬레이션 재생 인프라(T10) 의 마지막 퍼즐 — 강사가 LLM 셀 실행 결과를 JSON 으로 내보내 lesson 에 첨부하는 경로.
+
+**🆕 LlmCodeCell 에 "Trace JSON 다운로드" 버튼**
+- 셀 결과 영역 하단에 보라색 박스 — `📼 녹화 모드 — chat() 호출 N건 캡처됨` + `↓ Trace JSON (N)` 버튼
+- 클릭 시 `${cell.id}-traces.json` 파일 다운로드 (Blob URL 방식, 메모리 누수 없음)
+- 다운로드 활성화 조건: 녹화 모드 ON **AND** 이번 실행에서 `chat()` 호출 1회 이상
+
+**🆕 녹화 모드 진입 — 두 가지 경로**
+1. **Admin entitlement** — `useEntitlements()` + `isAdmin()` 체크. 일반 admin 로그인이면 자동 활성화
+2. **콘솔 토글** — `localStorage.setItem("aigolab.dev.recording", "1")` + 새로고침. admin 로그인 안 한 강사·콘텐츠 작성자도 사용 가능
+
+**📝 Ch02 lesson 파일에 첨부 가이드 주석**
+- 녹화 → JSON 저장 → `import` → `simulation.traces` 필드 주입 4단계 명시
+- TypeScript 의 `import ... with { type: "json" }` 구문 예시 포함
+
+**기존 인프라 재사용**:
+- `runtime/runCell.ts:getRecordedTraces(cellId)` — 셀별 트레이스 보관 Map 조회
+- `lib/llm:serializeTraces(traces)` — 다운로드 가능한 JSON 문자열로 직렬화
+- `Cell.simulation.traces` 필드 — `wrappedChat` 가 자동으로 순서대로 소비
+
+이 릴리즈로 **"키 없는 학생도 Ch02 진도 가능"** Phase 1 수용 기준의 마지막 도구가 갖춰짐. 실제 녹화본 첨부는 강사(콘텐츠 작성자)의 일회성 작업.
+
+---
+
 ## [4.1.1] - 2026-04-15
 
 ### Fixed — Gemini 모델 404 (신규 사용자 차단)

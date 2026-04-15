@@ -7,14 +7,31 @@
  *   - 좌측 거터에 🤖 배지 노출로 일반 코드셀과 구별
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import type { Cell } from "../../types/notebook";
 import { CellOutput } from "./CellOutput";
 import { HintPanel } from "./HintPanel";
 import { useNotebookStore } from "../../store/notebookStore";
-import { runCell } from "../../runtime/runCell";
+import { runCell, getRecordedTraces } from "../../runtime/runCell";
 import { activateCommandMode } from "../../runtime/commandMode";
+import { serializeTraces } from "../../lib/llm";
+import { useEntitlements } from "../../hooks/useEntitlements";
+import { isAdmin } from "../../content/access";
+
+/**
+ * 녹화 다운로드 가능 여부 — admin entitlement OR 콘솔 토글.
+ * 콘솔 토글: `localStorage.setItem("aigolab.dev.recording", "1")` (강사가 admin 로그인 안 해도 OK)
+ */
+function useRecordingMode(): boolean {
+  const { entitlements } = useEntitlements();
+  // localStorage 토글은 마운트 시 1회만 체크 (변경 시 새로고침 필요 — 충분)
+  const [devToggle] = useState<boolean>(() => {
+    if (typeof localStorage === "undefined") return false;
+    return localStorage.getItem("aigolab.dev.recording") === "1";
+  });
+  return isAdmin(entitlements) || devToggle;
+}
 
 interface Props {
   cell: Cell;
@@ -32,6 +49,25 @@ const statusIcon: Record<Cell["status"], { label: string; cls: string }> = {
 export function LlmCodeCell({ cell, isSelected }: Props) {
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
   const updateSource = useNotebookStore((s) => s.updateSource);
+  const recordingMode = useRecordingMode();
+
+  // 녹화 트레이스 다운로드 — 강사가 키로 셀 실행 후 결과를 lesson 에 첨부할 때 사용
+  const handleDownloadTraces = () => {
+    const traces = getRecordedTraces(cell.id);
+    if (traces.length === 0) return;
+    const json = serializeTraces(traces);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${cell.id}-traces.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const recordedCount = recordingMode ? getRecordedTraces(cell.id).length : 0;
 
   useEffect(() => {
     if (isSelected && editorRef.current) {
@@ -185,6 +221,22 @@ export function LlmCodeCell({ cell, isSelected }: Props) {
         </div>
 
         <CellOutput outputs={cell.outputs} executionTime={cell.executionTime} />
+
+        {/* 강사용 녹화 다운로드 — 셀에 chat() 호출이 있고 admin/dev 모드일 때만 */}
+        {recordingMode && recordedCount > 0 && (
+          <div className="px-4 py-2 border-t border-colab-subtle/50 bg-brand-primary/5 flex items-center justify-between gap-3">
+            <div className="text-[11px] text-brand-primary">
+              📼 <span className="font-medium">녹화 모드</span> — 이번 실행에서 chat() 호출 {recordedCount}건 캡처됨
+            </div>
+            <button
+              onClick={handleDownloadTraces}
+              title={`Trace ${recordedCount}건을 JSON 으로 다운로드 후 lesson 의 simulation.traces 에 첨부`}
+              className="px-3 py-1 text-[11px] rounded border border-brand-primary/40 text-brand-primary hover:bg-brand-primary/10 transition-colors"
+            >
+              ↓ Trace JSON ({recordedCount})
+            </button>
+          </div>
+        )}
 
         {cell.hints && cell.hints.length > 0 && (
           <HintPanel
