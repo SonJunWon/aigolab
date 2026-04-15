@@ -12,6 +12,7 @@
  */
 
 import { transform } from "sucrase";
+import { z, toJSONSchema } from "zod";
 import { chat } from "./router";
 import { exportTrace, replayTrace } from "./simulation";
 import { LlmError } from "./types";
@@ -142,8 +143,24 @@ export async function runLlmCode(
       toolOpts?: ChatWithToolsOptions,
     ) => baseChatWithTools(req, toolOpts);
 
-    const fn = new AsyncFunction("chat", "chatWithTools", "console", compiled);
-    const value = await fn(wrappedChat, wrappedChatWithTools, capturedConsole);
+    // Ch03 구조화 출력 실습 지원:
+    //   - z          : zod 스키마 빌더 (학생이 z.object({...}) 작성)
+    //   - toJsonSchema: zod → JSON Schema 변환 (responseSchema 에 주입 가능한 형태로)
+    const fn = new AsyncFunction(
+      "chat",
+      "chatWithTools",
+      "z",
+      "toJsonSchema",
+      "console",
+      compiled,
+    );
+    const value = await fn(
+      wrappedChat,
+      wrappedChatWithTools,
+      z,
+      toJSONSchema,
+      capturedConsole,
+    );
     const timeMs = Math.round(performance.now() - startedAt);
     return {
       value: value === undefined ? undefined : stringify(value),
