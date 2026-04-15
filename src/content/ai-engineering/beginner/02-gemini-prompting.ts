@@ -26,7 +26,7 @@ export const lesson02: Lesson = {
       type: "markdown",
       source: `# 🔑 먼저, 키 한 번만 받고 시작합시다
 
-이번 장부터는 **클라우드 LLM** 을 씁니다. 브라우저 밖의 거대한 모델(Gemini 2.0 Flash)이
+이번 장부터는 **클라우드 LLM** 을 씁니다. 브라우저 밖의 거대한 모델(Gemini 2.5 Flash)이
 우리 요청을 받아 응답해요. 속도·품질 모두 WebLLM 보다 훨씬 뛰어납니다.
 
 ## 🎁 무료로, 3분 안에

@@ -13,6 +13,17 @@
 
 ---
 
+## [4.1.1] - 2026-04-15
+
+### Fixed — Gemini 모델 404 (신규 사용자 차단)
+
+- `gemini-2.0-flash` 가 신규 사용자에게 더 이상 발급되지 않음 (Google 측 deprecation, "This model is no longer available to new users")
+- `PROVIDER_MODELS.gemini.default` 을 **`gemini-2.5-flash`** 로 교체 (label 도 "Google Gemini 2.5 Flash" 로)
+- Ch01 / Ch02 레슨 본문의 "Gemini 2.0 Flash" 언급도 2.5 로 일괄 갱신
+- 기존 무료 티어 한도(일 1500 req) 동일, API 시그니처 불변 — 어댑터 / 라우터 코드 수정 불필요
+
+---
+
 ## [4.1.0] - 2026-04-15
 
 ### Added — v4.0 UAT 보강: Ch02 를 실제로 테스트 가능한 상태로 끌어올림

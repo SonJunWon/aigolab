@@ -23,8 +23,9 @@ export const DEFAULT_ROUTES: Record<Task, Provider[]> = {
 /** 지원 모델 메타데이터 — UI 표시·비교 실습용 */
 export const PROVIDER_MODELS: Record<Provider, { default: string; label: string }> = {
   gemini: {
-    default: "gemini-2.0-flash",
-    label: "Google Gemini 2.0 Flash",
+    // 2026-04-15 시점: 2.0-flash 는 신규 사용자에게 차단됨 → 2.5-flash 로 이행
+    default: "gemini-2.5-flash",
+    label: "Google Gemini 2.5 Flash",
   },
   groq: {
     default: "llama-3.3-70b-versatile",
