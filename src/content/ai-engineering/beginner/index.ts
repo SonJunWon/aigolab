@@ -3,14 +3,21 @@ import { lesson01 } from "./01-webllm-intro";
 import { lesson02 } from "./02-gemini-prompting";
 import { lesson03 } from "./03-structured-output";
 import { lesson04 } from "./04-chain-of-thought";
+import { lesson05 } from "./05-tool-calling";
 
 /**
  * AI 엔지니어링 트랙 (beginner).
  *   Phase 1 (v4.0~): Ch01 WebLLM · Ch02 Gemini
- *   Phase 2 (v4.3~): Ch03 구조화 출력 · Ch04 CoT · Ch05 Tool Calling
+ *   Phase 2 (v4.3): Ch03 구조화 출력 · Ch04 CoT · Ch05 Tool Calling
  *   Phase 3~5 후속
  */
-export const LESSONS: Lesson[] = [lesson01, lesson02, lesson03, lesson04];
+export const LESSONS: Lesson[] = [
+  lesson01,
+  lesson02,
+  lesson03,
+  lesson04,
+  lesson05,
+];
 
 export const LESSON_SUMMARIES: LessonSummary[] = LESSONS.map((l) => ({
   id: l.id,

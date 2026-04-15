@@ -13,6 +13,93 @@
 
 ---
 
+## [4.3.0] - 2026-04-16
+
+### Added — Phase 2: 텍스트 패턴 3종 (Ch03·Ch04·Ch05)
+
+v4 AI 엔지니어링 트랙의 두 번째 메이저 단계. **실무 LLM 앱의 3대 텍스트 패턴** — 구조화 출력, Chain of Thought 스트리밍, Tool Calling — 을 학생이 손으로 코드화할 수 있도록 인프라와 레슨 3개를 동시 출시.
+
+#### 🧩 SDK 확장 (T1~T6)
+
+**타입 — `src/lib/llm/types.ts`**
+- `ChatRequest` 에 `responseSchema` / `stream` / `tools` / `toolChoice` 추가
+- `ChatResponse` 에 `json`(파싱된 객체) / `toolCalls` 추가
+- `Role` 에 `"tool"` 추가, `Message` 에 `toolCalls?` / `toolCallId?`
+- 신규 타입: `ToolDefinition` / `ToolCall` / `ToolChoice` / `JsonSchema`
+- `Trace` union → v1 (기존) + v2 (스트리밍 tokens + toolSteps)
+- `LlmErrorReason` 에 `schema-violation`, `tool-loop-exceeded` 추가
+
+**라우터 / 어댑터 계약**
+- `AdapterCallOptions` 객체로 통일 (`onProgress` + `onToken`)
+- 기존 `ProgressCallback` 함수형 2번째 인자도 하위 호환 유지
+
+**Gemini 어댑터** — 신 SDK 기능 완전 배선
+- `config.responseSchema` + `responseMimeType:"application/json"`
+- `generateContentStream` + chunk.text 를 onToken 으로 방출
+- `config.tools.functionDeclarations` / `toolConfig.functionCallingConfig`
+- `role="tool"` 메시지를 functionResponse part 로, assistant.toolCalls 를 functionCall part 로 재구성
+
+**Groq 어댑터** — OpenAI 호환 3대 기능
+- `response_format:{type:"json_schema",...}` / `stream:true` AsyncIterable / `tools[]` + `tool_choice`
+- 스트리밍 중 tool_calls delta 를 index 기준 누적 → 완전한 ToolCall[] 재조립
+- 다양한 tool role / assistant.toolCalls 매핑
+
+**WebLLM 어댑터** — 부분 지원
+- 스트리밍 ✅, 구조화 출력 🟡 (best-effort, 1B 모델 한계)
+- Tool calling ❌ → `LlmError("unsupported-env")` 명시
+
+**`chatWithTools` 헬퍼 — `src/lib/llm/toolLoop.ts`**
+- "chat → toolCalls → execute → tool 메시지 → chat 재호출" 루프 자동 반복
+- `maxIterations` 기본 5, 초과 시 `LlmError("tool-loop-exceeded")`
+- `onStep` 콜백으로 각 반복의 `{call, result, iteration}` 관찰 가능
+
+#### 🧠 런타임 / UI (T7)
+
+- `LlmRunCallbacks.onToken` 추가 — runtime 이 chat(req, {onProgress, onToken}) 로 어댑터에 forward
+- AsyncFunction 주입 확장 — 학생 코드가 `import` 없이 사용 가능:
+  - `chat`, `chatWithTools` (Ch04/05)
+  - **`z`**, **`toJsonSchema`** (Ch03 zod)
+- `OutputChunk.stream` 에 `"thought"` 추가
+- 새 store 액션 `appendThoughtToken(cellId, chunk, streaming)` — thought chunk 를 in-place 이어붙이기
+- `ThoughtBlock` 컴포넌트 — 🧠 이모지 + 이탤릭 모노스페이스 + 커서 깜빡임 애니메이션
+- `runCell` 이 onToken 을 appendThoughtToken 으로 연결, 완료 시 streaming=false 로 고정
+
+#### 📦 의존성
+- **`zod` ^4.3.6** 추가 (Ch03 런타임 검증 + `toJSONSchema` 내장)
+
+#### 📚 레슨 (T9~T11)
+
+**Ch03 — 구조화 출력: JSON 지옥에서 탈출** (35분, 11셀 + 6문항 퀴즈)
+- 자유 텍스트 파싱 고통 → naive JSON 요청 실패 → responseSchema 강제 → zod 검증 → 중첩/optional/enum/array 패턴
+- 미션: 리뷰 배치 분석기 (summary + byReview + overallInsight)
+
+**Ch04 — Chain of Thought + 스트리밍** (35분, 9셀 + 6문항)
+- Zero-shot 실패 vs CoT 비교 → "Let's think step by step" 마법 → `stream:true` Thought Stream → Groq 70B reasoning → CoT 한계 (환각/산수/비용)
+- 미션: 금 상자 논리 퍼즐 풀이 (stream + CoT + 답 파싱)
+
+**Ch05 — Tool Calling: AI 에게 팔을 달아주자** (45분, 11셀 + 6문항)
+- LLM 한계 인식 → Tool 4요소 정의 → raw 루프 수작업 (1 tool → 2 tool) → chatWithTools 헬퍼 → toolChoice auto/any/{name} 제어
+- 미션: 학생이 자기 tool 정의 + 자연어 질문 연결 (주사위 + 랜덤 선택 예시 solution)
+
+#### 🎯 Phase 2 수용 기준 통과
+- ✅ Ch03 리뷰 분석이 스키마 준수 JSON 반환
+- ✅ Ch04 스트리밍 토큰이 UI 에 실시간 누적 (🧠 박스)
+- ✅ Ch05 raw 루프 + 헬퍼 모두 동일 결과
+- ✅ Gemini / Groq tool calling, WebLLM 부분 지원
+- ✅ Phase 1 (Ch01/02) 경로 무영향 — Python/JS/SQL 무영향
+
+#### 📊 번들 영향
+- 메인 번들: ~2.23MB → ~2.51MB (+0.28MB, gzip +~70KB — 대부분 zod)
+- WebLLM 청크(6MB)·groq(30KB)·web(263KB) 청크는 영향 없음
+- 초기 로드 체감 변화 미미 (레슨 페이지 접근 시에만 영향)
+
+#### 🚧 Phase 2 에서 제외한 것 (후속)
+- JSON Schema 비주얼 에디터 (T8, 스트레치 목표였음)
+- Ch03~05 시뮬레이션 녹화본 첨부 — 인프라는 준비됨, 강사 일회성 콘텐츠 작업
+- Phase 3 (Ch06~07 에이전트) — 별도 릴리즈
+
+---
+
 ## [4.2.1] - 2026-04-16
 
 ### Changed — Ch01·Ch02 입문자 관점으로 대폭 확장
