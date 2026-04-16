@@ -187,15 +187,19 @@ export function LessonPage() {
   if (!lang || !trk) return <Navigate to="/coding" replace />;
   if (!lesson) return <Navigate to={`/coding/learn/${lang.id}/${trk.id}`} replace />;
 
-  // 이전/다음 챕터 찾기
+  // 이전/다음 챕터 찾기 — 워크샵 레슨은 별도 시퀀스 사용
+  const isWorkshop = lesson.order >= 99;
   const curriculum = getCurriculum(lang.id as Language, trk.id as Track);
-  const currentIdx =
-    curriculum?.summaries.findIndex((s) => s.id === lesson.id) ?? -1;
-  const prevLesson =
-    currentIdx > 0 ? curriculum?.summaries[currentIdx - 1] : null;
+
+  // 워크샵이면 lessons 배열에서 워크샵끼리, 아니면 summaries 에서
+  const navList = isWorkshop
+    ? (curriculum?.lessons.filter((l) => l.order >= 99) ?? [])
+    : (curriculum?.summaries ?? []);
+  const currentIdx = navList.findIndex((s) => s.id === lesson.id);
+  const prevLesson = currentIdx > 0 ? navList[currentIdx - 1] : null;
   const nextLesson =
-    currentIdx >= 0 && currentIdx < (curriculum?.summaries.length ?? 0) - 1
-      ? curriculum?.summaries[currentIdx + 1]
+    currentIdx >= 0 && currentIdx < navList.length - 1
+      ? navList[currentIdx + 1]
       : null;
 
   const alreadyDone = isCompleted(
@@ -228,6 +232,9 @@ export function LessonPage() {
     await completeLesson(lang.id as Language, trk.id as Track, lesson.id);
     if (nextLessonId) {
       navigate(`/coding/learn/${lang.id}/${trk.id}/${nextLessonId}`);
+    } else if (isWorkshop) {
+      // 워크샵 마지막 → 워크샵 목록으로
+      navigate("/ai-dev/workshop");
     } else {
       navigate(`/coding/learn/${lang.id}/${trk.id}`);
     }
