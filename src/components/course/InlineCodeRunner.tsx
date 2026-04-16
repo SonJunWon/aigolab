@@ -267,6 +267,7 @@ function InlineCellOutput({
     figure: "text-brand-text",
     progress: "text-brand-text", // InlineCodeRunner 는 LLM 셀 미사용
     thought: "text-brand-primary", // InlineCodeRunner 는 LLM 셀 미사용
+    "agent-step": "text-brand-text", // InlineCodeRunner 는 LLM 셀 미사용
   };
 
   return (

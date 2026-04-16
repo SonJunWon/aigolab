@@ -163,6 +163,12 @@ async function runLlmCellPath(
         }),
       onToken: (chunk) =>
         useNotebookStore.getState().appendThoughtToken(cellId, chunk, true),
+      onAgentStep: (step) =>
+        useNotebookStore.getState().appendOutput(cellId, {
+          stream: "agent-step",
+          text: step.content,
+          agentStep: step,
+        }),
       replayTraces,
     });
 

@@ -39,6 +39,16 @@ export interface LlmRunCallbacks {
    */
   onToken?: (chunk: string) => void;
   /**
+   * Phase 3 에이전트 단계 콜백 — chatWithTools 의 onStep 이벤트를 UI 로 전달.
+   * AgentTraceViewer 가 이걸 구독해 타임라인으로 렌더.
+   */
+  onAgentStep?: (step: {
+    type: "think" | "tool-call" | "tool-result" | "answer";
+    agentName?: string;
+    content: string;
+    meta?: Record<string, unknown>;
+  }) => void;
+  /**
    * T10 재생 — 학생이 키 없이도 진도 나갈 수 있게, 녹화본을 순서대로 주입.
    * 셀 내 chat() 호출마다 하나씩 소비.
    */
@@ -136,16 +146,35 @@ export async function runLlmCode(
       ...params: unknown[]
     ) => Promise<unknown>;
 
-    // chatWithTools 도 주입 — 내부에서 chat 을 거치지만, Ch05 학생 코드가 import 없이
-    // 이 헬퍼를 직접 호출할 수 있도록 AsyncFunction 파라미터로 노출.
-    const wrappedChatWithTools = (
+    // Ch03 구조화 + Ch06~07 에이전트 실습 지원:
+    //   - z / toJsonSchema : zod 스키마 빌더 + JSON Schema 변환
+    //   - __emitAgentStep  : onStep 을 OutputChunk "agent-step" 로 흘리는 내부 함수
+    //     chatWithTools 에 onStep 을 안 넘겨도 __emitAgentStep 이 자동 배선되어 있음
+    const wrappedChatWithToolsWithTrace = (
       req: ChatRequest,
       toolOpts?: ChatWithToolsOptions,
-    ) => baseChatWithTools(req, toolOpts);
+    ) => {
+      // onStep 미지정 시 자동으로 에이전트 트레이스 UI 로 방출
+      const mergedOpts: ChatWithToolsOptions = {
+        ...toolOpts,
+        onStep: (step) => {
+          // 원래 콜백 있으면 먼저 호출
+          toolOpts?.onStep?.(step);
+          // UI 자동 방출
+          callbacks.onAgentStep?.({
+            type: "tool-call",
+            content: `${step.call.name}(${JSON.stringify(step.call.args)})`,
+            meta: { result: step.result, iteration: step.iteration },
+          });
+          callbacks.onAgentStep?.({
+            type: "tool-result",
+            content: typeof step.result === "string" ? step.result : JSON.stringify(step.result),
+          });
+        },
+      };
+      return baseChatWithTools(req, mergedOpts);
+    };
 
-    // Ch03 구조화 출력 실습 지원:
-    //   - z          : zod 스키마 빌더 (학생이 z.object({...}) 작성)
-    //   - toJsonSchema: zod → JSON Schema 변환 (responseSchema 에 주입 가능한 형태로)
     const fn = new AsyncFunction(
       "chat",
       "chatWithTools",
@@ -156,7 +185,7 @@ export async function runLlmCode(
     );
     const value = await fn(
       wrappedChat,
-      wrappedChatWithTools,
+      wrappedChatWithToolsWithTrace,
       z,
       toJSONSchema,
       capturedConsole,

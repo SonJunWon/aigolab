@@ -31,7 +31,8 @@ export interface OutputChunk {
     | "table"
     | "figure"
     | "progress"
-    | "thought";
+    | "thought"
+    | "agent-step";
   /** 텍스트 출력 — table·figure 일 때는 사용 안 함 */
   text: string;
   /** table 일 때만 사용 */
@@ -44,6 +45,13 @@ export interface OutputChunk {
   phase?: "downloading" | "loading" | "ready";
   /** thought 일 때만 사용 — 아직 스트리밍 중이면 true (커서 깜빡임) */
   streaming?: boolean;
+  /** agent-step 일 때만 사용 — 에이전트 단계 정보 */
+  agentStep?: {
+    type: "think" | "tool-call" | "tool-result" | "answer";
+    agentName?: string;
+    content: string;
+    meta?: Record<string, unknown>;
+  };
 }
 
 export interface Cell {

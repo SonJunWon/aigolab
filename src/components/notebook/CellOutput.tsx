@@ -4,6 +4,7 @@ import {
   translateError,
   type TranslatedError,
 } from "../../runtime/errorTranslator";
+import { AgentTraceViewer } from "./AgentTraceViewer";
 
 interface Props {
   outputs: OutputChunk[];
@@ -20,6 +21,7 @@ const streamColor: Record<OutputChunk["stream"], string> = {
   figure: "text-colab-text",  // figure 도 별도 렌더, 색 미사용
   progress: "text-colab-text", // progress 도 별도 렌더
   thought: "text-brand-primary", // LLM 스트리밍 토큰 — 보라색 이탤릭
+  "agent-step": "text-colab-text", // AgentTraceViewer 로 별도 렌더
 };
 
 export function CellOutput({ outputs, executionTime }: Props) {
@@ -28,6 +30,7 @@ export function CellOutput({ outputs, executionTime }: Props) {
   // 종류별 분리
   const progressChunk = outputs.find((c) => c.stream === "progress");
   const thoughtChunks = outputs.filter((c) => c.stream === "thought");
+  const agentSteps = outputs.filter((c) => c.stream === "agent-step");
   const tableChunks = outputs.filter((c) => c.stream === "table");
   const figureChunks = outputs.filter((c) => c.stream === "figure");
   const errorChunks = outputs.filter((c) => c.stream === "error");
@@ -37,7 +40,8 @@ export function CellOutput({ outputs, executionTime }: Props) {
       c.stream !== "table" &&
       c.stream !== "figure" &&
       c.stream !== "progress" &&
-      c.stream !== "thought"
+      c.stream !== "thought" &&
+      c.stream !== "agent-step"
   );
   const errorText = errorChunks.map((c) => c.text).join("\n");
   const translated = errorText ? translateError(errorText) : null;
@@ -51,6 +55,9 @@ export function CellOutput({ outputs, executionTime }: Props) {
       {thoughtChunks.map((chunk, i) => (
         <ThoughtBlock key={`thought-${i}`} chunk={chunk} />
       ))}
+
+      {/* 에이전트 실행 로그 (Ch06~07) */}
+      {agentSteps.length > 0 && <AgentTraceViewer steps={agentSteps} />}
 
       {/* 일반 텍스트 출력 (print, console.log, 경고 등) */}
       {textChunks.length > 0 && (
