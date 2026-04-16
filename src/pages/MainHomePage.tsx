@@ -94,9 +94,9 @@ export function MainHomePage() {
             🚀 AI 앱 개발
           </h2>
           <div className="grid md:grid-cols-2 gap-5">
-            {/* AI 엔지니어링 트랙 */}
+            {/* AI 엔지니어링 트랙 → 커리큘럼 직행 */}
             <Link
-              to="/ai-dev"
+              to="/coding/learn/ai-engineering/beginner"
               className="group p-6 rounded-xl border border-brand-primary/30 bg-gradient-to-br from-violet-500/10 to-brand-panel/80
                          hover:border-brand-primary/60 hover:shadow-lg hover:shadow-brand-primary/10 transition-all"
             >
@@ -120,9 +120,9 @@ export function MainHomePage() {
               </div>
             </Link>
 
-            {/* 바이브코딩 워크샵 */}
+            {/* 바이브코딩 워크샵 → 커리큘럼 직행 (W00+ 하단) */}
             <Link
-              to="/ai-dev"
+              to="/coding/learn/ai-engineering/beginner"
               className="group p-6 rounded-xl border border-brand-accent/30 bg-gradient-to-br from-cyan-500/10 to-brand-panel/80
                          hover:border-brand-accent/60 hover:shadow-lg hover:shadow-brand-accent/10 transition-all"
             >
