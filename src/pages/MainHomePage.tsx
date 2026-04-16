@@ -39,17 +39,19 @@ export function MainHomePage() {
                   <h3 className="text-xl font-semibold group-hover:text-brand-primary transition-colors">
                     AI 엔지니어링 트랙
                   </h3>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-primary text-white font-semibold tracking-wider">
-                    NEW
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-green text-white font-semibold tracking-wider">
+                    12강 완성
                   </span>
                 </div>
                 <p className="text-sm text-brand-textDim mb-2">
-                  브라우저 내 LLM 부터 Agent · RAG · CoT 까지 — 무료 API 키만으로 12강 완주.
+                  프롬프트 · 구조화 출력 · CoT · Tool Calling · 에이전트 · RAG 까지 — 무료 API 키만으로.
                 </p>
                 <div className="flex items-center gap-4 text-xs text-brand-textDim">
-                  <span>🦙 WebLLM 로컬 실행</span>
-                  <span>✨ Google Gemini</span>
-                  <span>⚡ Groq Llama 3.3</span>
+                  <span>🦙 WebLLM 로컬</span>
+                  <span>✨ Gemini</span>
+                  <span>⚡ Groq 70B</span>
+                  <span>🔍 RAG</span>
+                  <span>🤖 Agent</span>
                 </div>
               </div>
               <span className="shrink-0 text-brand-textDim group-hover:text-brand-primary group-hover:translate-x-1 transition-all text-2xl">

@@ -13,6 +13,69 @@
 
 ---
 
+## [4.6.0] - 2026-04-16
+
+### Added — Phase 5: LLM 생태계 비교 + 종합 프로젝트 (Ch11~12) 🎓
+
+**12강 AI 엔지니어링 트랙 완성.**
+
+**Ch11 LLM 생태계 비교 실습** (35분)
+- WebLLM 1B vs Groq 70B vs Gemini 를 한국어 품질·추론력·속도 3축 벤치마크
+- 실무 선택 가이드: 프라이버시→WebLLM, 속도→Groq, 품질→Gemini, 혼합→task 라우팅
+
+**Ch12 종합 프로젝트 — AI 문서 Q&A 시스템** (60분)
+- 12강 전 기법 조립: 에이전트 + Tool(indexDocument+searchKB) + Hybrid RAG(청킹+임베딩+BM25+RRF) + CoT 스트리밍 + 출처 표기
+- 미션: 나만의 문서 Q&A (한국 계절 문서 solution)
+- 수료 메시지 + 다음 학습 경로 안내
+
+---
+
+## [4.5.0] - 2026-04-16
+
+### Added — Phase 4: 임베딩 + RAG + Hybrid RAG (Ch08~10)
+
+**Ch08 임베딩과 벡터 공간** (35분)
+- `@huggingface/transformers` 4.1.0 — 브라우저 내 `all-MiniLM-L6-v2` (22MB, 384차원)
+- `embed(texts)` → `number[][]`, `cosineSimilarity(a,b)`
+- VectorStore class (인메모리 brute-force cosine)
+- 의미 검색 실습: 키워드 아닌 "뜻이 비슷한" 문서 찾기
+
+**Ch09 RAG 기초** (45분)
+- 5단계 파이프라인: 청킹 → 임베딩 → 벡터 저장 → 질문 검색 → LLM context 주입 → 답변
+- system: "context 에 없으면 모르겠다" — hallucination 방어 기본
+
+**Ch10 Hybrid RAG + Re-ranking** (40분)
+- BM25 키워드 검색 직접 구현 (교육용)
+- RRF (Reciprocal Rank Fusion) 으로 벡터+키워드 결합
+- LLM Re-ranking 개념 소개
+
+**번들**: Transformers.js 별도 청크 516KB (gzip 148KB), 동적 import.
+
+---
+
+## [4.4.0] - 2026-04-16
+
+### Added — Phase 3: 단일/멀티 에이전트 (Ch06~07)
+
+**Ch06 단일 에이전트 — 이메일 초안 에이전트** (40분)
+- Think-Act-Observe 루프 개념
+- chatWithTools = 에이전트의 코드적 실체
+- 이메일 에이전트 (getSchedule + getContacts + draftEmail)
+- 에이전트 안전 3원칙 (최소 권한 · Human-in-the-loop · 감사 로그)
+
+**Ch07 멀티 에이전트 — 조사·집필·검토 삼각팀** (50분)
+- 2-에이전트 체인 (조사 → 집필)
+- 3-에이전트 파이프라인 + Critic Loop (조사 → 집필 → 검토 → 재집필)
+- 메시지 전달 프로토콜 (zod JSON 계약)
+- 위험: 연쇄 환각 · 비용 폭증 · 교착 대응
+
+**인프라**:
+- `AgentTraceViewer` — chatWithTools onStep 을 타임라인 시각화 (🧠🔧📨✅)
+- OutputChunk `"agent-step"` stream + `agentStep` 필드
+- runtime wrappedChatWithToolsWithTrace — onStep 미지정 시 자동 UI 방출
+
+---
+
 ## [4.3.0] - 2026-04-16
 
 ### Added — Phase 2: 텍스트 패턴 3종 (Ch03·Ch04·Ch05)
