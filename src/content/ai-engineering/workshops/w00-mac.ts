@@ -109,8 +109,12 @@ https://nodejs.org
 
 1. **터미널** 열기 (단계 0 에서 배운 방법)
 2. 아래 글자를 **그대로** 입력하고 Enter:
-\`\`\`
-node --version
+\`\`\`bash
+# 📌 node 가 설치됐는지 버전을 확인하는 명령어
+# "%" 또는 "$" 는 터미널이 보여주는 표시 — 입력하지 마세요!
+% node --version
+# ✅ 이런 결과가 나오면 성공:
+# v22.12.0  (숫자는 달라도 됨)
 \`\`\`
 3. \`v22.x.x\` 같은 버전 번호가 나오면 **성공!** ✅
 
@@ -166,23 +170,22 @@ https://code.visualstudio.com
 ### 🅰️ Claude Code 설치
 
 1. **터미널** 열기
-2. 아래 명령어 입력 후 Enter:
-\`\`\`
-npm install -g @anthropic-ai/claude-code
-\`\`\`
-   - 1~2분 걸릴 수 있어요. 글자가 주르륵 나오는 건 정상.
-   - "npm" 은 단계 1 에서 Node.js 와 함께 설치된 도구
+2. 아래 명령어를 **한 줄씩** 입력하고 각각 Enter:
+\`\`\`bash
+# 📌 Claude Code 를 전체 컴퓨터에서 쓸 수 있게 설치하는 명령어
+# "-g" = global (전역) — 어느 폴더에서든 claude 명령 사용 가능
+# ⏱️ 1~2분 걸림. 글자가 주르륵 나오는 건 정상!
+% npm install -g @anthropic-ai/claude-code
 
-3. 설치 확인:
-\`\`\`
-claude --version
-\`\`\`
+# 📌 설치가 잘 됐는지 확인
+% claude --version
+# ✅ 예: 1.0.x 같은 버전 번호가 나오면 성공
 
-4. 처음 실행:
+# 📌 Claude Code 첫 실행 — 브라우저가 열리며 로그인 화면
+% claude
+# → Anthropic 계정 만들기 또는 로그인
+# → 완료 후 터미널로 자동 돌아옴
 \`\`\`
-claude
-\`\`\`
-   - 브라우저가 열리며 Anthropic 로그인/가입 → 완료 후 터미널로 돌아옴
 
 ---
 
@@ -225,17 +228,26 @@ https://aistudio.google.com/apikey
 
 ### 🅰️ Claude Code 선택한 분
 
-1. 터미널에서:
-\`\`\`
-mkdir hello-ai
-cd hello-ai
-npm init -y
-npm install @google/genai
+1. 터미널에서 아래를 **한 줄씩** 입력 (각각 Enter):
+\`\`\`bash
+# 📌 "hello-ai" 라는 새 폴더를 만든다
+% mkdir hello-ai
+
+# 📌 방금 만든 폴더 안으로 들어간다
+% cd hello-ai
+
+# 📌 이 폴더를 Node.js 프로젝트로 초기화 (-y = 모든 질문에 자동 "예")
+% npm init -y
+
+# 📌 Google Gemini SDK 패키지를 설치 (AI 호출에 필요)
+# ⏱️ 10~30초 걸림
+% npm install @google/genai
 \`\`\`
 
-2. Claude 실행:
-\`\`\`
-claude
+2. Claude Code 실행:
+\`\`\`bash
+# 📌 이 폴더에서 Claude Code 시작
+% claude
 \`\`\`
 
 3. Claude 에게 이렇게 입력:
@@ -243,9 +255,12 @@ claude
 
 4. Claude 가 코드 생성 → **Accept**
 
-5. 실행:
-\`\`\`
-GEMINI_API_KEY=여러분키 node index.js
+5. 실행 (⚠️ "여러분키" 부분을 단계 4 에서 복사한 실제 키로 교체):
+\`\`\`bash
+# 📌 API 키를 환경변수로 전달하면서 프로그램 실행
+# "여러분키" → AIzaSy... 같은 실제 키로 바꿔야 함!
+% GEMINI_API_KEY=여러분의AIza키여기에붙여넣기 node index.js
+# ✅ AI 가 한국어로 응답하면 성공!
 \`\`\`
 
 AI 응답이 나오면 **완료!** 🎉

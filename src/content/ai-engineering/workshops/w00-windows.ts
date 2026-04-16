@@ -98,14 +98,17 @@ https://nodejs.org
    - 설치 완료 → **[Finish]**
 
 5. **확인** — 명령 프롬프트 **새로 열기** (단계 0 방법):
+\`\`\`bash
+# 📌 node 가 설치됐는지 버전 확인
+# ">" 는 명령 프롬프트가 보여주는 표시 — 입력하지 마세요!
+> node --version
+# ✅ 이런 결과가 나오면 성공:
+# v22.12.0  (숫자는 달라도 됨)
 \`\`\`
-node --version
-\`\`\`
-\`v22.x.x\` 나오면 성공! ✅
 
 ### ❗ 안 되면?
-- **컴퓨터 재시작** 후 다시 시도
-- "내부 또는 외부 명령이 아닙니다" → 명령 프롬프트를 닫고 **새로** 열기`,
+- "내부 또는 외부 명령이 아닙니다" → 명령 프롬프트를 **닫고 새로** 열기
+- 여전히 안 됨 → **컴퓨터 재시작** 후 다시`,
     },
 
     // ─── VS Code ───
@@ -134,12 +137,19 @@ node --version
 ### 🅰️ Claude Code
 
 1. **PowerShell** 열기 (검색 → "PowerShell" → **관리자 권한으로 실행**)
-2. 입력:
+2. 아래를 **한 줄씩** 입력 (각각 Enter):
+\`\`\`bash
+# 📌 Claude Code 전역 설치 (-g = 어디서든 사용 가능)
+# ⏱️ 1~2분 걸림. 글자가 쭉 나오는 건 정상!
+> npm install -g @anthropic-ai/claude-code
+
+# 📌 설치 확인
+> claude --version
+# ✅ 버전 번호 나오면 성공
+
+# 📌 첫 실행 — 브라우저가 열리며 Anthropic 로그인
+> claude
 \`\`\`
-npm install -g @anthropic-ai/claude-code
-\`\`\`
-3. 확인: \`claude --version\`
-4. 첫 실행: \`claude\` → Anthropic 로그인
 
 ### 🅱️ Cursor
 
@@ -165,17 +175,28 @@ npm install -g @anthropic-ai/claude-code
 
 ### 🅰️ Claude Code
 
-명령 프롬프트에서:
+명령 프롬프트에서 **한 줄씩** 입력 (각각 Enter):
+\`\`\`bash
+# 📌 새 폴더 만들기
+> mkdir hello-ai
+
+# 📌 폴더 안으로 이동
+> cd hello-ai
+
+# 📌 Node.js 프로젝트 초기화 (-y = 자동 예)
+> npm init -y
+
+# 📌 Google Gemini SDK 설치 (⏱️ 10~30초)
+> npm install @google/genai
+
+# 📌 Claude Code 시작
+> claude
 \`\`\`
-mkdir hello-ai
-cd hello-ai
-npm init -y
-npm install @google/genai
-claude
-\`\`\`
-Claude 에게: "Gemini 에 안녕 보내는 index.js 만들어줘"
-\`\`\`
-set GEMINI_API_KEY=여러분키 && node index.js
+Claude 에게: "Gemini 에 안녕 보내는 index.js 만들어줘" → Accept
+\`\`\`bash
+# 📌 실행 — "여러분키" 를 실제 AIzaSy... 키로 교체!
+> set GEMINI_API_KEY=여러분의AIza키 && node index.js
+# ✅ AI 응답 나오면 성공!
 \`\`\`
 
 ### 🅱️ Cursor
