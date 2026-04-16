@@ -6,13 +6,17 @@ import { lesson04 } from "./04-chain-of-thought";
 import { lesson05 } from "./05-tool-calling";
 import { lesson06 } from "./06-single-agent";
 import { lesson07 } from "./07-multi-agent";
+import { lesson08 } from "./08-embeddings";
+import { lesson09 } from "./09-rag-basics";
+import { lesson10 } from "./10-hybrid-rag";
 
 /**
  * AI 엔지니어링 트랙 (beginner).
  *   Phase 1 (v4.0~): Ch01 WebLLM · Ch02 Gemini
  *   Phase 2 (v4.3): Ch03 구조화 출력 · Ch04 CoT · Ch05 Tool Calling
  *   Phase 3 (v4.4): Ch06 단일 에이전트 · Ch07 멀티 에이전트
- *   Phase 4~5 후속
+ *   Phase 4 (v4.5): Ch08 임베딩 · Ch09 RAG 기초 · Ch10 Hybrid RAG
+ *   Phase 5 후속: Ch11 생태계 비교 · Ch12 종합 프로젝트
  */
 export const LESSONS: Lesson[] = [
   lesson01,
@@ -22,6 +26,9 @@ export const LESSONS: Lesson[] = [
   lesson05,
   lesson06,
   lesson07,
+  lesson08,
+  lesson09,
+  lesson10,
 ];
 
 export const LESSON_SUMMARIES: LessonSummary[] = LESSONS.map((l) => ({

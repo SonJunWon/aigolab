@@ -14,6 +14,8 @@
 import { transform } from "sucrase";
 import { z, toJSONSchema } from "zod";
 import { chat } from "./router";
+import { embed, cosineSimilarity } from "./embedding";
+import { VectorStore } from "./vectorStore";
 import { exportTrace, replayTrace } from "./simulation";
 import { LlmError } from "./types";
 import { chatWithTools as baseChatWithTools } from "./toolLoop";
@@ -180,6 +182,9 @@ export async function runLlmCode(
       "chatWithTools",
       "z",
       "toJsonSchema",
+      "embed",
+      "VectorStore",
+      "cosineSimilarity",
       "console",
       compiled,
     );
@@ -188,6 +193,9 @@ export async function runLlmCode(
       wrappedChatWithToolsWithTrace,
       z,
       toJSONSchema,
+      embed,
+      VectorStore,
+      cosineSimilarity,
       capturedConsole,
     );
     const timeMs = Math.round(performance.now() - startedAt);

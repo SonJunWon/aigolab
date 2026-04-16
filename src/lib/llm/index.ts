@@ -47,3 +47,6 @@ export type {
 } from "./types";
 export { LlmError } from "./types";
 export type { ProviderAdapter } from "./providers/base";
+export { embed, cosineSimilarity } from "./embedding";
+export { VectorStore } from "./vectorStore";
+export type { VectorDoc, SearchResult } from "./vectorStore";
