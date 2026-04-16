@@ -237,7 +237,7 @@ export function HomePage() {
               {resumeInfo ? "또는 새로 시작하기" : "배우고 싶은 언어를 선택하세요"}
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {LANGUAGES.map((lang) => {
+              {LANGUAGES.filter((l) => l.id !== "ai-engineering").map((lang) => {
                 const isDisabled = lang.status === "coming-soon";
                 return (
                   <button
