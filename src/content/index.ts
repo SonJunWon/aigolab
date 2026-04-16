@@ -31,6 +31,7 @@ import {
   LESSONS as AIENG_BEGINNER,
   LESSON_SUMMARIES as AIENG_BEGINNER_SUMMARIES,
 } from "./ai-engineering/beginner";
+import { WORKSHOP_LESSONS } from "./ai-engineering/workshops";
 
 type Curriculum = {
   lessons: Lesson[];
@@ -72,10 +73,11 @@ const CURRICULA: Partial<Record<Language, Partial<Record<Track, Curriculum>>>> =
   },
   "ai-engineering": {
     beginner: {
-      lessons: AIENG_BEGINNER,
+      // 12강 + 워크샵을 합쳐서 getLessonById 가 워크샵 레슨도 찾을 수 있게
+      // 커리큘럼 페이지에는 12강만 표시 (summaries 는 12강만)
+      lessons: [...AIENG_BEGINNER, ...WORKSHOP_LESSONS],
       summaries: AIENG_BEGINNER_SUMMARIES,
     },
-    // Ch03~12 는 후속 Phase 에서 추가
   },
 };
 

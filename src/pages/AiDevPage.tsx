@@ -55,9 +55,9 @@ export function AiDevPage() {
             </div>
           </Link>
 
-          {/* 바이브코딩 워크샵 → 커리큘럼 (W00+ 가 뒤쪽에 표시) */}
+          {/* 바이브코딩 워크샵 → 전용 목록 페이지 */}
           <Link
-            to="/coding/learn/ai-engineering/beginner"
+            to="/ai-dev/workshop"
             className="group p-8 rounded-2xl border border-brand-subtle bg-brand-panel/80
                        hover:border-brand-accent/60 hover:shadow-lg hover:shadow-brand-accent/10 transition-all"
           >

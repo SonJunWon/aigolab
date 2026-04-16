@@ -11,12 +11,10 @@ import { lesson09 } from "./09-rag-basics";
 import { lesson10 } from "./10-hybrid-rag";
 import { lesson11 } from "./11-llm-comparison";
 import { lesson12 } from "./12-capstone-project";
-import { WORKSHOP_LESSONS } from "../workshops";
 
 /**
- * AI 엔지니어링 트랙 (beginner) — 12강 + 바이브 코딩 워크샵.
- *   Phase 1~5: Ch01~12 커리큘럼
- *   Workshops: W00~ 실전 프로젝트 빌드 가이드
+ * AI 엔지니어링 트랙 (beginner) — 12강만.
+ * 바이브코딩 워크샵은 workshops/index.ts 에서 별도 관리 → /ai-dev/workshop 라우트.
  */
 export const LESSONS: Lesson[] = [
   lesson01,
@@ -31,7 +29,6 @@ export const LESSONS: Lesson[] = [
   lesson10,
   lesson11,
   lesson12,
-  ...WORKSHOP_LESSONS,
 ];
 
 export const LESSON_SUMMARIES: LessonSummary[] = LESSONS.map((l) => ({
