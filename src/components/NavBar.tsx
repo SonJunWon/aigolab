@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { path: "/courses", label: "📚 AI 강의" },
   { path: "/coding", label: "🐍 코딩 실습" },
   { path: "/projects", label: "🧪 프로젝트" },
+  { path: "/ai-dev", label: "🚀 AI 앱 개발" },
   { path: "/my", label: "👤 마이" },
 ];
 

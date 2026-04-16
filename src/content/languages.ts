@@ -25,14 +25,8 @@ export const LANGUAGES: LanguageInfo[] = [
     status: "available",
     color: "from-emerald-400 to-teal-500",
   },
-  {
-    id: "ai-engineering",
-    name: "AI 엔지니어링",
-    icon: "🤖",
-    description: "브라우저 내 LLM 부터 Agent·RAG·CoT 까지. 무료 API 키만으로 12강 완주.",
-    status: "available",
-    color: "from-violet-500 to-fuchsia-500",
-  },
+  // ai-engineering 은 /ai-dev 코너에서 별도 진입 — 코딩 실습 언어 선택에서는 숨김
+  // 타입·커리큘럼·레슨 데이터는 그대로 유지 (라우트 /coding/learn/ai-engineering/... 동작)
 ];
 
 export const TRACKS: TrackInfo[] = [

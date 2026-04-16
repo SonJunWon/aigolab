@@ -25,48 +25,12 @@ export function MainHomePage() {
           </p>
         </section>
 
-        {/* ─── 🌟 신규 플래그십: AI 엔지니어링 ─── */}
-        <section className="pb-10">
-          <Link
-            to="/coding/learn/ai-engineering/beginner"
-            className="group block p-6 rounded-xl border border-brand-primary/40 bg-gradient-to-r from-violet-500/10 via-fuchsia-500/5 to-cyan-500/10
-                       hover:border-brand-primary hover:shadow-lg hover:shadow-brand-primary/10 transition-all"
-          >
-            <div className="flex items-center gap-5">
-              <div className="shrink-0 text-5xl">🤖</div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-xl font-semibold group-hover:text-brand-primary transition-colors">
-                    AI 엔지니어링 트랙
-                  </h3>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-green text-white font-semibold tracking-wider">
-                    12강 완성
-                  </span>
-                </div>
-                <p className="text-sm text-brand-textDim mb-2">
-                  프롬프트 · 구조화 출력 · CoT · Tool Calling · 에이전트 · RAG 까지 — 무료 API 키만으로.
-                </p>
-                <div className="flex items-center gap-4 text-xs text-brand-textDim">
-                  <span>🦙 WebLLM 로컬</span>
-                  <span>✨ Gemini</span>
-                  <span>⚡ Groq 70B</span>
-                  <span>🔍 RAG</span>
-                  <span>🤖 Agent</span>
-                </div>
-              </div>
-              <span className="shrink-0 text-brand-textDim group-hover:text-brand-primary group-hover:translate-x-1 transition-all text-2xl">
-                →
-              </span>
-            </div>
-          </Link>
-        </section>
-
-        {/* ─── 4대 코너 ─── */}
-        <section className="pb-16">
+        {/* ─── 학습 코너 ─── */}
+        <section className="pb-12">
           <h2 className="text-sm font-medium text-brand-textDim uppercase tracking-wider mb-6 text-center">
-            학습 코너
+            📚 학습 코너
           </h2>
-          <div className="grid md:grid-cols-2 gap-5">
+          <div className="grid md:grid-cols-3 gap-5">
             {/* AI 강의 */}
             <Link
               to="/courses"
@@ -80,7 +44,7 @@ export function MainHomePage() {
               </p>
               <div className="flex items-center gap-4 text-xs text-brand-textDim">
                 <span>📖 5개 강의</span>
-                <span>🎯 강의별 퀴즈</span>
+                <span>🎯 퀴즈</span>
               </div>
             </Link>
 
@@ -96,7 +60,7 @@ export function MainHomePage() {
                 코딩 실습
               </h3>
               <p className="text-sm text-brand-textDim mb-3">
-                Python 입문 · 중급 · 데이터과학 · ML 실습. 노트북 + IDE 환경.
+                Python · JavaScript · SQL. 노트북 + IDE 환경.
               </p>
               <div className="flex items-center gap-4 text-xs text-brand-textDim">
                 <span>📖 26챕터</span>
@@ -105,7 +69,7 @@ export function MainHomePage() {
               </div>
             </Link>
 
-            {/* 프로젝트 */}
+            {/* AI 프로젝트 */}
             <Link
               to="/projects"
               className="group p-6 rounded-xl border border-brand-subtle bg-brand-panel/80
@@ -121,22 +85,83 @@ export function MainHomePage() {
                 <span>📊 입문 · 중급</span>
               </div>
             </Link>
+          </div>
+        </section>
 
-            {/* 마이페이지 */}
+        {/* ─── AI 앱 개발 코너 ─── */}
+        <section className="pb-12">
+          <h2 className="text-sm font-medium text-brand-textDim uppercase tracking-wider mb-6 text-center">
+            🚀 AI 앱 개발
+          </h2>
+          <div className="grid md:grid-cols-2 gap-5">
+            {/* AI 엔지니어링 트랙 */}
+            <Link
+              to="/ai-dev"
+              className="group p-6 rounded-xl border border-brand-primary/30 bg-gradient-to-br from-violet-500/10 to-brand-panel/80
+                         hover:border-brand-primary/60 hover:shadow-lg hover:shadow-brand-primary/10 transition-all"
+            >
+              <div className="text-3xl mb-3">🤖</div>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-semibold group-hover:text-brand-primary transition-colors">
+                  AI 엔지니어링 트랙
+                </h3>
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-green text-white font-semibold">
+                  12강
+                </span>
+              </div>
+              <p className="text-sm text-brand-textDim mb-3">
+                프롬프트 · 구조화 · CoT · Tool · 에이전트 · RAG — 무료 API 키만으로.
+              </p>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-brand-textDim">
+                <span>🦙 WebLLM</span>
+                <span>✨ Gemini</span>
+                <span>⚡ Groq</span>
+                <span>🔍 RAG</span>
+              </div>
+            </Link>
+
+            {/* 바이브코딩 워크샵 */}
+            <Link
+              to="/ai-dev"
+              className="group p-6 rounded-xl border border-brand-accent/30 bg-gradient-to-br from-cyan-500/10 to-brand-panel/80
+                         hover:border-brand-accent/60 hover:shadow-lg hover:shadow-brand-accent/10 transition-all"
+            >
+              <div className="text-3xl mb-3">🛠️</div>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-semibold group-hover:text-brand-accent transition-colors">
+                  바이브코딩 워크샵
+                </h3>
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-accent text-white font-semibold">
+                  NEW
+                </span>
+              </div>
+              <p className="text-sm text-brand-textDim mb-3">
+                MD 레시피 + AI 코딩 도구 = 완성도 있는 프로그램. 코딩 경험 없어도 OK.
+              </p>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-brand-textDim">
+                <span>💻 Claude Code</span>
+                <span>🖱️ Cursor</span>
+                <span>📄 MD 레시피</span>
+              </div>
+            </Link>
+          </div>
+        </section>
+
+        {/* ─── 마이페이지 ─── */}
+        <section className="pb-12">
+          <div className="max-w-md mx-auto">
             <Link
               to="/my"
-              className="group p-6 rounded-xl border border-brand-subtle bg-brand-panel/80
-                         hover:border-brand-primary/40 hover:shadow-lg hover:shadow-brand-primary/5 transition-all"
+              className="group block p-5 rounded-xl border border-brand-subtle bg-brand-panel/80
+                         hover:border-brand-primary/40 hover:shadow-lg transition-all"
             >
-              <div className="text-3xl mb-3">👤</div>
-              <h3 className="text-lg font-semibold mb-1 group-hover:text-brand-primary transition-colors">마이페이지</h3>
-              <p className="text-sm text-brand-textDim mb-3">
-                학습 진도, 스트릭, 활동 히트맵, 수료증까지 한눈에.
-              </p>
-              <div className="flex items-center gap-4 text-xs text-brand-textDim">
-                <span>🔥 스트릭</span>
-                <span>📊 통계</span>
-                <span>🏆 수료증</span>
+              <div className="flex items-center gap-4">
+                <div className="text-3xl">👤</div>
+                <div>
+                  <h3 className="text-base font-semibold group-hover:text-brand-primary transition-colors">마이페이지</h3>
+                  <p className="text-xs text-brand-textDim">진도 · 스트릭 · 수료증</p>
+                </div>
+                <span className="ml-auto text-brand-textDim group-hover:text-brand-primary text-lg">→</span>
               </div>
             </Link>
           </div>
@@ -150,12 +175,11 @@ export function MainHomePage() {
           <div className="flex items-center justify-center gap-3 flex-wrap">
             {[
               { label: "Python 기초", icon: "🐍", active: true },
-              { label: "Python 중급", icon: "⚡", active: true },
               { label: "AI 이론", icon: "🧠", active: true },
               { label: "데이터 분석", icon: "📊", active: true },
               { label: "머신러닝", icon: "🤖", active: true },
-              { label: "딥러닝", icon: "🧬", active: true },
               { label: "AI 엔지니어링", icon: "🦙", active: true },
+              { label: "바이브코딩", icon: "🛠️", active: true },
             ].map((step, i) => (
               <div key={i} className="flex items-center gap-3">
                 <div

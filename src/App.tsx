@@ -11,6 +11,7 @@ function LessonPageWrapper() {
   const { lessonId } = useParams();
   return <LessonPage key={lessonId} />;
 }
+import { AiDevPage } from "./pages/AiDevPage";
 import { PlaygroundPage } from "./pages/PlaygroundPage";
 import { IdePage } from "./pages/IdePage";
 import { AuthPage } from "./pages/AuthPage";
@@ -92,7 +93,7 @@ function AppInner() {
         {/* 메인 홈 */}
         <Route path="/" element={<MainHomePage />} />
 
-        {/* 코딩 실습 코너 */}
+        {/* 코딩 실습 코너 (Python/JS/SQL) */}
         <Route path="/coding" element={<CodingHomePage />} />
         <Route path="/coding/learn/:language/:track" element={<CurriculumPage />} />
         <Route
@@ -101,6 +102,12 @@ function AppInner() {
         />
         <Route path="/coding/playground" element={<PlaygroundPage />} />
         <Route path="/coding/ide" element={<IdePage />} />
+
+        {/* AI 앱 개발 코너 */}
+        <Route path="/ai-dev" element={<AiDevPage />} />
+        {/* AI 엔지니어링 트랙 → 기존 커리큘럼/레슨 페이지 재사용 */}
+        <Route path="/ai-dev/track" element={<Navigate to="/coding/learn/ai-engineering/beginner" replace />} />
+        <Route path="/ai-dev/workshop" element={<Navigate to="/coding/learn/ai-engineering/beginner" replace />} />
 
         {/* 하위 호환: 기존 URL 리다이렉트 */}
         <Route path="/learn/*" element={<Navigate to="/coding/learn" replace />} />
