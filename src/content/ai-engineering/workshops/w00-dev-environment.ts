@@ -13,7 +13,7 @@ export const workshopW00: Lesson = {
   language: "ai-engineering",
   track: "beginner",
   order: 100, // 워크샵은 100번대
-  title: "W00: 개발 환경 구축 — AI 바이브 코딩을 위한 준비",
+  title: "W00: 내 컴퓨터를 AI 작업실로",
   subtitle: "맥과 윈도우에서 Claude Code · Gemini · OpenAI 개발 환경 만들기",
   estimatedMinutes: 60,
   cells: [
@@ -22,7 +22,7 @@ export const workshopW00: Lesson = {
     // ─────────────────────────────────────────────
     {
       type: "markdown",
-      source: `# 🛠️ 바이브 코딩을 위한 개발 환경 만들기
+      source: `# 🛠️ 내 컴퓨터를 AI 작업실로
 
 > 💡 **보라색 점선 밑줄** 이 있는 단어는 전문 용어예요. **마우스를 올리면** (모바일은 터치) 쉬운 설명이 나옵니다.
 
