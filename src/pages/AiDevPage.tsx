@@ -24,9 +24,9 @@ export function AiDevPage() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          {/* AI 엔지니어링 트랙 */}
+          {/* AI 엔지니어링 트랙 → 커리큘럼 직접 이동 */}
           <Link
-            to="/ai-dev/track"
+            to="/coding/learn/ai-engineering/beginner"
             className="group p-8 rounded-2xl border border-brand-subtle bg-brand-panel/80
                        hover:border-brand-primary/60 hover:shadow-lg hover:shadow-brand-primary/10 transition-all"
           >
@@ -55,9 +55,9 @@ export function AiDevPage() {
             </div>
           </Link>
 
-          {/* 바이브코딩 워크샵 */}
+          {/* 바이브코딩 워크샵 → 커리큘럼 (W00+ 가 뒤쪽에 표시) */}
           <Link
-            to="/ai-dev/workshop"
+            to="/coding/learn/ai-engineering/beginner"
             className="group p-8 rounded-2xl border border-brand-subtle bg-brand-panel/80
                        hover:border-brand-accent/60 hover:shadow-lg hover:shadow-brand-accent/10 transition-all"
           >
