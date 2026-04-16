@@ -120,9 +120,9 @@ export function MainHomePage() {
               </div>
             </Link>
 
-            {/* 바이브코딩 워크샵 → 커리큘럼 직행 (W00+ 하단) */}
+            {/* 바이브코딩 워크샵 → AI 앱 개발 랜딩 */}
             <Link
-              to="/coding/learn/ai-engineering/beginner"
+              to="/ai-dev"
               className="group p-6 rounded-xl border border-brand-accent/30 bg-gradient-to-br from-cyan-500/10 to-brand-panel/80
                          hover:border-brand-accent/60 hover:shadow-lg hover:shadow-brand-accent/10 transition-all"
             >
