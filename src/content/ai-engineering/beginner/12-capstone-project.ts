@@ -14,7 +14,9 @@ export const lesson12: Lesson = {
       type: "markdown",
       source: `# 🎓 종합 프로젝트 — 12강의 총결산
 
-축하합니다! 여기까지 온 여러분은 이미 LLM 앱 개발의 핵심을 모두 배웠어요.
+> 💡 **보라색 점선 밑줄** 이 있는 단어는 전문 용어예요. **마우스를 올리면** (모바일은 터치) 쉬운 설명이 나옵니다.
+
+축하합니다! 여기까지 온 여러분은 이미 ==LLM== 앱 개발의 핵심을 모두 배웠어요.
 
 ### 12강에서 배운 기술 스택
 
@@ -24,11 +26,11 @@ export const lesson12: Lesson = {
 | 02 | 프롬프트 엔지니어링 | system prompt / few-shot / temperature |
 | 03 | 구조화 출력 | \`responseSchema\` + zod |
 | 04 | Chain of Thought | \`stream: true\` + onToken |
-| 05 | Tool Calling | \`tools[]\` + \`chatWithTools\` |
-| 06 | 단일 에이전트 | Think-Act-Observe 루프 |
+| 05 | ==Tool Calling== | \`tools[]\` + \`chatWithTools\` |
+| 06 | 단일 ==에이전트== | Think-Act-Observe 루프 |
 | 07 | 멀티 에이전트 | 파이프라인 + Critic Loop |
-| 08 | 임베딩 | \`embed()\` + 코사인 유사도 |
-| 09 | RAG | 청킹 → 벡터 검색 → LLM context 주입 |
+| 08 | ==임베딩== | \`embed()\` + 코사인 유사도 |
+| 09 | ==RAG== | ==청킹== → 벡터 검색 → LLM context 주입 |
 | 10 | Hybrid RAG | BM25 + RRF + Re-ranking |
 | 11 | 생태계 비교 | 1B vs 70B vs Gemini 벤치마크 |
 
@@ -36,7 +38,7 @@ export const lesson12: Lesson = {
 
 **"AI 문서 Q&A 시스템"** — 사용자가 문서를 입력하면:
 1. **청킹 + 임베딩 + 저장** (Ch08~09)
-2. 질문에 대해 **Hybrid 검색** (Ch10)
+2. 질문에 대해 **==Hybrid== 검색** (Ch10)
 3. 검색 결과를 **구조화 출력** 으로 정리 (Ch03)
 4. CoT **스트리밍** 으로 답변 생성 (Ch04)
 5. 답변에 **출처 번호** 첨부

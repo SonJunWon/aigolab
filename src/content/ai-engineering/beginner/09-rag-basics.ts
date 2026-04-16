@@ -12,9 +12,11 @@ export const lesson09: Lesson = {
   cells: [
     {
       type: "markdown",
-      source: `# 📄 RAG — Retrieval-Augmented Generation
+      source: `# 📄 ==RAG== — Retrieval-Augmented Generation
 
-### LLM 의 치명적 약점
+> 💡 **보라색 점선 밑줄** 이 있는 단어는 전문 용어예요. **마우스를 올리면** (모바일은 터치) 쉬운 설명이 나옵니다.
+
+### ==LLM== 의 치명적 약점
 - 훈련 시점 이후의 정보를 **모름**
 - 조직 내부 문서를 **못 읽음**
 - 긴 문서를 한번에 **못 담음** (context window 한계)
@@ -24,7 +26,7 @@ export const lesson09: Lesson = {
 
 ### 5단계 파이프라인
 \`\`\`
-[문서] → ❶ 청킹 → ❷ 임베딩 → ❸ 벡터 저장
+[문서] → ❶ ==청킹== → ❷ ==임베딩== → ❸ ==벡터== 저장
                                         ↓
 [질문] → ❹ 임베딩 → 벡터 검색 (Top-K) → 관련 청크 ← ❸
                                         ↓
@@ -265,9 +267,9 @@ console.log(answer.text);`,
 
 ### Ch10 예고 — Hybrid RAG
 벡터 검색만으로는 부족할 때:
-- **키워드(BM25) 검색** — 정확한 단어 매칭이 필요한 경우
-- **Hybrid** — 벡터 + 키워드 검색 결합
-- **Re-ranking** — LLM 이 검색 결과를 다시 평가해 순위 조정
+- **키워드(==BM25==) 검색** — 정확한 단어 매칭이 필요한 경우
+- **==Hybrid==** — 벡터 + 키워드 검색 결합
+- **==Re-ranking==** — LLM 이 검색 결과를 다시 평가해 순위 조정
 
 RAG 품질을 한 단계 끌어올리는 기법들입니다.`,
     },
