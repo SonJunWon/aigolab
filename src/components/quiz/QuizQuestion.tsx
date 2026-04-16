@@ -30,18 +30,40 @@ export function QuizQuestion({
 
   return (
     <div>
-      {/* 진행 표시 */}
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-xs text-colab-textDim uppercase tracking-wider">
+      {/* 진행 표시 + 버튼 (같은 줄) */}
+      <div className="flex items-center justify-between mb-4 gap-3">
+        <span className="text-xs text-colab-textDim uppercase tracking-wider shrink-0">
           문제 {questionNumber} / {totalQuestions}
         </span>
-        <div className="flex-1 mx-4 h-1 rounded-full bg-colab-bg overflow-hidden">
+        <div className="flex-1 h-1 rounded-full bg-colab-bg overflow-hidden">
           <div
             className="h-full bg-colab-accent transition-all duration-300"
             style={{
               width: `${((questionNumber - 1) / totalQuestions) * 100}%`,
             }}
           />
+        </div>
+        {/* 정답 확인 / 다음 문제 버튼을 헤더 우측에 배치 — 스크롤 없이 바로 접근 */}
+        <div className="shrink-0">
+          {!submitted ? (
+            <button
+              onClick={handleSubmit}
+              disabled={selected === null}
+              className="px-4 py-1.5 text-xs rounded-lg bg-colab-accent text-colab-bg font-medium
+                         hover:bg-colab-accentDim disabled:opacity-40 disabled:cursor-not-allowed
+                         transition-colors"
+            >
+              정답 확인
+            </button>
+          ) : (
+            <button
+              onClick={handleNext}
+              className="px-4 py-1.5 text-xs rounded-lg bg-colab-accent text-colab-bg font-medium
+                         hover:bg-colab-accentDim transition-colors"
+            >
+              {questionNumber < totalQuestions ? "다음 문제 →" : "결과 보기"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -148,8 +170,8 @@ export function QuizQuestion({
         </div>
       )}
 
-      {/* 버튼 */}
-      <div className="flex justify-end gap-2">
+      {/* 하단에도 버튼 유지 — 해설이 길 때 아래에서도 접근 가능 */}
+      <div className="flex justify-end gap-2 mt-2">
         {!submitted ? (
           <button
             onClick={handleSubmit}

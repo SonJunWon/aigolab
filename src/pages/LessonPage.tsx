@@ -44,6 +44,11 @@ export function LessonPage() {
       ? getLessonById(lang.id as Language, trk.id as Track, lessonId)
       : undefined;
 
+  // 레슨 진입 시 항상 스크롤 최상단 — LessonPageWrapper 가 key={lessonId} 라 챕터 변경 시 리마운트
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // 레슨의 언어에 맞춰 런타임 init (Python이면 Pyodide, JS면 JS Worker)
   const { status, version } = useLanguageRuntime(lesson?.language ?? "python");
 
@@ -224,9 +229,10 @@ export function LessonPage() {
     if (nextLessonId) {
       navigate(`/coding/learn/${lang.id}/${trk.id}/${nextLessonId}`);
     } else {
-      // 마지막 챕터: 완료 기록만 하고 커리큘럼으로 돌아감
       navigate(`/coding/learn/${lang.id}/${trk.id}`);
     }
+    // 다음 챕터/커리큘럼 이동 시 항상 최상단으로 스크롤
+    window.scrollTo(0, 0);
   };
 
   // ─── "처음부터 다시": 저장 삭제 후 원본 레슨 재주입 ───
