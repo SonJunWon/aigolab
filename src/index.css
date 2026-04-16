@@ -177,3 +177,63 @@ kbd {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;              /* Chrome / Safari */
 }
+
+/* ─── 용어 사전 툴팁 (==용어== 패턴) ─── */
+.glossary-term {
+  border-bottom: 1.5px dotted #7C3AED;
+  cursor: help;
+  position: relative;
+  color: inherit;
+}
+.glossary-term:hover,
+.glossary-term:focus {
+  background: rgba(124, 58, 237, 0.1);
+  border-radius: 2px;
+}
+/* 팝업 — 호버/포커스 시 표시. 왼쪽 기준 정렬로 화면 밖 넘침 방지. */
+.glossary-term::after {
+  content: attr(data-desc);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  width: max(280px, 20vw);
+  max-width: min(400px, 85vw);
+  padding: 10px 14px;
+  background: #1e1b2e;
+  color: #e8eaed;
+  border: 1px solid #3a3560;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: normal;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+/* 위쪽 화살표 */
+.glossary-term::before {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 12px;
+  border: 6px solid transparent;
+  border-top-color: #3a3560;
+  z-index: 51;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.glossary-term:hover::after,
+.glossary-term:focus::after,
+.glossary-term:hover::before,
+.glossary-term:focus::before {
+  opacity: 1;
+}
+/* 모바일: 터치 시 표시 유지 */
+@media (hover: none) {
+  .glossary-term:focus::after,
+  .glossary-term:focus::before {
+    opacity: 1;
+  }
+}

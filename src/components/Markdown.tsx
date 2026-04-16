@@ -9,6 +9,7 @@
 
 import { useMemo } from "react";
 import MarkdownIt from "markdown-it";
+import { lookupGlossary } from "../content/ai-engineering/glossary";
 
 const md = new MarkdownIt({
   html: true,
@@ -67,10 +68,29 @@ interface Props {
   className?: string;
 }
 
+/**
+ * ==용어== 패턴 → 용어 사전 툴팁 HTML 변환.
+ * 호버 시 팝업으로 중학생 수준의 설명 표시.
+ */
+function injectGlossaryTooltips(html: string): string {
+  return html.replace(/==([^=]+)==/g, (_, term: string) => {
+    const entry = lookupGlossary(term.trim());
+    if (!entry) return term; // 사전에 없으면 그냥 텍스트
+    // HTML 속성에 안전하게 넣기 위해 이스케이프
+    const desc = `${entry.ko} — ${entry.desc}`
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    return `<span class="glossary-term" data-desc="${desc}" tabindex="0">${term.trim()}</span>`;
+  });
+}
+
 export function Markdown({ content, className = "md-prose" }: Props) {
   const html = useMemo(() => {
     try {
-      return md.render(preprocess(content));
+      const rendered = md.render(preprocess(content));
+      return injectGlossaryTooltips(rendered);
     } catch {
       return content;
     }
