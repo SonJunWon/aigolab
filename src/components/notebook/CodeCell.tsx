@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import type { Cell } from "../../types/notebook";
 import { CellOutput } from "./CellOutput";
@@ -38,6 +38,12 @@ export function CodeCell({ cell, isSelected }: Props) {
 
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
+
+    // 콘텐츠 높이 변경 감지 → 에디터 높이 자동 조절
+    editor.onDidContentSizeChange(() => {
+      try { updateEditorHeight(); } catch { /* disposed */ }
+    });
+    updateEditorHeight();
 
     // 마운트 시점에 이 셀이 이미 선택돼 있으면 즉시 focus
     if (isSelected) {
@@ -112,12 +118,32 @@ export function CodeCell({ cell, isSelected }: Props) {
   const execLabel = cell.executionCount ? `[${cell.executionCount}]` : status.label;
   const isRunning = cell.status === "running";
 
-  // 에디터 높이를 줄 수에 맞게 자동 조절
+  // 에디터 높이: 초기값은 줄 수 기반, 마운트 후 실제 콘텐츠 높이로 갱신
   const lineHeight = 19;
-  const padding = 16;
+  const fallbackPadding = 28;
   const minLines = 1;
   const lines = Math.max(minLines, cell.source.split("\n").length);
-  const editorHeight = lines * lineHeight + padding;
+  const fallbackHeight = lines * lineHeight + fallbackPadding;
+  const [editorHeight, setEditorHeight] = useState(fallbackHeight);
+
+  // Monaco 콘텐츠 높이가 바뀔 때마다 자동 조절 (wordWrap으로 줄 수 증가 대응)
+  const updateEditorHeight = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    try {
+      const contentHeight = editor.getContentHeight();
+      if (contentHeight > 0) {
+        setEditorHeight(contentHeight);
+      }
+    } catch {
+      // 에디터가 dispose된 경우 무시
+    }
+  }, []);
+
+  // source 변경 시 높이 재계산
+  useEffect(() => {
+    updateEditorHeight();
+  }, [cell.source, updateEditorHeight]);
 
   return (
     <div className="flex">

@@ -7,7 +7,7 @@
  *   - 좌측 거터에 🤖 배지 노출로 일반 코드셀과 구별
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import type { Cell } from "../../types/notebook";
 import { CellOutput } from "./CellOutput";
@@ -80,6 +80,10 @@ export function LlmCodeCell({ cell, isSelected }: Props) {
 
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
+    editor.onDidContentSizeChange(() => {
+      try { updateEditorHeight(); } catch { /* disposed */ }
+    });
+    updateEditorHeight();
     if (isSelected) editor.focus();
 
     // Cmd/Ctrl+Enter → 실행
@@ -132,10 +136,28 @@ export function LlmCodeCell({ cell, isSelected }: Props) {
   const isRunning = cell.status === "running";
 
   const lineHeight = 19;
-  const padding = 16;
+  const fallbackPadding = 28;
   const minLines = 1;
   const lines = Math.max(minLines, cell.source.split("\n").length);
-  const editorHeight = lines * lineHeight + padding;
+  const fallbackHeight = lines * lineHeight + fallbackPadding;
+  const [editorHeight, setEditorHeight] = useState(fallbackHeight);
+
+  const updateEditorHeight = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    try {
+      const contentHeight = editor.getContentHeight();
+      if (contentHeight > 0) {
+        setEditorHeight(contentHeight);
+      }
+    } catch {
+      // 에디터가 dispose된 경우 무시
+    }
+  }, []);
+
+  useEffect(() => {
+    updateEditorHeight();
+  }, [cell.source, updateEditorHeight]);
 
   return (
     <div className="flex border-l-2 border-brand-primary/40">

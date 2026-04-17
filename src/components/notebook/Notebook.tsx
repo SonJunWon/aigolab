@@ -23,9 +23,9 @@ export function Notebook({ showToolbar = true }: Props) {
 
       <main className="flex-1 mx-auto w-full max-w-5xl px-6 py-6">
         <div className="space-y-2">
-          {cells.map((cell) => (
+          {cells.map((cell, idx) => (
             <CellShell
-              key={cell.id}
+              key={`${cell.id}-${idx}`}
               cell={cell}
               isSelected={selectedCellId === cell.id}
               onSelect={() => selectCell(cell.id)}

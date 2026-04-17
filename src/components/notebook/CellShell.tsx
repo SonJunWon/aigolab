@@ -15,7 +15,7 @@ interface Props {
 /**
  * 모든 셀(코드/마크다운)을 감싸는 외곽 컨테이너.
  * - 선택 상태 표시 (좌측 파란 보더)
- * - 호버 시 우상단에 셀 액션 메뉴 (Colab 스타일)
+ * - 호버 시 상단에 셀 액션 메뉴 (셀 바깥 위쪽)
  */
 export function CellShell({ cell, isSelected, onSelect }: Props) {
   const ref = useRef<HTMLDivElement>(null);
@@ -30,79 +30,83 @@ export function CellShell({ cell, isSelected, onSelect }: Props) {
     <div
       ref={ref}
       onClick={onSelect}
-      className={`group relative rounded-md border bg-colab-panel transition-colors overflow-hidden
-        ${
-          isSelected
-            ? "border-colab-subtle"
-            : "border-transparent hover:border-colab-subtle"
-        }`}
+      className="group relative"
     >
-      {/* 선택 시 좌측 파란 막대 — z-20으로 확실히 위에 표시 */}
+      {/* 호버/선택 시 표시되는 상단 액션 메뉴 — 셀 바깥 위쪽 */}
       <div
-        className={`absolute left-0 top-0 bottom-0 w-[3px] z-20 pointer-events-none transition-colors
-          ${isSelected ? "bg-colab-accent" : "bg-transparent"}`}
-        aria-hidden="true"
-      />
-
-      {/* 셀 본문 */}
-      {cell.type === "code" ? (
-        <CodeCell cell={cell} isSelected={isSelected} />
-      ) : cell.type === "llm-code" ? (
-        <LlmCodeCell cell={cell} isSelected={isSelected} />
-      ) : (
-        <MarkdownCell cell={cell} isSelected={isSelected} />
-      )}
-
-      {/* 호버/선택 시 표시되는 우상단 액션 메뉴 (Colab 스타일) */}
-      <div
-        className={`absolute right-2 top-2 flex gap-0.5 rounded bg-colab-bg/90 backdrop-blur-sm border border-colab-subtle
-          transition-opacity
+        className={`flex justify-end mb-1 transition-opacity
           ${isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
         onClick={(e) => e.stopPropagation()}
       >
-        {(cell.type === "code" || cell.type === "llm-code") && (
+        <div className="flex gap-0.5 rounded bg-colab-bg/90 backdrop-blur-sm border border-colab-subtle">
+          {(cell.type === "code" || cell.type === "llm-code") && (
+            <ActionButton
+              title="실행 (Cmd/Ctrl+Enter)"
+              onClick={() => runCell(cell.id)}
+              icon={<PlayIcon />}
+            />
+          )}
           <ActionButton
-            title="실행 (Cmd/Ctrl+Enter)"
-            onClick={() => runCell(cell.id)}
-            icon={<PlayIcon />}
+            title="위로 이동"
+            onClick={() => moveCellUp(cell.id)}
+            icon="↑"
           />
-        )}
-        <ActionButton
-          title="위로 이동"
-          onClick={() => moveCellUp(cell.id)}
-          icon="↑"
-        />
-        <ActionButton
-          title="아래로 이동"
-          onClick={() => moveCellDown(cell.id)}
-          icon="↓"
-        />
-        <ActionButton
-          title="위에 코드 셀 추가"
-          onClick={() => insertCellAbove(cell.id, "code")}
-          icon="+↑"
-        />
-        <ActionButton
-          title="아래에 코드 셀 추가"
-          onClick={() => insertCellBelow(cell.id, "code")}
-          icon="+↓"
-        />
-        {/* llm-code 셀은 레슨 전용이라 사용자가 토글로 변환하지 않음 */}
-        {cell.type !== "llm-code" && (
           <ActionButton
-            title={cell.type === "code" ? "텍스트 셀로 변환 (Ctrl+M, M)" : "코드 셀로 변환 (Ctrl+M, Y)"}
-            onClick={() =>
-              changeCellType(cell.id, cell.type === "code" ? "markdown" : "code")
-            }
-            icon={cell.type === "code" ? "T" : "{ }"}
+            title="아래로 이동"
+            onClick={() => moveCellDown(cell.id)}
+            icon="↓"
           />
-        )}
-        <ActionButton
-          title="셀 삭제 (Ctrl+M, D, D)"
-          onClick={() => deleteCell(cell.id)}
-          icon="🗑"
-          danger
+          <ActionButton
+            title="위에 코드 셀 추가"
+            onClick={() => insertCellAbove(cell.id, "code")}
+            icon="+↑"
+          />
+          <ActionButton
+            title="아래에 코드 셀 추가"
+            onClick={() => insertCellBelow(cell.id, "code")}
+            icon="+↓"
+          />
+          {cell.type !== "llm-code" && (
+            <ActionButton
+              title={cell.type === "code" ? "텍스트 셀로 변환 (Ctrl+M, M)" : "코드 셀로 변환 (Ctrl+M, Y)"}
+              onClick={() =>
+                changeCellType(cell.id, cell.type === "code" ? "markdown" : "code")
+              }
+              icon={cell.type === "code" ? "T" : "{ }"}
+            />
+          )}
+          <ActionButton
+            title="셀 삭제 (Ctrl+M, D, D)"
+            onClick={() => deleteCell(cell.id)}
+            icon="🗑"
+            danger
+          />
+        </div>
+      </div>
+
+      {/* 셀 본문 */}
+      <div
+        className={`relative rounded-md border bg-colab-panel transition-colors overflow-hidden
+          ${
+            isSelected
+              ? "border-colab-subtle"
+              : "border-transparent hover:border-colab-subtle"
+          }`}
+      >
+        {/* 선택 시 좌측 파란 막대 */}
+        <div
+          className={`absolute left-0 top-0 bottom-0 w-[3px] z-20 pointer-events-none transition-colors
+            ${isSelected ? "bg-colab-accent" : "bg-transparent"}`}
+          aria-hidden="true"
         />
+
+        {cell.type === "code" ? (
+          <CodeCell cell={cell} isSelected={isSelected} />
+        ) : cell.type === "llm-code" ? (
+          <LlmCodeCell cell={cell} isSelected={isSelected} />
+        ) : (
+          <MarkdownCell cell={cell} isSelected={isSelected} />
+        )}
       </div>
     </div>
   );
@@ -139,4 +143,3 @@ function PlayIcon() {
     </svg>
   );
 }
-

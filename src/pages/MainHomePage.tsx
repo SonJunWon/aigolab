@@ -125,7 +125,7 @@ export function MainHomePage() {
         </section>
 
         {/* ─── 만들 수 있는 앱 캐러셀 ─── */}
-        <section className="pb-12 sm:pb-16">
+        <section className="pb-12 sm:pb-16 pt-10 sm:pt-12 -mx-4 sm:-mx-6 px-4 sm:px-6 bg-brand-panel/30 rounded-2xl">
           <h2 className="text-sm font-medium text-brand-textDim uppercase tracking-wider mb-2 text-center">
             하나씩 따라가다 보면, 어느새 이런 앱을 만들고 있을 거예요
           </h2>
@@ -137,7 +137,7 @@ export function MainHomePage() {
             {SHOWCASE_APPS.map((app, i) => (
               <div
                 key={i}
-                className="snap-start shrink-0 w-64 sm:w-72 p-5 rounded-xl border border-brand-subtle/50
+                className="snap-start shrink-0 w-56 sm:w-72 p-4 sm:p-5 rounded-xl border border-brand-subtle/50
                            bg-brand-panel/60 hover:border-brand-accent/40 transition-all"
               >
                 <div className="flex items-center gap-3 mb-3">
@@ -222,7 +222,7 @@ export function MainHomePage() {
         </section>
 
         {/* ─── 숫자 통계 ─── */}
-        <section className="pb-12 sm:pb-16">
+        <section className="pb-12 sm:pb-16 pt-10 sm:pt-12 -mx-4 sm:-mx-6 px-4 sm:px-6 bg-brand-panel/20 rounded-2xl">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto">
             {[
               { num: "42", label: "워크샵", sub: "실전 프로젝트" },
@@ -241,7 +241,7 @@ export function MainHomePage() {
 
 
         {/* ─── 특징 — 세로 풀 레이아웃 ─── */}
-        <section className="pb-12 sm:pb-16">
+        <section className="pb-12 sm:pb-16 pt-10 sm:pt-12 -mx-4 sm:-mx-6 px-4 sm:px-6 bg-brand-panel/30 rounded-2xl">
           <h2 className="text-sm font-medium text-brand-textDim uppercase tracking-wider mb-2 text-center">
             왜 AIGoLab 인가요
           </h2>
