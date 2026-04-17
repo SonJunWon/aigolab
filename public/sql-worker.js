@@ -33,8 +33,17 @@ self.onmessage = async function (e) {
       });
 
       // Chinook DB 로드 (fetch → Uint8Array → SQL.Database)
-      const res = await fetch("/chinook.sqlite");
+      // cache: "no-cache" — 브라우저가 잘못 캐시한 파일(HTML 등)을 방지
+      const res = await fetch("/chinook.sqlite", { cache: "no-cache" });
+      if (!res.ok) throw new Error("Chinook DB fetch failed: " + res.status);
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("text/html")) {
+        throw new Error("Chinook DB가 HTML로 반환됨 — vercel.json rewrite 설정을 확인하세요");
+      }
       const buf = await res.arrayBuffer();
+      if (buf.byteLength < 1000) {
+        throw new Error("Chinook DB 크기가 비정상: " + buf.byteLength + " bytes");
+      }
       db = new SQL.Database(new Uint8Array(buf));
 
       initialized = true;
