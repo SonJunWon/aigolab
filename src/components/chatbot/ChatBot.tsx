@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../../store/authStore";
 import { chat, getKey } from "../../lib/llm";
 import { CHATBOT_SYSTEM_PROMPT } from "./systemPrompt";
-import { saveAdminInquiry } from "./adminInquiry";
+import { saveAdminInquiry, listUserInquiries, countUnreadReplies, markReplyAsRead, type AdminInquiry } from "./adminInquiry";
 import type { Message } from "../../lib/llm";
 
 interface ChatMessage {
@@ -28,6 +28,9 @@ export function ChatBot() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<"chat" | "inquiries">("chat");
+  const [inquiries, setInquiries] = useState<AdminInquiry[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -39,6 +42,13 @@ export function ChatBot() {
   useEffect(() => {
     if (isOpen) inputRef.current?.focus();
   }, [isOpen]);
+
+  // 문의 목록 + 미확인 답변 카운트 갱신
+  useEffect(() => {
+    if (!user) return;
+    setInquiries(listUserInquiries(user.id));
+    setUnreadCount(countUnreadReplies(user.id));
+  }, [user, isOpen, tab]);
 
   // API 키 확인
   const hasKey = !!(getKey("groq") || getKey("gemini"));
@@ -137,6 +147,11 @@ export function ChatBot() {
             title="AI 도우미"
           >
             💬
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shadow">
+                {unreadCount}
+              </span>
+            )}
           </button>
         </div>
       )}
@@ -147,23 +162,105 @@ export function ChatBot() {
                         flex flex-col rounded-2xl border border-brand-subtle bg-brand-bg
                         shadow-2xl shadow-black/30 overflow-hidden">
           {/* 헤더 */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-brand-subtle bg-brand-panel/80">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🤖</span>
-              <div>
-                <div className="text-sm font-semibold text-brand-text">AI 도우미</div>
-                <div className="text-[10px] text-brand-textDim">학습 질문, 오류 해결, 서비스 안내</div>
+          <div className="border-b border-brand-subtle bg-brand-panel/80">
+            <div className="flex items-center justify-between px-4 py-2">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🤖</span>
+                <span className="text-sm font-semibold text-brand-text">AI 도우미</span>
               </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-brand-textDim
+                           hover:bg-brand-hover hover:text-brand-text transition-colors text-sm"
+              >
+                ✕
+              </button>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-brand-textDim
-                         hover:bg-brand-hover hover:text-brand-text transition-colors"
-            >
-              ✕
-            </button>
+            {/* 탭 */}
+            <div className="flex px-4 gap-1">
+              <button
+                onClick={() => setTab("chat")}
+                className={`px-3 py-1.5 text-xs font-medium border-b-2 transition-colors
+                  ${tab === "chat" ? "text-brand-accent border-brand-accent" : "text-brand-textDim border-transparent hover:text-brand-text"}`}
+              >
+                채팅
+              </button>
+              <button
+                onClick={() => setTab("inquiries")}
+                className={`px-3 py-1.5 text-xs font-medium border-b-2 transition-colors relative
+                  ${tab === "inquiries" ? "text-brand-accent border-brand-accent" : "text-brand-textDim border-transparent hover:text-brand-text"}`}
+              >
+                내 문의
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
 
+          {/* ─── 내 문의 탭 ─── */}
+          {tab === "inquiries" && (
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+              {inquiries.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-2xl mb-2">📩</div>
+                  <p className="text-sm text-brand-textDim">아직 문의 내역이 없습니다</p>
+                  <p className="text-xs text-brand-textDim mt-1">채팅에서 @관리자를 입력하면 관리자에게 문의할 수 있어요</p>
+                </div>
+              ) : (
+                inquiries.map((inq) => {
+                  const isReplied = inq.status === "replied";
+                  const readKey = `aigolab-read-replies-${user!.id}`;
+                  const readIds: string[] = JSON.parse(localStorage.getItem(readKey) ?? "[]");
+                  const isUnread = isReplied && !readIds.includes(inq.id);
+                  return (
+                    <div
+                      key={inq.id}
+                      className={`rounded-xl border p-3 text-sm space-y-2
+                        ${isUnread ? "border-brand-accent/50 bg-brand-accent/5" : "border-brand-subtle bg-brand-panel/40"}`}
+                      onClick={() => { if (isUnread && user) markReplyAsRead(user.id, inq.id); setUnreadCount((c) => Math.max(0, c - (isUnread ? 1 : 0))); }}
+                    >
+                      {/* 상태 + 날짜 */}
+                      <div className="flex items-center gap-2">
+                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium
+                          ${isReplied ? "bg-emerald-500/15 text-emerald-400" : "bg-amber-500/15 text-amber-400"}`}>
+                          {isReplied ? "✅ 답변 완료" : "⏳ 대기 중"}
+                        </span>
+                        {isUnread && <span className="text-[9px] text-brand-accent font-medium">NEW</span>}
+                        <span className="text-[10px] text-brand-textDim ml-auto">
+                          {new Date(inq.createdAt).toLocaleDateString("ko-KR")}
+                        </span>
+                      </div>
+                      {/* 내 질문 */}
+                      <div>
+                        <div className="text-[10px] text-brand-textDim mb-0.5">내 질문</div>
+                        <div className="text-xs text-brand-text">{inq.question}</div>
+                      </div>
+                      {/* 관리자 답변 */}
+                      {inq.adminReply && (
+                        <div className="p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                          <div className="text-[10px] text-emerald-400 mb-0.5">🛡️ 관리자 답변</div>
+                          <div className="text-xs text-brand-text">{inq.adminReply}</div>
+                        </div>
+                      )}
+                      {/* AI 답변 */}
+                      {!inq.adminReply && inq.aiResponse && (
+                        <div>
+                          <div className="text-[10px] text-brand-textDim mb-0.5">🤖 AI 답변</div>
+                          <div className="text-xs text-brand-textDim">{inq.aiResponse}</div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+
+          {/* ─── 채팅 탭: 메시지 영역 ─── */}
+          {tab === "chat" && <>
           {/* 메시지 영역 */}
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
             {/* 환영 메시지 */}
@@ -269,6 +366,7 @@ export function ChatBot() {
               </button>
             </div>
           </div>
+          </>}
         </div>
       )}
     </>
