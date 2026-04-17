@@ -12,6 +12,7 @@ import { useAuthStore } from "../../store/authStore";
 import { chat, getKey } from "../../lib/llm";
 import { CHATBOT_SYSTEM_PROMPT } from "./systemPrompt";
 import { createInquiry, listMyInquiries, type AdminInquiry } from "../../storage/supabaseInquiryRepo";
+import { sendTelegramNotification } from "../../lib/telegramNotify";
 import type { Message } from "../../lib/llm";
 
 interface ChatMessage {
@@ -100,11 +101,17 @@ export function ChatBot() {
       setMessages((prev) => [...prev, assistantMsg]);
 
       if (text.includes("@관리자")) {
+        const cleanQuestion = text.replace("@관리자", "").trim();
         await createInquiry({
           userId: user.id,
           userEmail: user.email ?? "",
-          question: text.replace("@관리자", "").trim(),
+          question: cleanQuestion,
           aiResponse: res.text,
+        });
+        // 텔레그램으로 관리자 알림
+        sendTelegramNotification({
+          userEmail: user.email ?? "알 수 없음",
+          question: cleanQuestion,
         });
       }
     } catch (err) {
