@@ -112,16 +112,33 @@ export function ChatBot() {
     <>
       {/* 플로팅 버튼 */}
       {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full
-                     bg-gradient-to-r from-brand-accent to-cyan-500 text-white
-                     shadow-lg shadow-brand-accent/30 hover:shadow-xl hover:scale-105
-                     transition-all flex items-center justify-center text-2xl"
-          title="AI 도우미"
-        >
-          💬
-        </button>
+        <div className="fixed bottom-6 right-6 z-50 group">
+          {/* 말풍선 툴팁 */}
+          <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 rounded-lg
+                          bg-brand-panel border border-brand-subtle shadow-lg
+                          text-xs text-brand-text whitespace-nowrap
+                          opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0
+                          transition-all duration-300 pointer-events-none">
+            무엇이든 물어보세요!
+            <div className="absolute top-full right-5 w-2 h-2 bg-brand-panel border-r border-b border-brand-subtle rotate-45 -translate-y-1" />
+          </div>
+          {/* 펄스 링 */}
+          <div className="absolute inset-0 rounded-full bg-brand-accent/20 animate-ping" />
+          {/* 버튼 */}
+          <button
+            onClick={() => setIsOpen(true)}
+            className="relative w-14 h-14 rounded-full
+                       bg-gradient-to-r from-brand-accent to-cyan-500 text-white
+                       shadow-lg shadow-brand-accent/30
+                       hover:shadow-2xl hover:shadow-brand-accent/40 hover:scale-110
+                       active:scale-95
+                       transition-all duration-200 ease-out
+                       flex items-center justify-center text-2xl"
+            title="AI 도우미"
+          >
+            💬
+          </button>
+        </div>
       )}
 
       {/* 채팅 패널 */}
