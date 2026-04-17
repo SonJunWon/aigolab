@@ -55,12 +55,28 @@ export function Footer() {
             </dl>
           </div>
 
-          {/* 정책 & 링크 */}
+          {/* 고객 지원 & 정책 */}
           <div>
             <h3 className="text-xs font-medium text-brand-text uppercase tracking-wider mb-2">
-              정책
+              고객 지원
             </h3>
             <ul className="space-y-1.5 text-xs">
+              <li>
+                <Link
+                  to="/notices"
+                  className="hover:text-brand-primary transition-colors"
+                >
+                  공지사항
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/faq"
+                  className="hover:text-brand-primary transition-colors"
+                >
+                  자주 묻는 질문 (FAQ)
+                </Link>
+              </li>
               <li>
                 <Link
                   to="/privacy"

@@ -33,6 +33,8 @@ import { ProjectWorkPage } from "./pages/ProjectWorkPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { TermsPage } from "./pages/TermsPage";
 import { AdminPage } from "./pages/AdminPage";
+import { FAQPage } from "./pages/FAQPage";
+import { NoticesPage } from "./pages/NoticesPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { useProgressStore } from "./store/progressStore";
 import { useKeyModalStore } from "./store/keyModalStore";
@@ -128,6 +130,8 @@ function AppInner() {
         <Route path="/ai-dev" element={<AiDevPage />} />
         <Route path="/courses" element={<CoursesPage />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/faq" element={<FAQPage />} />
+        <Route path="/notices" element={<NoticesPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
 
