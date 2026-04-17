@@ -8,6 +8,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { WORKSHOP_LESSONS } from "../content/ai-engineering/workshops";
 import { useProgressStore } from "../store/progressStore";
+import { useEntitlements } from "../hooks/useEntitlements";
+import { canAccessWorkshop } from "../content/access";
+import { isWorkshopPro } from "../content/tier";
 import type { Lesson } from "../types/lesson";
 
 /* ─── Phase 정의 ─── */
@@ -127,6 +130,7 @@ function getLessonsForPhase(phase: Phase): Lesson[] {
 /* ─── 메인 컴포넌트 ─── */
 export function WorkshopListPage() {
   const isCompleted = useProgressStore((s) => s.isCompleted);
+  const { entitlements } = useEntitlements();
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
 
   const togglePhase = (phaseId: number) =>
@@ -223,8 +227,13 @@ export function WorkshopListPage() {
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="text-2xl shrink-0">{phase.icon}</span>
                     <div className="min-w-0">
-                      <h2 className={`text-base sm:text-lg font-semibold ${phase.color}`}>
+                      <h2 className={`text-base sm:text-lg font-semibold ${phase.color} flex items-center gap-2`}>
                         {phase.title}
+                        {phase.id >= 2 && (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/20">
+                            PRO
+                          </span>
+                        )}
                       </h2>
                       <p className="text-xs text-brand-textDim">{phase.subtitle}</p>
                     </div>
@@ -257,23 +266,28 @@ export function WorkshopListPage() {
                     {lessons.map((lesson) => {
                       const done = isCompleted("ai-engineering", "beginner", lesson.id);
                       const diff = getDifficulty(lesson.order);
+                      const isPro = isWorkshopPro(lesson.order);
+                      const canAccess = canAccessWorkshop(lesson.order, entitlements);
 
                       return (
                         <Link
                           key={lesson.id}
                           to={`/ai-dev/workshop/${lesson.id}`}
-                          className="group flex items-center gap-3 sm:gap-4 p-4 sm:p-5
-                                     bg-brand-panel/40 hover:bg-brand-panel/80 transition-all"
+                          className={`group flex items-center gap-3 sm:gap-4 p-4 sm:p-5
+                                     bg-brand-panel/40 hover:bg-brand-panel/80 transition-all
+                                     ${isPro && !canAccess ? "opacity-70" : ""}`}
                         >
-                          {/* 완료 체크 / 번호 */}
+                          {/* 완료 체크 / 번호 / 잠금 */}
                           <div
                             className={`shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-xs font-bold
                                         ${done
                                           ? "bg-emerald-500/20 text-emerald-400"
+                                          : isPro && !canAccess
+                                          ? "bg-amber-500/15 text-amber-400"
                                           : "bg-brand-subtle/60 text-brand-textDim group-hover:bg-brand-accent/15 group-hover:text-brand-accent"
                                         } transition-colors`}
                           >
-                            {done ? "✓" : lesson.order <= 100 ? "00" : String(lesson.order - 100).padStart(2, "0")}
+                            {done ? "✓" : isPro && !canAccess ? "🔒" : lesson.order <= 100 ? "00" : String(lesson.order - 100).padStart(2, "0")}
                           </div>
 
                           {/* 제목 + 부제 */}
@@ -285,6 +299,11 @@ export function WorkshopListPage() {
                               >
                                 {lesson.title}
                               </h3>
+                              {isPro && (
+                                <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/20">
+                                  PRO
+                                </span>
+                              )}
                             </div>
                             {lesson.subtitle && (
                               <p className="text-[11px] sm:text-xs text-brand-textDim truncate mt-0.5">

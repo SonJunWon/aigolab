@@ -2,7 +2,7 @@
  * 접근 제어 헬퍼 — `tier.ts` (콘텐츠 pro 여부) + 사용자 entitlements 결합.
  *
  * 규칙:
- *   - 무료 콘텐츠: 누구나 접근 가능
+ *   - 무료 콘텐츠: 로그인만 하면 접근 가능
  *   - PRO 콘텐츠: 사용자가 대응 entitlement 를 가지고 있어야 접근 가능
  *   - `all-pro` 는 모든 번들을 포함하는 슈퍼 번들
  *   - `admin` 은 별도 권한 — 모든 콘텐츠 접근 + 관리자 UI 접근
@@ -10,7 +10,7 @@
 
 import type { Language, Track } from "../types/lesson";
 import type { Entitlement, EntitlementKind } from "../types/entitlement";
-import { isCoursePro, isProjectPro, isLessonPro, isTrackPro } from "./tier";
+import { isCoursePro, isProjectPro, isLessonPro, isTrackPro, isWorkshopPro } from "./tier";
 
 /** entitlement 가 만료되지 않았는지 */
 function isActive(ent: Entitlement): boolean {
@@ -59,19 +59,16 @@ export function canAccessProject(
 
 /**
  * 코딩 실습 레슨 접근 가능 여부.
- *
- * `lessonId` 는 ai-engineering 처럼 트랙 내 일부 레슨만 무료인 경우에 필요.
- * Python/JavaScript/SQL 트랙에선 무시되므로 optional.
  */
 export function canAccessLesson(
   lang: Language,
   track: Track,
   entitlements: Entitlement[],
   lessonId?: string,
+  lessonOrder?: number,
 ): boolean {
-  if (!isLessonPro(lang, track, lessonId)) return true;
+  if (!isLessonPro(lang, track, lessonId, lessonOrder)) return true;
   if (isAdmin(entitlements)) return true;
-  // Python 의 pro 트랙은 python-advanced 번들로 열림
   if (lang === "python" && track !== "beginner") {
     return (
       hasEntitlement(entitlements, "all-pro") ||
@@ -89,4 +86,18 @@ export function canAccessTrack(
 ): boolean {
   if (!isTrackPro(lang, track)) return true;
   return canAccessLesson(lang, track, entitlements);
+}
+
+/**
+ * 바이브코딩 워크샵 접근 가능 여부.
+ * W00 + Phase 1 (order <= 106): 무료
+ * Phase 2+ (order >= 107): PRO 필요
+ */
+export function canAccessWorkshop(
+  lessonOrder: number,
+  entitlements: Entitlement[]
+): boolean {
+  if (!isWorkshopPro(lessonOrder)) return true;
+  if (isAdmin(entitlements)) return true;
+  return hasEntitlement(entitlements, "all-pro");
 }
