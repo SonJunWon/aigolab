@@ -282,45 +282,64 @@ export function HomePage() {
               {/* Python 선택 시 Playground + IDE */}
               {selectedLang === "python" && (
                 <div className="mt-8">
-                  <h2 className="text-sm font-medium text-colab-textDim uppercase tracking-wider mb-4">
+                  <h2 className="text-sm font-medium text-colab-textDim uppercase tracking-wider mb-2">
                     Python 코딩 도구
                   </h2>
+                  <p className="text-xs text-colab-textDim mb-4">
+                    커리큘럼 없이 자유롭게 Python 코드를 작성하고 실행할 수 있는 도구입니다
+                  </p>
                   <div className="grid md:grid-cols-2 gap-4">
                     <Link
                       to="/coding/playground"
-                      className="group flex items-start gap-4 p-5 rounded-xl border border-colab-subtle bg-colab-panel
+                      className="group p-5 rounded-xl border border-colab-subtle bg-colab-panel
                                  hover:border-colab-accent/60 hover:shadow-lg transition-all"
                     >
-                      <div className="shrink-0 w-11 h-11 rounded-lg bg-colab-accent/10 flex items-center justify-center text-xl">
-                        🧪
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-colab-text group-hover:text-colab-accent transition-colors">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="shrink-0 w-11 h-11 rounded-lg bg-colab-accent/10 flex items-center justify-center text-xl">
+                          🧪
+                        </div>
+                        <h3 className="text-base font-semibold text-colab-text group-hover:text-colab-accent transition-colors">
                           Playground
                         </h3>
-                        <p className="text-xs text-colab-textDim mt-0.5">
-                          노트북에서 자유 코딩. 셀 단위 실행, 자동 저장.
-                        </p>
                       </div>
-                      <span className="text-colab-textDim group-hover:text-colab-accent text-sm mt-1">→</span>
+                      <p className="text-sm text-colab-textDim leading-relaxed mb-3">
+                        Jupyter 노트북 스타일의 자유 코딩 환경입니다.
+                        코드를 셀 단위로 나눠서 작성하고, 한 셀씩 실행하면서
+                        결과를 바로 확인할 수 있어요. 간단한 실험이나
+                        학습한 내용을 복습할 때 적합합니다.
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] bg-colab-accent/10 text-colab-accent/80">셀 단위 실행</span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] bg-colab-accent/10 text-colab-accent/80">자동 저장</span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] bg-colab-accent/10 text-colab-accent/80">마크다운 메모</span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] bg-colab-accent/10 text-colab-accent/80">결과 즉시 확인</span>
+                      </div>
                     </Link>
                     <Link
                       to="/coding/ide"
-                      className="group flex items-start gap-4 p-5 rounded-xl border border-colab-subtle bg-colab-panel
+                      className="group p-5 rounded-xl border border-colab-subtle bg-colab-panel
                                  hover:border-colab-accent/60 hover:shadow-lg transition-all"
                     >
-                      <div className="shrink-0 w-11 h-11 rounded-lg bg-colab-green/10 flex items-center justify-center text-xl">
-                        💻
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-colab-text group-hover:text-colab-accent transition-colors">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="shrink-0 w-11 h-11 rounded-lg bg-colab-green/10 flex items-center justify-center text-xl">
+                          💻
+                        </div>
+                        <h3 className="text-base font-semibold text-colab-text group-hover:text-colab-accent transition-colors">
                           Python IDE
                         </h3>
-                        <p className="text-xs text-colab-textDim mt-0.5">
-                          멀티 파일, import 지원, VS Code 스타일 개발 환경.
-                        </p>
                       </div>
-                      <span className="text-colab-textDim group-hover:text-colab-accent text-sm mt-1">→</span>
+                      <p className="text-sm text-colab-textDim leading-relaxed mb-3">
+                        VS Code와 동일한 본격 개발 환경입니다.
+                        여러 파일을 만들고 import로 연결할 수 있어서
+                        실제 프로젝트처럼 폴더 구조를 갖춘 코딩이 가능합니다.
+                        모듈화, 클래스 분리 등 실전 개발 연습에 적합합니다.
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] bg-colab-green/10 text-colab-green/80">멀티 파일</span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] bg-colab-green/10 text-colab-green/80">import 지원</span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] bg-colab-green/10 text-colab-green/80">VS Code 스타일</span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] bg-colab-green/10 text-colab-green/80">프로젝트 구조</span>
+                      </div>
                     </Link>
                   </div>
                 </div>
