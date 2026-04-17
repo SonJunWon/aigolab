@@ -35,6 +35,33 @@ import { useProgressStore } from "./store/progressStore";
 import { useKeyModalStore } from "./store/keyModalStore";
 import { KeySetupModal } from "./components/llm/KeySetupModal";
 
+/** 라우트 변경 시 스크롤 최상단으로 복원 */
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  // 브라우저 자동 스크롤 복원 비활성화 — SPA에서는 직접 제어
+  useEffect(() => {
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+  }, []);
+
+  useEffect(() => {
+    const scroll = () => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    // 즉시 + rAF + 지연 — 비동기 렌더링·레이아웃 시프트 모두 대비
+    scroll();
+    requestAnimationFrame(scroll);
+    const t = setTimeout(scroll, 50);
+    return () => clearTimeout(t);
+  }, [pathname]);
+
+  return null;
+}
+
 /**
  * NavBar/Footer를 표시할지 결정하는 레이아웃.
  * IDE와 레슨 페이지는 자체 헤더가 있어서 NavBar 숨김.
@@ -53,6 +80,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <ScrollToTop />
       {!hideChrome && <NavBar />}
       {/* NavBar가 fixed라서 그 높이(56px=h-14)만큼 패딩 */}
       <div className={hideChrome ? "" : "pt-14"}>

@@ -46,7 +46,11 @@ export function LessonPage() {
 
   // 레슨 진입 시 항상 스크롤 최상단 — LessonPageWrapper 가 key={lessonId} 라 챕터 변경 시 리마운트
   useEffect(() => {
-    window.scrollTo(0, 0);
+    // 즉시 + 약간의 지연 후 두 번 시도 — 비동기 렌더링으로 스크롤 복원이 덮어쓸 수 있어서
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    });
   }, []);
 
   // 레슨의 언어에 맞춰 런타임 init (Python이면 Pyodide, JS면 JS Worker)
@@ -280,9 +284,9 @@ export function LessonPage() {
         <div className="mx-auto max-w-5xl px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <Link
-              to={`/coding/learn/${lang.id}/${trk.id}`}
+              to={isWorkshop ? "/ai-dev/workshop" : `/coding/learn/${lang.id}/${trk.id}`}
               className="shrink-0 text-sm text-colab-textDim hover:text-colab-accent transition-colors"
-              title="커리큘럼으로"
+              title={isWorkshop ? "워크샵 목록으로" : "커리큘럼으로"}
             >
               ←
             </Link>
@@ -290,8 +294,8 @@ export function LessonPage() {
             <div className="min-w-0 flex-1">
               <div className="text-[10px] sm:text-[11px] text-colab-textDim flex items-center gap-1.5 truncate">
                 <span className="truncate">
-                  <span className="hidden sm:inline">{lang.name} · {trk.name} · </span>
-                  챕터 {lesson.order}
+                  <span className="hidden sm:inline">{isWorkshop ? "바이브코딩 워크샵" : `${lang.name} · ${trk.name}`} · </span>
+                  {isWorkshop ? "워크샵" : `챕터 ${lesson.order}`}
                 </span>
                 {alreadyDone && (
                   <span className="text-colab-green shrink-0" title="완료한 챕터">

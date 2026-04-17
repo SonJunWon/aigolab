@@ -67,13 +67,10 @@ export function WorkshopListPage() {
           ))}
         </div>
 
-        {/* 더 많은 워크샵 예고 */}
+        {/* 총 워크샵 수 안내 */}
         <div className="mt-8 p-6 rounded-xl border border-dashed border-brand-subtle text-center">
           <p className="text-sm text-brand-textDim">
-            🚧 더 많은 워크샵이 추가될 예정이에요
-          </p>
-          <p className="text-xs text-brand-textDim mt-1">
-            W02: 문서 Q&A 봇 · W03: AI 이메일 비서 · ...
+            총 {WORKSHOP_LESSONS.length}개 워크샵 — 기초부터 SaaS 런칭까지 단계별로 도전해보세요
           </p>
         </div>
       </div>
