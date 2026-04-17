@@ -79,11 +79,14 @@ export function MainHomePage() {
           >
             AIGoLab
           </h1>
-          <p className="text-xl sm:text-2xl text-brand-text font-medium mb-2">
+          <p className="text-xl sm:text-2xl text-brand-text font-medium mb-3">
             AI를 시작하는 가장 쉬운 실험실
           </p>
-          <p className="text-sm sm:text-base text-brand-textDim mb-6">
-            브라우저만으로, 설치 없이, 이론부터 실전 앱 개발까지
+          <p className="text-sm sm:text-base text-brand-textDim leading-relaxed max-w-2xl mx-auto mb-6">
+            AIGoLab은 누구나 AI를 배우고 직접 만들어볼 수 있는 실습형 학습 플랫폼입니다.
+            복잡한 설치 없이 브라우저에서 바로 코딩하고, AI 이론부터 실전 앱 개발까지
+            단계별로 안내합니다. 프로그래밍이 처음이어도, AI가 낯설어도 괜찮아요 —
+            쉬운 설명과 실습 중심 커리큘럼으로 누구나 자신만의 AI 앱을 완성할 수 있습니다.
           </p>
 
           {/* 타이핑 애니메이션 */}
