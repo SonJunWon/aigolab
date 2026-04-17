@@ -414,7 +414,7 @@ export function HomePage() {
                       <p className="text-sm text-colab-textDim leading-relaxed mb-3">
                         브라우저 내장 SQLite 데이터베이스에서 SQL 쿼리를 자유롭게 실행하는 환경입니다.
                         테이블 생성, 데이터 입력, SELECT 쿼리 등을 실습하고 결과를 테이블 형태로 바로 확인할 수 있습니다.
-                        Chinook 샘플 데이터셋이 내장되어 있어 바로 쿼리 연습을 시작할 수 있습니다.
+                        Chinook 샘플 데이터(Artist, Album, Track 등 11개 테이블)가 내장되어 바로 쿼리 연습을 시작할 수 있습니다.
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         <span className="px-2 py-0.5 rounded-md text-[10px] bg-cyan-500/10 text-cyan-400/80">SQLite 내장</span>

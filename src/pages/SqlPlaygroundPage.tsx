@@ -20,22 +20,22 @@ const DEFAULT_CELLS = [
 
 SELECT 결과는 테이블 형태로, INSERT/UPDATE/DELETE 결과는 텍스트로 표시됩니다.
 
-### 샘플 테이블
-\`artists\`, \`albums\`, \`tracks\`, \`genres\`, \`customers\`, \`invoices\`, \`employees\` 등`,
+### 샘플 테이블 (단수형, 첫 글자 대문자)
+\`Artist\`, \`Album\`, \`Track\`, \`Genre\`, \`Customer\`, \`Invoice\`, \`InvoiceLine\`, \`Employee\`, \`MediaType\`, \`Playlist\`, \`PlaylistTrack\``,
   },
   {
     type: "code" as const,
     source: `-- 아티스트 목록 조회 (상위 10개)
 SELECT ArtistId, Name
-FROM artists
+FROM Artist
 LIMIT 10;`,
   },
   {
     type: "code" as const,
     source: `-- 장르별 트랙 수 조회
 SELECT g.Name AS Genre, COUNT(*) AS TrackCount
-FROM tracks t
-JOIN genres g ON t.GenreId = g.GenreId
+FROM Track t
+JOIN Genre g ON t.GenreId = g.GenreId
 GROUP BY g.Name
 ORDER BY TrackCount DESC;`,
   },
