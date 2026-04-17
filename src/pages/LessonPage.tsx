@@ -44,13 +44,20 @@ export function LessonPage() {
       ? getLessonById(lang.id as Language, trk.id as Track, lessonId)
       : undefined;
 
-  // 레슨 진입 시 항상 스크롤 최상단 — LessonPageWrapper 가 key={lessonId} 라 챕터 변경 시 리마운트
+  // 레슨 진입 시 항상 스크롤 최상단
+  // 셀 로딩 후 DOM이 커지면서 스크롤이 밀리므로 여러 타이밍에 강제 스크롤
   useEffect(() => {
-    // 즉시 + 약간의 지연 후 두 번 시도 — 비동기 렌더링으로 스크롤 복원이 덮어쓸 수 있어서
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    });
+    const scroll = () => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    scroll();
+    requestAnimationFrame(scroll);
+    const t1 = setTimeout(scroll, 100);
+    const t2 = setTimeout(scroll, 300);
+    const t3 = setTimeout(scroll, 600);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
   // 레슨의 언어에 맞춰 런타임 init (Python이면 Pyodide, JS면 JS Worker)

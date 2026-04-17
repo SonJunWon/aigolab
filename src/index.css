@@ -178,6 +178,25 @@ kbd {
   display: none;              /* Chrome / Safari */
 }
 
+/* 얇은 스크롤바 (캐러셀 등) */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 3px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.3);
+}
+
 /* ─── 용어 사전 툴팁 (==용어== 패턴) ─── */
 .glossary-term {
   border-bottom: 1.5px dotted #7C3AED;
