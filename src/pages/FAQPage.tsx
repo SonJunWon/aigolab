@@ -193,17 +193,12 @@ const FAQ_DATA: FAQCategory[] = [
 
 /* ─── 컴포넌트 ─── */
 export function FAQPage() {
-  const [openItems, setOpenItems] = useState<Set<string>>(new Set());
+  const [openItem, setOpenItem] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
   const toggleItem = (key: string) => {
-    setOpenItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+    setOpenItem((prev) => (prev === key ? null : key));
   };
 
   // 검색 필터
@@ -290,7 +285,7 @@ export function FAQPage() {
                 <div className="space-y-2">
                   {cat.items.map((item, idx) => {
                     const key = `${cat.id}-${idx}`;
-                    const isOpen = openItems.has(key);
+                    const isOpen = openItem === key;
                     return (
                       <div
                         key={key}
