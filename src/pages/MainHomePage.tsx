@@ -363,6 +363,36 @@ export function MainHomePage() {
           </div>
         </section>
 
+        {/* ─── 고객 지원 ─── */}
+        <section className="pb-16 sm:pb-20">
+          <div className="grid sm:grid-cols-2 gap-4 max-w-xl mx-auto">
+            <Link
+              to="/notices"
+              className="group flex items-center gap-3 p-4 rounded-xl border border-brand-subtle
+                         bg-brand-panel/40 hover:border-brand-accent/30 transition-all"
+            >
+              <span className="text-xl">📢</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium group-hover:text-brand-accent transition-colors">공지사항</div>
+                <div className="text-[11px] text-brand-textDim">서비스 소식과 업데이트</div>
+              </div>
+              <span className="text-brand-textDim group-hover:text-brand-accent text-sm">→</span>
+            </Link>
+            <Link
+              to="/faq"
+              className="group flex items-center gap-3 p-4 rounded-xl border border-brand-subtle
+                         bg-brand-panel/40 hover:border-brand-accent/30 transition-all"
+            >
+              <span className="text-xl">❓</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium group-hover:text-brand-accent transition-colors">자주 묻는 질문</div>
+                <div className="text-[11px] text-brand-textDim">이용 방법, PRO, 오류 해결</div>
+              </div>
+              <span className="text-brand-textDim group-hover:text-brand-accent text-sm">→</span>
+            </Link>
+          </div>
+        </section>
+
       </div>
     </div>
   );
