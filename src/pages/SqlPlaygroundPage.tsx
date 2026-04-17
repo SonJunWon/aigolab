@@ -8,7 +8,7 @@ import { useLanguageRuntime } from "../hooks/useLanguageRuntime";
 import { useAutoSave } from "../hooks/useAutoSave";
 import { loadNotebook } from "../storage/notebookRepo";
 
-const PLAYGROUND_ID = "playground:sql";
+const PLAYGROUND_ID = "playground:sql:v2";
 
 const DEFAULT_CELLS = [
   {
