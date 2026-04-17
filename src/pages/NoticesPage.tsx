@@ -32,23 +32,23 @@ const NOTICES: Notice[] = [
     content: "AIGoLab은 누구나 AI를 배우고 직접 만들어볼 수 있는 실습형 학습 플랫폼입니다. Python, JavaScript, SQL 코딩 실습부터 AI 엔지니어링 12강, 바이브코딩 워크샵 42개까지 — 브라우저에서 바로 시작하세요.\n\n프로그래밍이 처음이어도, AI가 낯설어도 괜찮습니다. 단계별 힌트, 한국어 에러 번역, 챕터별 퀴즈로 누구나 자신만의 AI 앱을 완성할 수 있습니다.",
     category: "general",
     pinned: true,
-    date: "2026-04-18",
+    date: "2026-02-01",
   },
   {
     id: "n002",
-    title: "바이브코딩 워크샵 W00~W40 전체 오픈",
-    content: "바이브코딩 워크샵 42개가 모두 준비되었습니다!\n\n• Phase 1 (W01~W06): 기초 — AI 챗봇, 문서 Q&A, 번역기, 유튜브 기획기, 자막 생성기, 이미지 분석기\n• Phase 2 (W07~W11): 실전 도구 — 숏폼 메이커, 블로그 작성기, 감정 분석, 이메일 비서, 학습카드\n• Phase 3~8: 풀스택, 통합, 크리에이터, AI 에이전트, 수익화, 최종 종합\n\nW00(환경 설정)부터 차근차근 시작해보세요. 각 워크샵 상세 페이지에서 완성 모습과 학습 흐름을 미리 확인할 수 있습니다.",
-    category: "update",
-    pinned: true,
-    date: "2026-04-17",
-  },
-  {
-    id: "n003",
     title: "AI 엔지니어링 12강 커리큘럼 완성",
     content: "AI 엔지니어링 트랙 12강이 모두 완성되었습니다.\n\n• Ch01~02: WebLLM, Gemini 프롬프팅 (FREE)\n• Ch03~12: 구조화 출력, CoT, Tool Calling, 에이전트, RAG 등 (PRO)\n\n무료 API 키(Gemini, Groq)만으로 모든 실습을 진행할 수 있습니다. 'AI 앱 개발 → AI 엔지니어링 트랙'에서 시작하세요.",
     category: "update",
     pinned: false,
-    date: "2026-04-14",
+    date: "2026-02-15",
+  },
+  {
+    id: "n003",
+    title: "바이브코딩 워크샵 W00~W40 전체 오픈",
+    content: "바이브코딩 워크샵 42개가 모두 준비되었습니다!\n\n• Phase 1 (W01~W06): 기초 — AI 챗봇, 문서 Q&A, 번역기, 유튜브 기획기, 자막 생성기, 이미지 분석기\n• Phase 2 (W07~W11): 실전 도구 — 숏폼 메이커, 블로그 작성기, 감정 분석, 이메일 비서, 학습카드\n• Phase 3~8: 풀스택, 통합, 크리에이터, AI 에이전트, 수익화, 최종 종합\n\nW00(환경 설정)부터 차근차근 시작해보세요. 각 워크샵 상세 페이지에서 완성 모습과 학습 흐름을 미리 확인할 수 있습니다.",
+    category: "update",
+    pinned: true,
+    date: "2026-03-05",
   },
   {
     id: "n004",
@@ -56,7 +56,7 @@ const NOTICES: Notice[] = [
     content: "워크샵 학습 진도를 한눈에 확인할 수 있는 대시보드가 추가되었습니다.\n\n• Phase별 완료 현황 시각화\n• 다음 추천 워크샵 안내\n• 전체 진도율 표시\n\n'AI 앱 개발' 페이지 하단의 '학습 진도 대시보드'에서 확인하세요.",
     category: "update",
     pinned: false,
-    date: "2026-04-17",
+    date: "2026-03-20",
   },
   {
     id: "n005",
@@ -64,7 +64,7 @@ const NOTICES: Notice[] = [
     content: "중급 이상의 학습 콘텐츠는 PRO로 분류되어 있습니다. PRO 콘텐츠는 도서 구매자에게 제공될 예정이며, 자세한 일정과 방법은 추후 공지를 통해 안내드리겠습니다.\n\n현재 FREE로 이용 가능한 콘텐츠:\n• Python/JavaScript/SQL 입문 전체\n• AI 강의 01~06\n• AI 엔지니어링 Ch01~02\n• 바이브코딩 워크샵 Phase 1 (W01~W06)\n• Playground, IDE",
     category: "general",
     pinned: false,
-    date: "2026-04-18",
+    date: "2026-04-10",
   },
 ];
 
