@@ -36,6 +36,7 @@ import { AdminPage } from "./pages/AdminPage";
 import { FAQPage } from "./pages/FAQPage";
 import { NoticesPage } from "./pages/NoticesPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { ChatBot } from "./components/chatbot/ChatBot";
 import { useProgressStore } from "./store/progressStore";
 import { useKeyModalStore } from "./store/keyModalStore";
 import { KeySetupModal } from "./components/llm/KeySetupModal";
@@ -169,6 +170,7 @@ function AppInner() {
 
       <ShortcutsHelp />
       <GlobalKeyModal />
+      <ChatBot />
     </Layout>
   );
 }
