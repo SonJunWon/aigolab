@@ -179,7 +179,7 @@ export function AdminPage() {
             { id: "entitlements" as AdminTab, label: "👥 혜택 관리", },
             { id: "notices" as AdminTab, label: "📢 공지사항", },
             { id: "faq" as AdminTab, label: "❓ FAQ", },
-            { id: "inquiries" as AdminTab, label: "📩 문의 관리", },
+            { id: "inquiries" as AdminTab, label: "💬 문의 관리", },
           ]).map((tab) => (
             <button
               key={tab.id}
