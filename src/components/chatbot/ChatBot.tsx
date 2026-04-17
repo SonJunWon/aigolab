@@ -31,21 +31,17 @@ export function ChatBot() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // 로그인 안 된 상태면 렌더링 안 함
-  if (!user) return null;
-
   // 자동 스크롤
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
     if (isOpen) inputRef.current?.focus();
   }, [isOpen]);
+
+  // 로그인 안 된 상태면 렌더링 안 함 — hooks 이후에 배치
+  if (!user) return null;
 
   // API 키 확인
   const hasKey = !!(getKey("groq") || getKey("gemini"));
