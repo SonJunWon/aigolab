@@ -23,6 +23,10 @@ const statusIcon: Record<Cell["status"], { label: string; cls: string }> = {
 export function CodeCell({ cell, isSelected }: Props) {
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
   const updateSource = useNotebookStore((s) => s.updateSource);
+  const notebookLang = useNotebookStore((s) => s.language);
+
+  // Monaco 에디터 언어 매핑
+  const editorLanguage = notebookLang === "sql" ? "sql" : notebookLang === "javascript" ? "javascript" : "python";
 
   // ─── 셀이 선택되면 자동으로 Monaco editor에 focus ───
   // (Shift+Enter로 새 셀 생성 시 자동으로 거기서 입력 가능하게)
@@ -178,7 +182,7 @@ export function CodeCell({ cell, isSelected }: Props) {
         <div className="overflow-hidden">
           <Editor
             height={editorHeight}
-            defaultLanguage="python"
+            defaultLanguage={editorLanguage}
             value={cell.source}
             onChange={(val) => updateSource(cell.id, val ?? "")}
             onMount={handleMount}

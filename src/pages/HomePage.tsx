@@ -355,22 +355,24 @@ export function HomePage() {
                     커리큘럼 외에 자유롭게 JavaScript 코드를 실행할 수 있는 도구입니다
                   </p>
                   <div className="grid md:grid-cols-2 gap-4">
-                    <div className="relative p-5 rounded-xl border border-colab-subtle bg-colab-panel/50 opacity-60">
-                      <span className="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded-full bg-colab-subtle text-colab-textDim">준비 중</span>
+                    <Link
+                      to="/coding/playground-js"
+                      className="group p-5 rounded-xl border border-colab-subtle bg-colab-panel hover:border-colab-accent/60 hover:shadow-lg transition-all"
+                    >
                       <div className="flex items-center gap-3 mb-3">
                         <div className="shrink-0 w-11 h-11 rounded-lg bg-amber-500/10 flex items-center justify-center text-xl">🧪</div>
-                        <h3 className="text-base font-semibold text-colab-text">JS Playground</h3>
+                        <h3 className="text-base font-semibold text-colab-text group-hover:text-colab-accent transition-colors">JS Playground</h3>
                       </div>
                       <p className="text-sm text-colab-textDim leading-relaxed mb-3">
                         브라우저에서 JavaScript 코드를 셀 단위로 실행하고 결과를 확인하는 노트북 환경입니다.
-                        console.log 출력, DOM 조작 실험, 비동기 코드 테스트 등 자유롭게 활용할 수 있습니다.
+                        console.log 출력, 배열/객체 조작, 비동기 코드 테스트 등 자유롭게 활용할 수 있습니다.
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         <span className="px-2 py-0.5 rounded-md text-[10px] bg-amber-500/10 text-amber-400/80">셀 단위 실행</span>
                         <span className="px-2 py-0.5 rounded-md text-[10px] bg-amber-500/10 text-amber-400/80">console 출력</span>
                         <span className="px-2 py-0.5 rounded-md text-[10px] bg-amber-500/10 text-amber-400/80">자동 저장</span>
                       </div>
-                    </div>
+                    </Link>
                     <div className="relative p-5 rounded-xl border border-colab-subtle bg-colab-panel/50 opacity-60">
                       <span className="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded-full bg-colab-subtle text-colab-textDim">준비 중</span>
                       <div className="flex items-center gap-3 mb-3">
@@ -401,24 +403,26 @@ export function HomePage() {
                     커리큘럼 외에 자유롭게 SQL 쿼리를 실행할 수 있는 도구입니다
                   </p>
                   <div className="max-w-md">
-                    <div className="relative p-5 rounded-xl border border-colab-subtle bg-colab-panel/50 opacity-60">
-                      <span className="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded-full bg-colab-subtle text-colab-textDim">준비 중</span>
+                    <Link
+                      to="/coding/playground-sql"
+                      className="group block p-5 rounded-xl border border-colab-subtle bg-colab-panel hover:border-colab-accent/60 hover:shadow-lg transition-all"
+                    >
                       <div className="flex items-center gap-3 mb-3">
                         <div className="shrink-0 w-11 h-11 rounded-lg bg-cyan-500/10 flex items-center justify-center text-xl">🗄️</div>
-                        <h3 className="text-base font-semibold text-colab-text">SQL Playground</h3>
+                        <h3 className="text-base font-semibold text-colab-text group-hover:text-colab-accent transition-colors">SQL Playground</h3>
                       </div>
                       <p className="text-sm text-colab-textDim leading-relaxed mb-3">
                         브라우저 내장 SQLite 데이터베이스에서 SQL 쿼리를 자유롭게 실행하는 환경입니다.
                         테이블 생성, 데이터 입력, SELECT 쿼리 등을 실습하고 결과를 테이블 형태로 바로 확인할 수 있습니다.
-                        샘플 데이터셋이 내장되어 있어 바로 쿼리 연습을 시작할 수 있습니다.
+                        Chinook 샘플 데이터셋이 내장되어 있어 바로 쿼리 연습을 시작할 수 있습니다.
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         <span className="px-2 py-0.5 rounded-md text-[10px] bg-cyan-500/10 text-cyan-400/80">SQLite 내장</span>
                         <span className="px-2 py-0.5 rounded-md text-[10px] bg-cyan-500/10 text-cyan-400/80">테이블 결과 뷰</span>
                         <span className="px-2 py-0.5 rounded-md text-[10px] bg-cyan-500/10 text-cyan-400/80">샘플 데이터</span>
-                        <span className="px-2 py-0.5 rounded-md text-[10px] bg-cyan-500/10 text-cyan-400/80">쿼리 히스토리</span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] bg-cyan-500/10 text-cyan-400/80">자동 저장</span>
                       </div>
-                    </div>
+                    </Link>
                   </div>
                 </div>
               )}

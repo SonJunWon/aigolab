@@ -36,6 +36,8 @@ import { AdminPage } from "./pages/AdminPage";
 import { FAQPage } from "./pages/FAQPage";
 import { NoticesPage } from "./pages/NoticesPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { JavaScriptPlaygroundPage } from "./pages/JavaScriptPlaygroundPage";
+import { SqlPlaygroundPage } from "./pages/SqlPlaygroundPage";
 import { ChatBot } from "./components/chatbot/ChatBot";
 import { useProgressStore } from "./store/progressStore";
 import { useKeyModalStore } from "./store/keyModalStore";
@@ -147,6 +149,8 @@ function AppInner() {
         <Route path="/coding/learn/:language/:track" element={<ProtectedRoute><CurriculumPage /></ProtectedRoute>} />
         <Route path="/coding/learn/:language/:track/:lessonId" element={<ProtectedRoute><LessonPageWrapper /></ProtectedRoute>} />
         <Route path="/coding/playground" element={<ProtectedRoute><PlaygroundPage /></ProtectedRoute>} />
+        <Route path="/coding/playground-js" element={<ProtectedRoute><JavaScriptPlaygroundPage /></ProtectedRoute>} />
+        <Route path="/coding/playground-sql" element={<ProtectedRoute><SqlPlaygroundPage /></ProtectedRoute>} />
         <Route path="/coding/ide" element={<ProtectedRoute><IdePage /></ProtectedRoute>} />
 
         {/* AI 앱 개발 */}
