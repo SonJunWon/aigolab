@@ -14,6 +14,7 @@ function LessonPageWrapper() {
 import { AiDevPage } from "./pages/AiDevPage";
 import { WorkshopListPage } from "./pages/WorkshopListPage";
 import { WorkshopDetailPage } from "./pages/WorkshopDetailPage";
+import { ProgressDashboardPage } from "./pages/ProgressDashboardPage";
 import { PlaygroundPage } from "./pages/PlaygroundPage";
 import { IdePage } from "./pages/IdePage";
 import { AuthPage } from "./pages/AuthPage";
@@ -139,6 +140,7 @@ function AppInner() {
         <Route path="/ai-dev/track" element={<Navigate to="/coding/learn/ai-engineering/beginner" replace />} />
         <Route path="/ai-dev/workshop" element={<WorkshopListPage />} />
         <Route path="/ai-dev/workshop/:workshopId" element={<WorkshopDetailPage />} />
+        <Route path="/ai-dev/progress" element={<ProgressDashboardPage />} />
 
         {/* 하위 호환: 기존 URL 리다이렉트 */}
         <Route path="/learn/*" element={<Navigate to="/coding/learn" replace />} />

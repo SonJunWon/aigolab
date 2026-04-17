@@ -83,6 +83,38 @@ function findAdjacentWorkshops(lessonId: string) {
   };
 }
 
+/* ─── 선수 과목 + 관련 워크샵 ─── */
+function getPrerequisites(order: number): { id: string; title: string }[] {
+  // W00(환경설정)은 모든 워크샵의 선수
+  const prereqs: { id: string; title: string }[] = [];
+  if (order > 100) {
+    const w00 = WORKSHOP_LESSONS.find((l) => l.order === 100);
+    if (w00) prereqs.push({ id: w00.id, title: "W00: 환경 설정" });
+  }
+  // Phase 3+(order 112+)은 W12 SaaS 기초 권장
+  if (order >= 113 && order <= 116) {
+    const w12 = WORKSHOP_LESSONS.find((l) => l.order === 112);
+    if (w12) prereqs.push({ id: w12.id, title: w12.title });
+  }
+  // Phase 5+(order 122+)은 W16 배포 마스터 권장
+  if (order >= 122) {
+    const w16 = WORKSHOP_LESSONS.find((l) => l.order === 116);
+    if (w16) prereqs.push({ id: w16.id, title: w16.title });
+  }
+  return prereqs;
+}
+
+function getRelatedWorkshops(lesson: Lesson): Lesson[] {
+  // 같은 Phase 내 다른 워크샵 (최대 3개)
+  const phase = getPhaseMeta(lesson.order);
+  return WORKSHOP_LESSONS
+    .filter((l) => {
+      const lPhase = getPhaseMeta(l.order);
+      return lPhase.label === phase.label && l.id !== lesson.id;
+    })
+    .slice(0, 3);
+}
+
 /* ─── 메인 컴포넌트 ─── */
 export function WorkshopDetailPage() {
   const { workshopId } = useParams<{ workshopId: string }>();
@@ -96,6 +128,8 @@ export function WorkshopDetailPage() {
   const done = isCompleted("ai-engineering", "beginner", lesson.id);
   const info = extractWorkshopInfo(lesson);
   const { prev, next } = findAdjacentWorkshops(lesson.id);
+  const prereqs = getPrerequisites(lesson.order);
+  const related = getRelatedWorkshops(lesson);
 
   const workshopNum = lesson.order <= 100
     ? "W00"
@@ -240,6 +274,64 @@ export function WorkshopDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* ─── 선수 과목 ─── */}
+        {prereqs.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold mb-3">사전 준비</h2>
+            <div className="space-y-2">
+              {prereqs.map((p) => {
+                const prDone = isCompleted("ai-engineering", "beginner", p.id);
+                return (
+                  <Link
+                    key={p.id}
+                    to={`/ai-dev/workshop/${p.id}`}
+                    className="flex items-center gap-3 p-3 rounded-lg border border-brand-subtle/50 bg-brand-panel/40
+                               hover:border-brand-accent/40 transition-all group"
+                  >
+                    <span className={`text-sm ${prDone ? "text-emerald-400" : "text-brand-textDim"}`}>
+                      {prDone ? "✓" : "○"}
+                    </span>
+                    <span className="text-sm group-hover:text-brand-accent transition-colors">{p.title}</span>
+                    {prDone ? (
+                      <span className="ml-auto text-[10px] text-emerald-400">완료</span>
+                    ) : (
+                      <span className="ml-auto text-[10px] text-brand-textDim">권장</span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ─── 같은 Phase 워크샵 ─── */}
+        {related.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold mb-3">같은 단계의 워크샵</h2>
+            <div className="grid sm:grid-cols-3 gap-3">
+              {related.map((r) => {
+                const rDone = isCompleted("ai-engineering", "beginner", r.id);
+                return (
+                  <Link
+                    key={r.id}
+                    to={`/ai-dev/workshop/${r.id}`}
+                    className="p-3 rounded-lg border border-brand-subtle/50 bg-brand-panel/40
+                               hover:border-brand-accent/40 transition-all group"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      {rDone && <span className="text-emerald-400 text-xs">✓</span>}
+                      <span className="text-sm font-medium group-hover:text-brand-accent transition-colors truncate">
+                        {r.title}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-brand-textDim truncate">{r.subtitle}</p>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ─── CTA 버튼 ─── */}
         <div className="mb-10">

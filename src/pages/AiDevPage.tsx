@@ -190,6 +190,30 @@ export function AiDevPage() {
           </p>
         </section>
 
+        {/* ─── 진도 대시보드 링크 ─── */}
+        <section className="mb-12 sm:mb-16">
+          <Link
+            to="/ai-dev/progress"
+            className="group block p-5 sm:p-6 rounded-xl border border-brand-subtle bg-brand-panel/60
+                       hover:border-brand-accent/40 hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">📊</span>
+                <div>
+                  <div className="text-base font-semibold group-hover:text-brand-accent transition-colors">
+                    학습 진도 대시보드
+                  </div>
+                  <div className="text-xs text-brand-textDim">
+                    Phase별 완료 현황과 다음 추천 워크샵 확인
+                  </div>
+                </div>
+              </div>
+              <span className="text-brand-textDim group-hover:text-brand-accent group-hover:translate-x-1 transition-all text-lg">→</span>
+            </div>
+          </Link>
+        </section>
+
       </div>
     </div>
   );
