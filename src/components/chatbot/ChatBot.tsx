@@ -40,16 +40,13 @@ export function ChatBot() {
     if (isOpen) inputRef.current?.focus();
   }, [isOpen]);
 
-  // 로그인 안 된 상태면 렌더링 안 함 — hooks 이후에 배치
-  if (!user) return null;
-
   // API 키 확인
   const hasKey = !!(getKey("groq") || getKey("gemini"));
 
   // 메시지 전송
   const handleSend = useCallback(async () => {
     const text = input.trim();
-    if (!text || loading) return;
+    if (!text || loading || !user) return;
 
     setInput("");
     setError(null);
@@ -64,7 +61,6 @@ export function ChatBot() {
     setLoading(true);
 
     try {
-      // 대화 히스토리 구성 (최근 10턴)
       const history: Message[] = [
         { role: "system", content: CHATBOT_SYSTEM_PROMPT },
         ...messages.slice(-20).map((m) => ({
@@ -86,7 +82,6 @@ export function ChatBot() {
       };
       setMessages((prev) => [...prev, assistantMsg]);
 
-      // @관리자 멘션 감지 시 Supabase에 저장
       if (text.includes("@관리자")) {
         await saveAdminInquiry({
           userId: user.id,
@@ -102,6 +97,9 @@ export function ChatBot() {
       setLoading(false);
     }
   }, [input, loading, messages, user]);
+
+  // 로그인 안 된 상태면 렌더링 안 함 — 모든 hooks 이후에 배치
+  if (!user) return null;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
