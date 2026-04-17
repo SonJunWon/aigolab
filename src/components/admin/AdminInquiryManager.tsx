@@ -4,11 +4,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  listAdminInquiries,
+  listAllInquiries,
   replyToInquiry,
   deleteInquiry,
   type AdminInquiry,
-} from "../chatbot/adminInquiry";
+} from "../../storage/supabaseInquiryRepo";
 
 export function AdminInquiryManager() {
   const [inquiries, setInquiries] = useState<AdminInquiry[]>([]);
@@ -16,8 +16,9 @@ export function AdminInquiryManager() {
   const [replyText, setReplyText] = useState("");
   const [filter, setFilter] = useState<"all" | "pending" | "replied">("all");
 
-  const reload = useCallback(() => {
-    setInquiries(listAdminInquiries());
+  const reload = useCallback(async () => {
+    const list = await listAllInquiries();
+    setInquiries(list);
   }, []);
 
   useEffect(() => {
@@ -32,19 +33,19 @@ export function AdminInquiryManager() {
 
   const selected = inquiries.find((i) => i.id === selectedId);
 
-  const handleReply = () => {
+  const handleReply = async () => {
     if (!selectedId || !replyText.trim()) return;
-    replyToInquiry(selectedId, replyText.trim());
+    await replyToInquiry(selectedId, replyText.trim());
     setReplyText("");
     setSelectedId(null);
-    reload();
+    await reload();
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("이 문의를 삭제하시겠습니까?")) return;
-    deleteInquiry(id);
+    await deleteInquiry(id);
     if (selectedId === id) setSelectedId(null);
-    reload();
+    await reload();
   };
 
   const pendingCount = inquiries.filter((i) => i.status === "pending").length;
@@ -105,8 +106,8 @@ export function AdminInquiryManager() {
               ${selected.status === "pending" ? "bg-amber-500/15 text-amber-400" : "bg-emerald-500/15 text-emerald-400"}`}>
               {selected.status === "pending" ? "⏳ 대기" : "✅ 답변됨"}
             </span>
-            <span className="text-xs text-brand-textDim">{selected.userEmail}</span>
-            <span className="text-xs text-brand-textDim">{new Date(selected.createdAt).toLocaleString("ko-KR")}</span>
+            <span className="text-xs text-brand-textDim">{selected.user_email}</span>
+            <span className="text-xs text-brand-textDim">{new Date(selected.created_at).toLocaleString("ko-KR")}</span>
           </div>
 
           <div className="mb-4">
@@ -116,13 +117,13 @@ export function AdminInquiryManager() {
 
           <div className="mb-4">
             <div className="text-[10px] text-brand-textDim uppercase tracking-wider mb-1">AI 응답</div>
-            <div className="p-3 rounded-lg bg-brand-bg text-sm text-brand-textDim">{selected.aiResponse}</div>
+            <div className="p-3 rounded-lg bg-brand-bg text-sm text-brand-textDim">{selected.ai_response}</div>
           </div>
 
-          {selected.adminReply ? (
+          {selected.admin_reply ? (
             <div className="mb-4">
               <div className="text-[10px] text-brand-textDim uppercase tracking-wider mb-1">관리자 답변</div>
-              <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-sm">{selected.adminReply}</div>
+              <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-sm">{selected.admin_reply}</div>
             </div>
           ) : (
             <div className="mb-4">
@@ -169,8 +170,8 @@ export function AdminInquiryManager() {
                       ${inq.status === "pending" ? "bg-amber-500/15 text-amber-400" : "bg-emerald-500/15 text-emerald-400"}`}>
                       {inq.status === "pending" ? "⏳" : "✅"}
                     </span>
-                    <span className="text-xs text-brand-textDim">{inq.userEmail}</span>
-                    <span className="text-[10px] text-brand-textDim">{new Date(inq.createdAt).toLocaleDateString("ko-KR")}</span>
+                    <span className="text-xs text-brand-textDim">{inq.user_email}</span>
+                    <span className="text-[10px] text-brand-textDim">{new Date(inq.created_at).toLocaleDateString("ko-KR")}</span>
                   </div>
                   <div className="text-sm truncate">{inq.question}</div>
                 </button>

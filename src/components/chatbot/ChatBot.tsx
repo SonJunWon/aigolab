@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../../store/authStore";
 import { chat, getKey } from "../../lib/llm";
 import { CHATBOT_SYSTEM_PROMPT } from "./systemPrompt";
-import { saveAdminInquiry, listUserInquiries, countUnreadReplies, markReplyAsRead, type AdminInquiry } from "./adminInquiry";
+import { createInquiry, listMyInquiries, type AdminInquiry } from "../../storage/supabaseInquiryRepo";
 import type { Message } from "../../lib/llm";
 
 interface ChatMessage {
@@ -46,8 +46,15 @@ export function ChatBot() {
   // 문의 목록 + 미확인 답변 카운트 갱신
   useEffect(() => {
     if (!user) return;
-    setInquiries(listUserInquiries(user.id));
-    setUnreadCount(countUnreadReplies(user.id));
+    (async () => {
+      const list = await listMyInquiries(user.id);
+      setInquiries(list);
+      // 읽음 상태는 localStorage에서 관리
+      const readKey = `aigolab-read-replies-${user.id}`;
+      const readIds: string[] = JSON.parse(localStorage.getItem(readKey) ?? "[]");
+      const unread = list.filter((i) => i.status === "replied" && !readIds.includes(i.id)).length;
+      setUnreadCount(unread);
+    })();
   }, [user, isOpen, tab]);
 
   // API 키 확인
@@ -93,10 +100,10 @@ export function ChatBot() {
       setMessages((prev) => [...prev, assistantMsg]);
 
       if (text.includes("@관리자")) {
-        await saveAdminInquiry({
+        await createInquiry({
           userId: user.id,
           userEmail: user.email ?? "",
-          question: text,
+          question: text.replace("@관리자", "").trim(),
           aiResponse: res.text,
         });
       }
@@ -220,7 +227,14 @@ export function ChatBot() {
                       key={inq.id}
                       className={`rounded-xl border p-3 text-sm space-y-2
                         ${isUnread ? "border-brand-accent/50 bg-brand-accent/5" : "border-brand-subtle bg-brand-panel/40"}`}
-                      onClick={() => { if (isUnread && user) markReplyAsRead(user.id, inq.id); setUnreadCount((c) => Math.max(0, c - (isUnread ? 1 : 0))); }}
+                      onClick={() => {
+                        if (isUnread && user) {
+                          const rk = `aigolab-read-replies-${user.id}`;
+                          const ids: string[] = JSON.parse(localStorage.getItem(rk) ?? "[]");
+                          if (!ids.includes(inq.id)) { ids.push(inq.id); localStorage.setItem(rk, JSON.stringify(ids)); }
+                          setUnreadCount((c) => Math.max(0, c - 1));
+                        }
+                      }}
                     >
                       {/* 상태 + 날짜 */}
                       <div className="flex items-center gap-2">
@@ -230,7 +244,7 @@ export function ChatBot() {
                         </span>
                         {isUnread && <span className="text-[9px] text-brand-accent font-medium">NEW</span>}
                         <span className="text-[10px] text-brand-textDim ml-auto">
-                          {new Date(inq.createdAt).toLocaleDateString("ko-KR")}
+                          {new Date(inq.created_at).toLocaleDateString("ko-KR")}
                         </span>
                       </div>
                       {/* 내 질문 */}
@@ -239,17 +253,17 @@ export function ChatBot() {
                         <div className="text-xs text-brand-text">{inq.question}</div>
                       </div>
                       {/* 관리자 답변 */}
-                      {inq.adminReply && (
+                      {inq.admin_reply && (
                         <div className="p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
                           <div className="text-[10px] text-emerald-400 mb-0.5">🛡️ 관리자 답변</div>
-                          <div className="text-xs text-brand-text">{inq.adminReply}</div>
+                          <div className="text-xs text-brand-text">{inq.admin_reply}</div>
                         </div>
                       )}
                       {/* AI 답변 */}
-                      {!inq.adminReply && inq.aiResponse && (
+                      {!inq.admin_reply && inq.ai_response && (
                         <div>
                           <div className="text-[10px] text-brand-textDim mb-0.5">🤖 AI 답변</div>
-                          <div className="text-xs text-brand-textDim">{inq.aiResponse}</div>
+                          <div className="text-xs text-brand-textDim">{inq.ai_response}</div>
                         </div>
                       )}
                     </div>
