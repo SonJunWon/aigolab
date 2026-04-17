@@ -29,6 +29,10 @@ import {
   ENTITLEMENT_LABELS,
   ENTITLEMENT_DESCRIPTIONS,
 } from "../types/entitlement";
+import { AdminNoticesEditor } from "../components/admin/AdminNoticesEditor";
+import { AdminFAQEditor } from "../components/admin/AdminFAQEditor";
+
+type AdminTab = "entitlements" | "notices" | "faq";
 
 export function AdminPage() {
   const user = useAuthStore((s) => s.user);
@@ -42,6 +46,7 @@ export function AdminPage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<AdminTab>("entitlements");
 
   // 데이터 로드
   const reload = useCallback(async () => {
@@ -167,6 +172,35 @@ export function AdminPage() {
           </button>
         </header>
 
+        {/* 탭 네비게이션 */}
+        <div className="flex gap-1 mb-6 border-b border-brand-subtle">
+          {([
+            { id: "entitlements" as AdminTab, label: "👥 혜택 관리", },
+            { id: "notices" as AdminTab, label: "📢 공지사항", },
+            { id: "faq" as AdminTab, label: "❓ FAQ", },
+          ]).map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2
+                ${activeTab === tab.id
+                  ? "text-brand-primary border-brand-primary"
+                  : "text-brand-textDim border-transparent hover:text-brand-text"
+                }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* 공지사항 관리 탭 */}
+        {activeTab === "notices" && <AdminNoticesEditor />}
+
+        {/* FAQ 관리 탭 */}
+        {activeTab === "faq" && <AdminFAQEditor />}
+
+        {/* 혜택 관리 탭 */}
+        {activeTab === "entitlements" && <>
         {/* 요약 */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <StatCard
@@ -336,6 +370,8 @@ export function AdminPage() {
             })
           )}
         </div>
+
+        </>}
 
         {/* Toast */}
         {toast && (
