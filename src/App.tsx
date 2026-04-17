@@ -33,6 +33,7 @@ import { ProjectWorkPage } from "./pages/ProjectWorkPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { TermsPage } from "./pages/TermsPage";
 import { AdminPage } from "./pages/AdminPage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { useProgressStore } from "./store/progressStore";
 import { useKeyModalStore } from "./store/keyModalStore";
 import { KeySetupModal } from "./components/llm/KeySetupModal";
@@ -121,49 +122,43 @@ function AppInner() {
   return (
     <Layout>
       <Routes>
-        {/* 메인 홈 */}
+        {/* ─── 자유 접근 (로그인 불필요) ─── */}
         <Route path="/" element={<MainHomePage />} />
-
-        {/* 코딩 실습 코너 (Python/JS/SQL) */}
         <Route path="/coding" element={<CodingHomePage />} />
-        <Route path="/coding/learn/:language/:track" element={<CurriculumPage />} />
-        <Route
-          path="/coding/learn/:language/:track/:lessonId"
-          element={<LessonPageWrapper />}
-        />
-        <Route path="/coding/playground" element={<PlaygroundPage />} />
-        <Route path="/coding/ide" element={<IdePage />} />
-
-        {/* AI 앱 개발 코너 */}
         <Route path="/ai-dev" element={<AiDevPage />} />
-        {/* AI 엔지니어링 트랙 → 기존 커리큘럼/레슨 페이지 재사용 */}
-        <Route path="/ai-dev/track" element={<Navigate to="/coding/learn/ai-engineering/beginner" replace />} />
-        <Route path="/ai-dev/workshop" element={<WorkshopListPage />} />
-        <Route path="/ai-dev/workshop/:workshopId" element={<WorkshopDetailPage />} />
-        <Route path="/ai-dev/progress" element={<ProgressDashboardPage />} />
+        <Route path="/courses" element={<CoursesPage />} />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
 
         {/* 하위 호환: 기존 URL 리다이렉트 */}
         <Route path="/learn/*" element={<Navigate to="/coding/learn" replace />} />
         <Route path="/playground" element={<Navigate to="/coding/playground" replace />} />
         <Route path="/ide" element={<Navigate to="/coding/ide" replace />} />
 
-        {/* 인증 */}
-        <Route path="/auth" element={<AuthPage />} />
+        {/* ─── 로그인 필수 (비로그인 시 유도 화면) ─── */}
 
-        {/* AI 강의 */}
-        <Route path="/courses" element={<CoursesPage />} />
-        <Route path="/courses/:courseId" element={<CourseDetailPage />} />
-        <Route path="/projects" element={<ProjectsPage />} />
-        <Route path="/projects/:projectId/work" element={<ProjectWorkPage />} />
-        <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
-        <Route path="/my" element={<MyPage />} />
+        {/* 코딩 실습 */}
+        <Route path="/coding/learn/:language/:track" element={<ProtectedRoute><CurriculumPage /></ProtectedRoute>} />
+        <Route path="/coding/learn/:language/:track/:lessonId" element={<ProtectedRoute><LessonPageWrapper /></ProtectedRoute>} />
+        <Route path="/coding/playground" element={<ProtectedRoute><PlaygroundPage /></ProtectedRoute>} />
+        <Route path="/coding/ide" element={<ProtectedRoute><IdePage /></ProtectedRoute>} />
 
-        {/* 정책 페이지 */}
-        <Route path="/privacy" element={<PrivacyPage />} />
-        <Route path="/terms" element={<TermsPage />} />
+        {/* AI 앱 개발 */}
+        <Route path="/ai-dev/track" element={<ProtectedRoute><Navigate to="/coding/learn/ai-engineering/beginner" replace /></ProtectedRoute>} />
+        <Route path="/ai-dev/workshop" element={<ProtectedRoute><WorkshopListPage /></ProtectedRoute>} />
+        <Route path="/ai-dev/workshop/:workshopId" element={<ProtectedRoute><WorkshopDetailPage /></ProtectedRoute>} />
+        <Route path="/ai-dev/progress" element={<ProtectedRoute><ProgressDashboardPage /></ProtectedRoute>} />
 
-        {/* 관리자 */}
-        <Route path="/admin" element={<AdminPage />} />
+        {/* AI 강의 상세 · 프로젝트 */}
+        <Route path="/courses/:courseId" element={<ProtectedRoute><CourseDetailPage /></ProtectedRoute>} />
+        <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+        <Route path="/projects/:projectId/work" element={<ProtectedRoute><ProjectWorkPage /></ProtectedRoute>} />
+        <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
+
+        {/* 마이페이지 · 관리자 */}
+        <Route path="/my" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
