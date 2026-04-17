@@ -33,8 +33,8 @@ self.onmessage = async function (e) {
       });
 
       // Chinook DB 로드 (fetch → Uint8Array → SQL.Database)
-      // cache: "no-cache" — 브라우저가 잘못 캐시한 파일(HTML 등)을 방지
-      const res = await fetch("/chinook.sqlite", { cache: "no-cache" });
+      // cache-busting: 쿼리스트링으로 브라우저 캐시 완전 무시
+      const res = await fetch("/chinook.sqlite?v=" + Date.now(), { cache: "no-store" });
       if (!res.ok) throw new Error("Chinook DB fetch failed: " + res.status);
       const contentType = res.headers.get("content-type") || "";
       if (contentType.includes("text/html")) {
@@ -46,8 +46,16 @@ self.onmessage = async function (e) {
       }
       db = new SQL.Database(new Uint8Array(buf));
 
+      // 테이블 존재 검증 — Chinook DB가 제대로 로드됐는지 확인
+      var tableCheck = db.exec("SELECT name FROM sqlite_master WHERE type='table' LIMIT 5");
+      var tableCount = tableCheck.length > 0 ? tableCheck[0].values.length : 0;
+      if (tableCount === 0) {
+        // 테이블이 없으면 빈 DB — fetch가 잘못된 파일을 받았을 가능성
+        throw new Error("Chinook DB 로드 실패: 테이블이 0개. fetch된 파일이 올바른 SQLite인지 확인하세요. (size: " + buf.byteLength + ")");
+      }
+
       initialized = true;
-      self.postMessage({ type: "ready", id, version: "SQLite 3 (Chinook)" });
+      self.postMessage({ type: "ready", id, version: "SQLite 3 (Chinook, " + tableCount + " tables)" });
     } catch (err) {
       self.postMessage({
         type: "error",
