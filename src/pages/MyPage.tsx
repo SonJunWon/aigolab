@@ -193,6 +193,22 @@ export function MyPage() {
           <StatCard label="퀴즈" value={`${quizCount}`} sub="회 완료" />
         </section>
 
+        {/* API 키 관리 링크 */}
+        <section className="mb-10">
+          <Link
+            to="/my/api-keys"
+            className="group flex items-center gap-4 p-5 rounded-xl border border-brand-subtle bg-brand-panel
+                       hover:border-brand-accent/40 hover:shadow-lg transition-all"
+          >
+            <span className="text-2xl">🔑</span>
+            <div className="flex-1">
+              <div className="text-base font-semibold group-hover:text-brand-accent transition-colors">API 키 관리</div>
+              <div className="text-xs text-brand-textDim">Gemini, Groq 등 AI API 키 등록 및 관리</div>
+            </div>
+            <span className="text-brand-textDim group-hover:text-brand-accent text-lg">→</span>
+          </Link>
+        </section>
+
         {/* 활동 히트맵 */}
         <section className="mb-10 p-5 rounded-xl border border-brand-subtle bg-brand-panel">
           <div className="flex items-center justify-between mb-4">
