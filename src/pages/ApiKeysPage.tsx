@@ -32,9 +32,9 @@ const API_KEYS: ApiKeyConfig[] = [
     name: "Google Gemini",
     icon: "✨",
     required: true,
-    description: "AI 텍스트 생성, 이미지 분석, 코드 설명 등 핵심 AI 기능을 제공합니다. 대부분의 실습에 필요한 필수 키입니다.",
-    useCases: ["AI 텍스트 생성", "이미지 분석 (멀티모달)", "코드 설명 및 생성", "번역, 요약, 분류"],
-    freeLimit: "하루 1,500회 요청 / 분당 15회",
+    description: "AI 텍스트 생성, 이미지 생성/분석, 코드 설명 등 핵심 AI 기능을 제공합니다. 대부분의 실습에 필요한 필수 키입니다.",
+    useCases: ["AI 텍스트 생성", "AI 이미지 생성 (Imagen)", "이미지 분석 (멀티모달)", "코드 설명 및 생성", "번역, 요약, 분류"],
+    freeLimit: "텍스트: 하루 1,500회 / 이미지 생성: 하루 약 50회",
     prefix: "AIza",
     guide: {
       url: "https://aistudio.google.com/apikey",
