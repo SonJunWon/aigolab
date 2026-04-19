@@ -7,6 +7,7 @@
 import { Link } from "react-router-dom";
 import { useProgressStore } from "../store/progressStore";
 import { WORKSHOP_LESSONS } from "../content/ai-engineering/workshops";
+import { LESSONS as INTRO_LESSONS } from "../content/ai-engineering/intro";
 
 /* ─── 워크샵 앱 갤러리 ─── */
 const APP_GALLERY = [
@@ -30,6 +31,9 @@ const APP_GALLERY = [
 
 export function AiDevPage() {
   const isCompleted = useProgressStore((s) => s.isCompleted);
+  const introDone = INTRO_LESSONS.filter((l) =>
+    isCompleted("ai-engineering", "intro", l.id)
+  ).length;
   const workshopDone = WORKSHOP_LESSONS.filter((l) =>
     isCompleted("ai-engineering", "beginner", l.id)
   ).length;
@@ -41,7 +45,7 @@ export function AiDevPage() {
         {/* ─── 히어로 ─── */}
         <section className="text-center mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-accent/10 border border-brand-accent/20 text-xs text-brand-accent font-medium mb-4">
-            42개 워크샵 · 8단계 · 무료 API
+            입문 13강 · 엔지니어링 12강 · 워크샵 42개
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">
             <span className="text-4xl sm:text-5xl mr-2">🚀</span>
@@ -56,82 +60,129 @@ export function AiDevPage() {
           {/* CTA 제거 — 아래 트랙 카드가 직접 진입점 역할 */}
         </section>
 
-        {/* ─── 두 트랙 ─── */}
+        {/* ─── 세 트랙 ─── */}
         <section className="mb-12 sm:mb-16">
-          <div className="grid md:grid-cols-2 gap-5">
-            {/* AI 엔지니어링 트랙 */}
+          <div className="space-y-5">
+            {/* AI 입문 준비 과정 — 전체 폭 강조 */}
             <Link
-              to="/coding/learn/ai-engineering/beginner"
-              className="group p-6 sm:p-8 rounded-2xl border border-brand-subtle bg-gradient-to-br from-violet-500/8 to-brand-panel/80
-                         hover:border-brand-primary/60 hover:shadow-lg hover:shadow-brand-primary/10 transition-all"
+              to="/coding/learn/ai-engineering/intro"
+              className="group block p-6 sm:p-8 rounded-2xl border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/8 to-brand-panel/80
+                         hover:border-amber-400/60 hover:shadow-lg hover:shadow-amber-500/10 transition-all"
             >
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-semibold">
+                  여기서 시작하세요!
+                </span>
+              </div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="text-3xl sm:text-4xl">🤖</div>
+                <div className="text-3xl sm:text-4xl">🌱</div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-lg sm:text-xl font-semibold group-hover:text-brand-primary transition-colors">
-                      AI 엔지니어링 트랙
+                    <h2 className="text-lg sm:text-xl font-semibold group-hover:text-amber-400 transition-colors">
+                      AI 입문 준비 과정
                     </h2>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-green text-white font-semibold">
-                      12강
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500 text-white font-semibold">
+                      13강
                     </span>
                   </div>
-                  <p className="text-xs text-brand-textDim">개념과 기법을 체계적으로</p>
+                  <p className="text-xs text-brand-textDim">AI가 처음이라면, 여기부터</p>
                 </div>
               </div>
               <p className="text-sm text-brand-textDim mb-4 leading-relaxed">
-                프롬프트 · 구조화 출력 · CoT · Tool Calling · 에이전트 · RAG.
-                무료 API 키만으로 12강 체계적 커리큘럼.
+                플랫폼 사용법 · API 키 등록 · AI 대화 · 이미지 생성 · 프롬프트 · 코딩 첫걸음.
+                코딩 경험이 전혀 없어도 따라할 수 있는 기초 과정입니다.
               </p>
               <div className="flex flex-wrap gap-2">
-                {["WebLLM", "Gemini", "Groq", "RAG", "Agent"].map((tag) => (
-                  <span key={tag} className="px-2 py-0.5 rounded-md text-[10px] bg-violet-500/10 text-violet-300">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <div className="mt-4 text-xs text-brand-textDim">
-                📖 12강 · ⏱️ ~8시간 · 📝 60+ 퀴즈
-              </div>
-            </Link>
-
-            {/* 바이브코딩 워크샵 */}
-            <Link
-              to="/ai-dev/workshop"
-              className="group p-6 sm:p-8 rounded-2xl border border-brand-subtle bg-gradient-to-br from-cyan-500/8 to-brand-panel/80
-                         hover:border-brand-accent/60 hover:shadow-lg hover:shadow-brand-accent/10 transition-all"
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="text-3xl sm:text-4xl">🛠️</div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-lg sm:text-xl font-semibold group-hover:text-brand-accent transition-colors">
-                      바이브코딩 워크샵
-                    </h2>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-accent text-white font-semibold">
-                      42개
-                    </span>
-                  </div>
-                  <p className="text-xs text-brand-textDim">실전 앱을 직접 만들기</p>
-                </div>
-              </div>
-              <p className="text-sm text-brand-textDim mb-4 leading-relaxed">
-                MD 레시피 + AI 코딩 도구 = 완성도 있는 프로그램.
-                기초부터 SaaS 런칭까지 8단계 학습 곡선.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {["Claude Code", "Cursor", "MD 레시피", "Supabase", "Vercel"].map((tag) => (
-                  <span key={tag} className="px-2 py-0.5 rounded-md text-[10px] bg-cyan-500/10 text-cyan-300">
+                {["AI 대화", "이미지 생성", "프롬프트", "코딩 기초", "바이브코딩"].map((tag) => (
+                  <span key={tag} className="px-2 py-0.5 rounded-md text-[10px] bg-amber-500/10 text-amber-300">
                     {tag}
                   </span>
                 ))}
               </div>
               <div className="mt-4 flex items-center gap-3 text-xs text-brand-textDim">
-                <span>🛠️ {WORKSHOP_LESSONS.length}개 워크샵</span>
+                <span>📖 {INTRO_LESSONS.length}강</span>
                 <span>·</span>
-                <span>✅ {workshopDone}개 완료</span>
+                <span>⏱️ ~{Math.ceil(INTRO_LESSONS.length * 17 / 60)}시간</span>
+                <span>·</span>
+                <span>✅ {introDone}강 완료</span>
               </div>
             </Link>
+
+            <div className="grid md:grid-cols-2 gap-5">
+              {/* AI 엔지니어링 트랙 */}
+              <Link
+                to="/coding/learn/ai-engineering/beginner"
+                className="group p-6 sm:p-8 rounded-2xl border border-brand-subtle bg-gradient-to-br from-violet-500/8 to-brand-panel/80
+                           hover:border-brand-primary/60 hover:shadow-lg hover:shadow-brand-primary/10 transition-all"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="text-3xl sm:text-4xl">🤖</div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg sm:text-xl font-semibold group-hover:text-brand-primary transition-colors">
+                        AI 엔지니어링 트랙
+                      </h2>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-green text-white font-semibold">
+                        12강
+                      </span>
+                    </div>
+                    <p className="text-xs text-brand-textDim">개념과 기법을 체계적으로</p>
+                  </div>
+                </div>
+                <p className="text-sm text-brand-textDim mb-4 leading-relaxed">
+                  프롬프트 · 구조화 출력 · CoT · Tool Calling · 에이전트 · RAG.
+                  무료 API 키만으로 12강 체계적 커리큘럼.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {["WebLLM", "Gemini", "Groq", "RAG", "Agent"].map((tag) => (
+                    <span key={tag} className="px-2 py-0.5 rounded-md text-[10px] bg-violet-500/10 text-violet-300">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-4 text-xs text-brand-textDim">
+                  📖 12강 · ⏱️ ~8시간 · 📝 60+ 퀴즈
+                </div>
+              </Link>
+
+              {/* 바이브코딩 워크샵 */}
+              <Link
+                to="/ai-dev/workshop"
+                className="group p-6 sm:p-8 rounded-2xl border border-brand-subtle bg-gradient-to-br from-cyan-500/8 to-brand-panel/80
+                           hover:border-brand-accent/60 hover:shadow-lg hover:shadow-brand-accent/10 transition-all"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="text-3xl sm:text-4xl">🛠️</div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg sm:text-xl font-semibold group-hover:text-brand-accent transition-colors">
+                        바이브코딩 워크샵
+                      </h2>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-accent text-white font-semibold">
+                        42개
+                      </span>
+                    </div>
+                    <p className="text-xs text-brand-textDim">실전 앱을 직접 만들기</p>
+                  </div>
+                </div>
+                <p className="text-sm text-brand-textDim mb-4 leading-relaxed">
+                  MD 레시피 + AI 코딩 도구 = 완성도 있는 프로그램.
+                  기초부터 SaaS 런칭까지 8단계 학습 곡선.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {["Claude Code", "Cursor", "MD 레시피", "Supabase", "Vercel"].map((tag) => (
+                    <span key={tag} className="px-2 py-0.5 rounded-md text-[10px] bg-cyan-500/10 text-cyan-300">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-4 flex items-center gap-3 text-xs text-brand-textDim">
+                  <span>🛠️ {WORKSHOP_LESSONS.length}개 워크샵</span>
+                  <span>·</span>
+                  <span>✅ {workshopDone}개 완료</span>
+                </div>
+              </Link>
+            </div>
           </div>
         </section>
 
@@ -165,9 +216,10 @@ export function AiDevPage() {
           </h2>
           <div className="max-w-lg mx-auto space-y-3">
             {[
-              { icon: "🤖", label: "12강 커리큘럼", desc: "AI 개념·기법 학습", color: "border-violet-500/30 bg-violet-500/5" },
+              { icon: "🌱", label: "AI 입문 준비", desc: "AI 기초 + 플랫폼 사용법 (13강)", color: "border-amber-500/30 bg-amber-500/5" },
+              { icon: "🤖", label: "AI 엔지니어링", desc: "AI 개념·기법 심화 학습 (12강)", color: "border-violet-500/30 bg-violet-500/5" },
               { icon: "🛠️", label: "바이브코딩 워크샵", desc: "실전 앱 42개 제작", color: "border-cyan-500/30 bg-cyan-500/5" },
-            ].map((item, i) => (
+            ].map((item, i, arr) => (
               <div key={i}>
                 <div className={`flex items-center gap-4 p-4 rounded-xl border ${item.color}`}>
                   <span className="text-2xl">{item.icon}</span>
@@ -177,7 +229,7 @@ export function AiDevPage() {
                   </div>
                   <span className="ml-auto text-xs text-brand-textDim">Step {i + 1}</span>
                 </div>
-                {i === 0 && (
+                {i < arr.length - 1 && (
                   <div className="flex justify-center py-1">
                     <span className="text-brand-textDim text-sm">↓</span>
                   </div>
@@ -186,7 +238,7 @@ export function AiDevPage() {
             ))}
           </div>
           <p className="mt-4 text-xs text-brand-textDim text-center">
-            12강으로 기법을 배우고 → 워크샵에서 실제 앱으로 조립. 또는 바로 워크샵부터 시작해도 OK.
+            입문부터 시작하거나, 경험이 있다면 엔지니어링 트랙 또는 워크샵부터 바로 시작해도 OK.
           </p>
         </section>
 
