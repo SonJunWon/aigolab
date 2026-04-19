@@ -169,6 +169,12 @@ async function runLlmCellPath(
           text: step.content,
           agentStep: step,
         }),
+      onFigure: (dataUrl) =>
+        useNotebookStore.getState().appendOutput(cellId, {
+          stream: "figure",
+          text: "",
+          dataUrl,
+        }),
       replayTraces,
     });
 

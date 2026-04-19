@@ -26,6 +26,10 @@ import type {
   Trace,
 } from "./types";
 import type { ChatWithToolsOptions } from "./toolLoop";
+import {
+  generateImage as baseGenerateImage,
+  type ImageGenResponse,
+} from "../imageGen";
 
 export interface LlmRunCallbacks {
   onStdout?: (text: string) => void;
@@ -55,6 +59,11 @@ export interface LlmRunCallbacks {
    * 셀 내 chat() 호출마다 하나씩 소비.
    */
   replayTraces?: Trace[];
+  /**
+   * 이미지 생성 결과를 figure 출력으로 방출할 때 호출.
+   * dataUrl 형태 (data:image/png;base64,...) 를 전달.
+   */
+  onFigure?: (dataUrl: string) => void;
 }
 
 export interface LlmRunResult {
@@ -137,6 +146,7 @@ export async function runLlmCode(
   };
 
   // ─── 4. 실행 ────────────────────────────────────
+  const figureEmitter = callbacks.onFigure;
   const capturedConsole = createCapturedConsole(callbacks);
   const startedAt = performance.now();
 
@@ -177,9 +187,26 @@ export async function runLlmCode(
       return baseChatWithTools(req, mergedOpts);
     };
 
+    // generateImage 래핑 — 생성 후 자동으로 figure 출력 + 결과 반환
+    const wrappedGenerateImage = async (
+      promptOrReq: string | { prompt: string; negativePrompt?: string; skipTranslation?: boolean },
+    ): Promise<ImageGenResponse> => {
+      const req = typeof promptOrReq === "string" ? { prompt: promptOrReq } : promptOrReq;
+      const res = await baseGenerateImage(req);
+      // figure 출력으로 이미지 자동 표시
+      callbacks.onStdout?.(`[이미지 생성 완료] 프로바이더: ${res.provider}, 소요시간: ${res.latencyMs}ms\n`);
+      // figure 스트림으로 이미지 전달 — onFigure 콜백이 없으므로 stdout에 마커를 넣고
+      // 별도로 figure OutputChunk를 방출
+      if (figureEmitter) {
+        figureEmitter(res.dataUrl);
+      }
+      return res;
+    };
+
     const fn = new AsyncFunction(
       "chat",
       "chatWithTools",
+      "generateImage",
       "z",
       "toJsonSchema",
       "embed",
@@ -191,6 +218,7 @@ export async function runLlmCode(
     const value = await fn(
       wrappedChat,
       wrappedChatWithToolsWithTrace,
+      wrappedGenerateImage,
       z,
       toJSONSchema,
       embed,

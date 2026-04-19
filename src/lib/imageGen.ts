@@ -10,11 +10,14 @@
  */
 
 import { getKey } from "./llm/keys";
+import { chat } from "./llm/router";
 
 export interface ImageGenRequest {
   prompt: string;
   /** 부정 프롬프트 (Gemini Imagen 지원) */
   negativePrompt?: string;
+  /** 자동 번역 건너뛰기 (이미 영어인 경우) */
+  skipTranslation?: boolean;
 }
 
 export interface ImageGenResponse {
@@ -122,19 +125,51 @@ async function generateWithCloudflare(
   return { dataUrl, provider: "cloudflare", latencyMs };
 }
 
+/** 비영어 프롬프트를 영어로 번역 (이미지 생성 정확도 향상) */
+async function translateToEnglish(prompt: string): Promise<string> {
+  // ASCII 비율로 영어 여부 간이 판단
+  const asciiRatio = prompt.replace(/[^a-zA-Z0-9\s.,!?'"()-]/g, "").length / prompt.length;
+  if (asciiRatio > 0.8) return prompt; // 이미 영어
+
+  try {
+    const res = await chat({
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an image prompt translator. Translate the user's image description into a detailed English prompt optimized for AI image generation. Output ONLY the English prompt, nothing else. Preserve all visual details, style cues, and composition instructions.",
+        },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.1,
+    });
+    return res.text.trim();
+  } catch {
+    // 번역 실패 시 원문 그대로 사용
+    return prompt;
+  }
+}
+
 /**
- * 이미지 생성 — Gemini Imagen 우선, 실패 시 CF 폴백
+ * 이미지 생성 — Gemini Imagen 우선, 실패 시 CF 폴백.
+ * 한국어 프롬프트는 자동으로 영어로 번역되어 이미지 정확도를 높입니다.
  */
 export async function generateImage(
   req: ImageGenRequest,
 ): Promise<ImageGenResponse> {
+  // 한→영 자동 번역
+  const translatedPrompt = req.skipTranslation
+    ? req.prompt
+    : await translateToEnglish(req.prompt);
+  const translatedReq = { ...req, prompt: translatedPrompt };
+
   const errors: Error[] = [];
 
   // 1순위: Gemini Imagen
   const geminiKey = await getKey("gemini");
   if (geminiKey) {
     try {
-      return await generateWithGemini(req);
+      return await generateWithGemini(translatedReq);
     } catch (err) {
       errors.push(err instanceof Error ? err : new Error(String(err)));
     }
@@ -145,7 +180,7 @@ export async function generateImage(
   const cfToken = await getKey("cf-api-token");
   if (cfAccount && cfToken) {
     try {
-      return await generateWithCloudflare(req);
+      return await generateWithCloudflare(translatedReq);
     } catch (err) {
       errors.push(err instanceof Error ? err : new Error(String(err)));
     }
