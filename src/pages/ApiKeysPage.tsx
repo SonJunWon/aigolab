@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { getKey, setKey, removeKey } from "../lib/llm";
+import type { ApiKeyId } from "../lib/llm";
 
 /* ─── API 키 정의 ─── */
 interface ApiKeyConfig {
@@ -104,6 +105,79 @@ const API_KEYS: ApiKeyConfig[] = [
       ],
     },
   },
+  {
+    id: "cf-account-id",
+    name: "Cloudflare Account ID",
+    icon: "☁️",
+    required: false,
+    description: "Cloudflare Workers AI를 통한 이미지 생성 폴백에 사용됩니다. Gemini 이미지 한도 초과 시 자동 전환됩니다.",
+    useCases: ["AI 이미지 생성 (폴백)", "Gemini 한도 초과 시 자동 전환"],
+    freeLimit: "하루 약 200회 (무료 플랜)",
+    prefix: "",
+    guide: {
+      url: "https://dash.cloudflare.com",
+      urlLabel: "Cloudflare Dashboard",
+      steps: [
+        {
+          title: "Cloudflare 가입 + 로그인",
+          detail: "위 링크에서 Cloudflare 계정을 만들고 로그인하세요. 무료 플랜으로 충분합니다.",
+        },
+        {
+          title: "Account ID 확인",
+          detail: "대시보드 우측 사이드바 또는 Workers & Pages → Overview 페이지에서 Account ID를 확인할 수 있습니다. 32자리 영숫자 문자열입니다.",
+        },
+        {
+          title: "아래 입력란에 붙여넣기",
+          detail: "복사한 Account ID를 아래 입력란에 붙여넣고 [등록] 버튼을 클릭하세요.",
+        },
+      ],
+      warnings: [
+        "Account ID는 비밀 정보는 아니지만, 불필요하게 공유하지 마세요",
+        "API Token과 함께 등록해야 이미지 생성 폴백이 작동합니다",
+      ],
+    },
+  },
+  {
+    id: "cf-api-token",
+    name: "Cloudflare API Token",
+    icon: "🔐",
+    required: false,
+    description: "Cloudflare Workers AI API 호출에 필요한 인증 토큰입니다. Account ID와 함께 등록해야 합니다.",
+    useCases: ["Workers AI 인증", "이미지 생성 API 호출"],
+    freeLimit: "Account ID와 동일",
+    prefix: "",
+    guide: {
+      url: "https://dash.cloudflare.com/profile/api-tokens",
+      urlLabel: "Cloudflare API Tokens",
+      steps: [
+        {
+          title: "API Tokens 페이지 접속",
+          detail: "위 링크를 클릭하거나, Cloudflare 대시보드 → 프로필 아이콘 → My Profile → API Tokens로 이동하세요.",
+        },
+        {
+          title: "토큰 생성",
+          detail: "'Create Token' 버튼을 클릭합니다. 템플릿 목록에서 'Workers AI' 템플릿을 선택하거나, 'Create Custom Token'으로 직접 만드세요.",
+        },
+        {
+          title: "권한 설정 (Custom Token인 경우)",
+          detail: "Account > Workers AI > Read 권한을 추가하세요. 다른 권한은 필요 없습니다.",
+        },
+        {
+          title: "토큰 복사하기 (중요!)",
+          detail: "생성된 토큰이 한 번만 표시됩니다. 반드시 바로 복사하세요. 분실 시 삭제 후 재생성해야 합니다.",
+        },
+        {
+          title: "아래 입력란에 붙여넣기",
+          detail: "복사한 토큰을 아래 입력란에 붙여넣고 [등록] 버튼을 클릭하세요.",
+        },
+      ],
+      warnings: [
+        "토큰 생성 직후에만 전체 값을 볼 수 있습니다 — 바로 복사하세요",
+        "API Token은 절대 다른 사람과 공유하지 마세요",
+        "Account ID도 함께 등록해야 이미지 생성이 작동합니다",
+      ],
+    },
+  },
 ];
 
 /* ─── 컴포넌트 ─── */
@@ -119,7 +193,7 @@ export function ApiKeysPage() {
   const loadKeys = useCallback(async () => {
     const loaded: Record<string, string | null> = {};
     for (const api of API_KEYS) {
-      loaded[api.id] = (await getKey(api.id as "gemini" | "groq")) ?? null;
+      loaded[api.id] = (await getKey(api.id as ApiKeyId)) ?? null;
     }
     setKeys(loaded);
   }, []);
@@ -135,7 +209,7 @@ export function ApiKeysPage() {
   const handleRegister = (apiId: string) => {
     const value = inputs[apiId]?.trim();
     if (!value) { showToast("❌ API 키를 입력해주세요"); return; }
-    setKey(apiId as "gemini" | "groq", value);
+    setKey(apiId as ApiKeyId, value);
     setInputs((prev) => ({ ...prev, [apiId]: "" }));
     loadKeys();
     showToast("✅ 키가 등록되었습니다");
@@ -144,7 +218,7 @@ export function ApiKeysPage() {
   // 키 삭제
   const handleDelete = (apiId: string) => {
     if (!confirm("이 API 키를 삭제하시겠습니까?")) return;
-    removeKey(apiId as "gemini" | "groq");
+    removeKey(apiId as ApiKeyId);
     loadKeys();
     showToast("🗑 키가 삭제되었습니다");
   };
@@ -153,12 +227,38 @@ export function ApiKeysPage() {
   const handleTest = async (apiId: string) => {
     setTesting(apiId);
     try {
-      const { chat } = await import("../lib/llm");
-      const res = await chat({
-        provider: apiId as "gemini" | "groq",
-        messages: [{ role: "user", content: "안녕? 한 문장으로 답해줘." }],
-      });
-      showToast(`✅ 테스트 성공! 응답: "${res.text.slice(0, 50)}..."`);
+      if (apiId === "cf-account-id" || apiId === "cf-api-token") {
+        // Cloudflare 테스트: 두 키 모두 있어야 가능
+        const accountId = await getKey("cf-account-id");
+        const apiToken = await getKey("cf-api-token");
+        if (!accountId || !apiToken) {
+          showToast("❌ Account ID와 API Token 모두 등록해야 테스트할 수 있습니다");
+          return;
+        }
+        const res = await fetch(
+          `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ prompt: "a blue sky", num_steps: 4 }),
+          },
+        );
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText.slice(0, 100)}`);
+        }
+        showToast("✅ Cloudflare Workers AI 연결 테스트 성공!");
+      } else {
+        const { chat } = await import("../lib/llm");
+        const res = await chat({
+          provider: apiId as "gemini" | "groq",
+          messages: [{ role: "user", content: "안녕? 한 문장으로 답해줘." }],
+        });
+        showToast(`✅ 테스트 성공! 응답: "${res.text.slice(0, 50)}..."`);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       showToast(`❌ 테스트 실패: ${msg}`);

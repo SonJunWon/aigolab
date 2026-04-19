@@ -40,6 +40,12 @@ export interface Message {
 /** 지원 Provider 이름 */
 export type Provider = "gemini" | "groq" | "webllm";
 
+/** 이미지 생성 등 비-LLM 서비스 키 ID */
+export type ServiceKeyId = "cf-account-id" | "cf-api-token";
+
+/** 키 저장소에서 사용하는 전체 키 ID (LLM Provider + 기타 서비스) */
+export type ApiKeyId = Provider | ServiceKeyId;
+
 /**
  * 추상 task — 학생은 provider 를 몰라도 된다.
  * - fast: 빠른 응답 (Groq → Gemini 페일오버)

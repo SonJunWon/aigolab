@@ -44,6 +44,8 @@ export type {
   ToolCall,
   ToolChoice,
   LlmErrorReason,
+  ApiKeyId,
+  ServiceKeyId,
 } from "./types";
 export { LlmError } from "./types";
 export type { ProviderAdapter } from "./providers/base";

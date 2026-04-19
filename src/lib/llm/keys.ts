@@ -13,7 +13,7 @@
  * 공개 API (get/set/remove/list/requireKey) 는 T2 시점과 동일 — 어댑터 수정 없음.
  */
 
-import type { Provider } from "./types";
+import type { Provider, ApiKeyId } from "./types";
 import { LlmError } from "./types";
 import {
   decryptString,
@@ -23,7 +23,7 @@ import {
 } from "./crypto";
 
 const STORAGE_KEY = "aigolab.llm.keys.v1";
-type KeyMap = Partial<Record<Provider, Ciphertext>>;
+type KeyMap = Partial<Record<ApiKeyId, Ciphertext>>;
 
 function readAll(): KeyMap {
   if (typeof localStorage === "undefined") return {};
@@ -58,7 +58,7 @@ function writeAll(map: KeyMap): void {
  * 키 조회 — 없거나 복호화 실패 시 undefined.
  * 던지지 않는 이유: router 가 페일오버 판단하도록 "키 없음" 도 정상 흐름에 포함.
  */
-export async function getKey(provider: Provider): Promise<string | undefined> {
+export async function getKey(provider: ApiKeyId): Promise<string | undefined> {
   const enc = readAll()[provider];
   if (!enc) return undefined;
   try {
@@ -71,12 +71,11 @@ export async function getKey(provider: Provider): Promise<string | undefined> {
 }
 
 /** 키 저장 — 디바이스 키로 AES-GCM 암호화 후 localStorage 에 기록 */
-export async function setKey(provider: Provider, key: string): Promise<void> {
+export async function setKey(provider: ApiKeyId, key: string): Promise<void> {
   if (!key || !key.trim()) {
     throw new LlmError(
       "invalid-key",
       `${provider} 키 값이 비어있습니다.`,
-      provider,
     );
   }
   const enc = await encryptString(key.trim());
@@ -86,28 +85,27 @@ export async function setKey(provider: Provider, key: string): Promise<void> {
 }
 
 /** 키 삭제 */
-export async function removeKey(provider: Provider): Promise<void> {
+export async function removeKey(provider: ApiKeyId): Promise<void> {
   const map = readAll();
   delete map[provider];
   writeAll(map);
 }
 
 /** 저장된 provider 목록 (복호화 없이 메타만) */
-export function listKeys(): Provider[] {
-  return Object.keys(readAll()) as Provider[];
+export function listKeys(): ApiKeyId[] {
+  return Object.keys(readAll()) as ApiKeyId[];
 }
 
 /**
  * 키 필수 조회 — 없으면 LlmError("missing-key") 던짐.
  * 어댑터 내부에서 키 없음을 명확히 표현하고 싶을 때 사용.
  */
-export async function requireKey(provider: Provider): Promise<string> {
+export async function requireKey(provider: ApiKeyId): Promise<string> {
   const key = await getKey(provider);
   if (!key) {
     throw new LlmError(
       "missing-key",
       `${provider} API 키가 저장되어 있지 않습니다. 키 입력 모달에서 등록해주세요.`,
-      provider,
     );
   }
   return key;
