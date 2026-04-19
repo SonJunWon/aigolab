@@ -1,4 +1,5 @@
 import type { Lesson } from "../../../types/lesson";
+import type { Quiz } from "../../../types/quiz";
 
 /**
  * Ch00 — AIGoLab 시작하기
@@ -397,4 +398,79 @@ AI가 어떤 질문에 잘 답하고, 어떤 질문에 어려워하는지 직접
 > 궁금한 것이 있으면 언제든 AI에게 물어보세요.`,
     },
   ],
+
+  quiz: {
+    title: "Ch00 이해도 퀴즈",
+    questions: [
+      {
+        type: "multiple-choice",
+        question: "AIGoLab에서 코드를 실행하려면 어떻게 해야 하나요?",
+        options: [
+          "프로그램을 따로 설치한다",
+          "셀의 ▶ 버튼을 클릭하거나 Shift + Enter를 누른다",
+          "코드를 복사해서 메모장에 붙여넣는다",
+          "관리자에게 실행을 요청한다",
+        ],
+        correctIndex: 1,
+        explanation:
+          "AIGoLab의 셀은 ▶ 버튼 클릭 또는 Shift + Enter 키보드 단축키로 실행할 수 있습니다. 별도의 프로그램 설치가 필요 없어요!",
+      },
+      {
+        type: "multiple-choice",
+        question:
+          "API 키를 가장 쉽게 비유하면 무엇에 해당하나요?",
+        options: [
+          "도서관의 책",
+          "도서관 건물의 주소",
+          "도서관 회원증",
+          "도서관 직원",
+        ],
+        correctIndex: 2,
+        explanation:
+          "API 키는 '도서관 회원증'과 같습니다. 회원증이 있어야 책을 빌릴 수 있듯이, API 키가 있어야 AI 서비스를 사용할 수 있어요.",
+      },
+      {
+        type: "multiple-choice",
+        question:
+          "AIGoLab의 교육 철학에서 가장 중요하게 여기는 것은 무엇인가요?",
+        options: [
+          "가능한 한 빠르게 많은 기능을 외우는 것",
+          "화려한 결과물을 먼저 만드는 것",
+          "기본 원리를 충실히 다지고 '왜?'를 묻는 것",
+          "최신 도구를 남들보다 빨리 사용하는 것",
+        ],
+        correctIndex: 2,
+        explanation:
+          "AIGoLab은 '기본기 + 왜?'를 가장 중요하게 생각합니다. 원리를 이해하면 어떤 새로운 도구가 나와도 스스로 응용할 수 있기 때문이에요.",
+      },
+      {
+        type: "multiple-choice",
+        question:
+          "AIGoLab에서 AI 셀을 실행했을 때, 셀 왼쪽에 [*] 표시가 나타났습니다. 이것은 무슨 뜻인가요?",
+        options: [
+          "오류가 발생했다",
+          "실행이 완료되었다",
+          "현재 실행 중이다",
+          "아직 실행하지 않았다",
+        ],
+        correctIndex: 2,
+        explanation:
+          "[*]는 '실행 중'을 의미합니다. AI가 답변을 생성하는 동안 잠시 기다리면, 완료 시 [✓]로 바뀌고 결과가 표시돼요.",
+      },
+      {
+        type: "multiple-choice",
+        question:
+          "'파이프라인 사고'란 무엇인가요?",
+        options: [
+          "수도 배관을 설치하는 기술",
+          "하나의 명령어를 완벽하게 외우는 것",
+          "여러 단계를 연결해서 전체 흐름을 설계하는 사고방식",
+          "AI에게 한 번에 긴 명령을 보내는 것",
+        ],
+        correctIndex: 2,
+        explanation:
+          "파이프라인 사고는 '입력 → 처리 1 → 처리 2 → 결과'처럼 여러 단계를 연결해서 전체 흐름을 설계하는 것입니다. 하나의 기능을 만드는 것보다 훨씬 강력한 능력이에요.",
+      },
+    ],
+  } satisfies Quiz,
 };
