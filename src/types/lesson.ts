@@ -13,7 +13,7 @@ import type { Trace } from "../lib/llm/types";
  * registry 에는 별도 런타임 등록 없이 동작 — T9 LLM 셀 런타임 참조.
  */
 export type Language = "python" | "javascript" | "sql" | "ai-engineering";
-export type Track = "beginner" | "intermediate" | "data-science" | "ml-practice";
+export type Track = "beginner" | "intermediate" | "data-science" | "ml-practice" | "intro";
 
 /** 콘텐츠의 언어 메타데이터 */
 export interface LanguageInfo {

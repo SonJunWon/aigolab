@@ -39,6 +39,12 @@ export const LANGUAGES: LanguageInfo[] = [
 
 export const TRACKS: TrackInfo[] = [
   {
+    id: "intro",
+    name: "AI 입문 준비",
+    description: "AI가 처음인 분을 위한 준비 과정. 플랫폼 사용법부터 AI 기초, 코딩 첫걸음까지 13강 완주.",
+    estimatedHours: 8,
+  },
+  {
     id: "beginner",
     name: "입문자",
     description: "프로그래밍이 처음이에요. 기초부터 차근차근 배울게요.",
