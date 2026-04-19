@@ -53,7 +53,7 @@ async function generateWithGemini(
   const start = performance.now();
 
   const response = await ai.models.generateImages({
-    model: "imagen-3.0-generate-001",
+    model: "imagen-4.0-generate-001",
     prompt: req.prompt,
     config: {
       numberOfImages: 1,
