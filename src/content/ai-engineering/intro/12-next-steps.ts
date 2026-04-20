@@ -1,11 +1,11 @@
 import type { Lesson } from "../../../types/lesson";
 import type { Quiz } from "../../../types/quiz";
 
-export const lesson12: Lesson = {
+export const lesson13: Lesson = {
   id: "ai-intro-12-next-steps",
   language: "ai-engineering",
   track: "intro",
-  order: 12,
+  order: 13,
   title: "다음 단계",
   subtitle: "AI 입문 완주! 앞으로 어떤 길이 있을까?",
   estimatedMinutes: 15,

@@ -45,7 +45,7 @@ export function AiDevPage() {
         {/* ─── 히어로 ─── */}
         <section className="text-center mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-accent/10 border border-brand-accent/20 text-xs text-brand-accent font-medium mb-4">
-            입문 13강 · 엔지니어링 12강 · 워크샵 42개
+            입문 14강 · 엔지니어링 12강 · 워크샵 42개
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">
             <span className="text-4xl sm:text-5xl mr-2">🚀</span>
@@ -82,7 +82,7 @@ export function AiDevPage() {
                       AI 입문 준비 과정
                     </h2>
                     <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500 text-white font-semibold">
-                      13강
+                      14강
                     </span>
                   </div>
                   <p className="text-xs text-brand-textDim">AI가 처음이라면, 여기부터</p>
@@ -216,7 +216,7 @@ export function AiDevPage() {
           </h2>
           <div className="max-w-lg mx-auto space-y-3">
             {[
-              { icon: "🌱", label: "AI 입문 준비", desc: "AI 기초 + 플랫폼 사용법 (13강)", color: "border-amber-500/30 bg-amber-500/5" },
+              { icon: "🌱", label: "AI 입문 준비", desc: "AI 기초 + 플랫폼 사용법 (14강)", color: "border-amber-500/30 bg-amber-500/5" },
               { icon: "🤖", label: "AI 엔지니어링", desc: "AI 개념·기법 심화 학습 (12강)", color: "border-violet-500/30 bg-violet-500/5" },
               { icon: "🛠️", label: "바이브코딩 워크샵", desc: "실전 앱 42개 제작", color: "border-cyan-500/30 bg-cyan-500/5" },
             ].map((item, i, arr) => (

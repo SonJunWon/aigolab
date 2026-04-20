@@ -41,7 +41,7 @@ export const TRACKS: TrackInfo[] = [
   {
     id: "intro",
     name: "AI 입문 준비",
-    description: "AI가 처음인 분을 위한 준비 과정. 플랫폼 사용법부터 AI 기초, 코딩 첫걸음까지 13강 완주.",
+    description: "AI가 처음인 분을 위한 준비 과정. 플랫폼 사용법부터 AI 기초, 마크다운, 코딩 첫걸음까지 14강 완주.",
     estimatedHours: 8,
   },
   {

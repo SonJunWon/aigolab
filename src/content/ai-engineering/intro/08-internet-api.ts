@@ -1,10 +1,10 @@
 import type { Lesson } from "../../../types/lesson";
 
-export const lesson08: Lesson = {
+export const lesson09: Lesson = {
   id: "ai-intro-08-internet-api",
   language: "ai-engineering",
   track: "intro",
-  order: 8,
+  order: 9,
   title: "인터넷과 API",
   subtitle: "컴퓨터들이 서로 대화하는 방법 — 요청과 응답",
   estimatedMinutes: 15,

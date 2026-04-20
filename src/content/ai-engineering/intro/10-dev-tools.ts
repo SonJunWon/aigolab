@@ -1,10 +1,10 @@
 import type { Lesson } from "../../../types/lesson";
 
-export const lesson10: Lesson = {
+export const lesson11: Lesson = {
   id: "ai-intro-10-dev-tools",
   language: "ai-engineering",
   track: "intro",
-  order: 10,
+  order: 11,
   title: "개발 도구",
   subtitle: "프로그래머가 사용하는 도구들 — 터미널, VS Code, Cursor",
   estimatedMinutes: 15,

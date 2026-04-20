@@ -1,11 +1,11 @@
 import type { Lesson } from "../../../types/lesson";
 import type { Quiz } from "../../../types/quiz";
 
-export const lesson06: Lesson = {
+export const lesson07: Lesson = {
   id: "ai-intro-06-ai-types",
   language: "ai-engineering",
   track: "intro",
-  order: 6,
+  order: 7,
   title: "AI 종류 알아보기",
   subtitle: "ChatGPT, Gemini, Claude... 뭐가 다를까?",
   estimatedMinutes: 15,

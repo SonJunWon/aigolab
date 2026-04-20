@@ -5,16 +5,17 @@ import { lesson02 } from "./02-ai-writing";
 import { lesson03 } from "./03-ai-drawing";
 import { lesson04 } from "./04-ai-principles";
 import { lesson05 } from "./05-prompt-engineering";
-import { lesson06 } from "./06-ai-types";
-import { lesson07 } from "./07-file-extensions";
-import { lesson08 } from "./08-internet-api";
-import { lesson09 } from "./09-coding-basics";
-import { lesson10 } from "./10-dev-tools";
-import { lesson11 } from "./11-vibe-coding";
-import { lesson12 } from "./12-next-steps";
+import { lesson06 } from "./06-markdown";
+import { lesson07 } from "./06-ai-types";
+import { lesson08 } from "./07-file-extensions";
+import { lesson09 } from "./08-internet-api";
+import { lesson10 } from "./09-coding-basics";
+import { lesson11 } from "./10-dev-tools";
+import { lesson12 } from "./11-vibe-coding";
+import { lesson13 } from "./12-next-steps";
 
 /**
- * AI 입문 준비 과정 (intro) — Ch00~Ch12 (13강)
+ * AI 입문 준비 과정 (intro) — Ch00~Ch13 (14강)
  * 대상: AI/코딩 경험 없는 초보자 (초등 4~6학년 수준)
  */
 export const LESSONS: Lesson[] = [
@@ -31,6 +32,7 @@ export const LESSONS: Lesson[] = [
   lesson10,
   lesson11,
   lesson12,
+  lesson13,
 ];
 
 export const LESSON_SUMMARIES: LessonSummary[] = LESSONS.map((l) => ({

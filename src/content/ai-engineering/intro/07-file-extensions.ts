@@ -1,10 +1,10 @@
 import type { Lesson } from "../../../types/lesson";
 
-export const lesson07: Lesson = {
+export const lesson08: Lesson = {
   id: "ai-intro-07-file-extensions",
   language: "ai-engineering",
   track: "intro",
-  order: 7,
+  order: 8,
   title: "파일 확장자",
   subtitle: "컴퓨터 파일의 이름표 — .py .md .json .html .css .js",
   estimatedMinutes: 15,

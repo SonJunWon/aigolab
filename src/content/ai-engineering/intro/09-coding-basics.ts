@@ -1,10 +1,10 @@
 import type { Lesson } from "../../../types/lesson";
 
-export const lesson09: Lesson = {
+export const lesson10: Lesson = {
   id: "ai-intro-09-coding-basics",
   language: "ai-engineering",
   track: "intro",
-  order: 9,
+  order: 10,
   title: "코딩 기초",
   subtitle: "변수, 출력, 조건문 — 프로그래밍의 기본기를 배우자",
   estimatedMinutes: 25,
