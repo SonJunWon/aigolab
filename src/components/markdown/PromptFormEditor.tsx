@@ -6,9 +6,26 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { runLlmCode } from "../../lib/llm";
+import { runLlmCode, listKeys } from "../../lib/llm";
 import { useMdFileStore } from "../../store/mdFileStore";
 import type { OutputChunk } from "../../types/notebook";
+
+/* ─── AI 모델 옵션 ─── */
+type PromptMode = "text" | "image";
+
+interface ModelOption {
+  id: string;
+  provider: string;
+  label: string;
+  free: boolean;
+  description: string;
+}
+
+const MODEL_OPTIONS: ModelOption[] = [
+  { id: "auto", provider: "", label: "자동 선택 (무료)", free: true, description: "Groq → Gemini 순서로 자동 선택" },
+  { id: "gemini", provider: "gemini", label: "Gemini 2.5 Flash", free: true, description: "Google AI · 무료 1,500회/일" },
+  { id: "groq", provider: "groq", label: "Groq Llama 3.3 70B", free: true, description: "초고속 · 무료 14,400회/일" },
+];
 
 /* ─── 프롬프트 데이터 구조 ─── */
 interface PromptData {
@@ -92,8 +109,16 @@ export function PromptFormEditor({
   const [query, setQuery] = useState("");
   const [outputs, setOutputs] = useState<OutputChunk[]>([]);
   const [running, setRunning] = useState(false);
+  const [selectedModel, setSelectedModel] = useState("auto");
+  const [promptMode, setPromptMode] = useState<PromptMode>("text");
+  const [registeredKeys, setRegisteredKeys] = useState<string[]>([]);
   const initialized = useRef(false);
   const composing = useRef(false);
+
+  // 등록된 API 키 확인
+  useEffect(() => {
+    setRegisteredKeys(listKeys());
+  }, []);
 
   // 현재 데이터를 ref로 유지 (언마운트 시 접근용)
   const dataRef = useRef(data);
@@ -175,18 +200,43 @@ export function PromptFormEditor({
 
     const systemMessage = systemParts.join("\n");
 
-    // 타입스크립트 코드 자동 생성
-    const code = `
+    // provider 옵션
+    const providerCode = selectedModel !== "auto"
+      ? `provider: ${JSON.stringify(selectedModel)},`
+      : "";
+
+    let code: string;
+
+    if (promptMode === "image") {
+      // 이미지 생성 모드
+      const imagePromptParts = [];
+      if (data.context) imagePromptParts.push(data.context);
+      imagePromptParts.push(actualQuery);
+      if (data.format) imagePromptParts.push(data.format);
+      if (data.constraints) imagePromptParts.push(data.constraints);
+      const imagePrompt = imagePromptParts.join(". ");
+
+      code = `
+const result = await generateImage(${JSON.stringify(imagePrompt)});
+console.log("[이미지 생성 완료]");
+console.log("프로바이더: " + result.provider);
+console.log("소요시간: " + result.latencyMs + "ms");
+`;
+    } else {
+      // 텍스트 생성 모드
+      code = `
 const response = await chat({
   messages: [
     ${systemMessage ? `{ role: "system", content: ${JSON.stringify(systemMessage)} },` : ""}
     { role: "user", content: ${JSON.stringify(actualQuery)} },
   ],
+  ${providerCode}
 });
 console.log(response.text);
 console.log("\\n---");
 console.log("⏱ " + response.latencyMs + "ms · " + response.model);
 `;
+    }
 
     setOutputs([]);
     setRunning(true);
@@ -255,12 +305,61 @@ console.log("⏱ " + response.latencyMs + "ms · " + response.model);
           </div>
         ))}
 
-        {/* 구분선 */}
-        <div className="border-t border-brand-subtle/50 pt-4">
+        {/* 구분선 + 설정 영역 */}
+        <div className="border-t border-brand-subtle/50 pt-4 space-y-3">
+
+          {/* 모드 + 모델 선택 */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* 텍스트/이미지 모드 토글 */}
+            <div className="flex rounded-lg border border-brand-subtle overflow-hidden">
+              <button
+                onClick={() => setPromptMode("text")}
+                className={`px-3 py-1.5 text-[11px] transition-colors ${promptMode === "text" ? "bg-brand-accent text-white" : "text-brand-textDim hover:text-brand-text"}`}
+              >💬 텍스트</button>
+              <button
+                onClick={() => setPromptMode("image")}
+                className={`px-3 py-1.5 text-[11px] transition-colors ${promptMode === "image" ? "bg-violet-500 text-white" : "text-brand-textDim hover:text-brand-text"}`}
+              >🖼️ 이미지</button>
+            </div>
+
+            {/* AI 모델 선택 */}
+            {promptMode === "text" && (
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-brand-textDim">AI 모델:</span>
+                <select
+                  value={selectedModel}
+                  onChange={(e) => {
+                    const model = e.target.value;
+                    setSelectedModel(model);
+                    // 키 미등록 모델 선택 시 경고
+                    if (model !== "auto" && !registeredKeys.includes(model)) {
+                      alert(`${model} API 키가 등록되어 있지 않습니다. 마이페이지 > API 키 관리에서 등록해주세요.`);
+                    }
+                  }}
+                  className="px-2 py-1 rounded-lg bg-brand-panel border border-brand-subtle text-[11px] text-brand-text
+                             focus:outline-none focus:border-brand-accent transition-colors"
+                >
+                  {MODEL_OPTIONS.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.label} {registeredKeys.includes(opt.provider) ? "✓" : opt.id === "auto" ? "" : "(미등록)"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* 이미지 모드 안내 */}
+            {promptMode === "image" && (
+              <span className="text-[10px] text-violet-400">
+                한국어 → 영어 자동 번역 · Gemini Imagen 사용
+              </span>
+            )}
+          </div>
+
           {/* 질문 입력 */}
           <label className="flex items-center gap-2 text-xs font-medium text-brand-textDim mb-1.5">
-            <span className="text-base">💬</span>
-            질문 입력
+            <span className="text-base">{promptMode === "image" ? "🖼️" : "💬"}</span>
+            {promptMode === "image" ? "이미지 설명" : "질문 입력"}
           </label>
           <textarea
             value={query}
@@ -274,7 +373,9 @@ console.log("⏱ " + response.latencyMs + "ms · " + response.model);
                 handleRun();
               }
             }}
-            placeholder="AI에게 보낼 질문을 입력하세요... (Ctrl+Enter로 실행)"
+            placeholder={promptMode === "image"
+              ? "이미지를 설명하세요... (예: 벚꽃 나무 아래 고양이, 수채화 스타일)"
+              : "AI에게 보낼 질문을 입력하세요... (Ctrl+Enter로 실행)"}
             rows={3}
             className="w-full px-3 py-2 rounded-lg bg-brand-bg border border-brand-accent/30 text-sm text-brand-text
                        placeholder:text-brand-textDim/40 focus:outline-none focus:border-brand-accent
@@ -294,7 +395,11 @@ console.log("⏱ " + response.latencyMs + "ms · " + response.model);
                   ? "bg-brand-subtle text-brand-textDim cursor-not-allowed"
                   : "bg-brand-accent text-white hover:brightness-110"}`}
             >
-              {running ? "⏳ 실행 중..." : "▶ AI에게 보내기"}
+              {running
+                ? "⏳ 실행 중..."
+                : promptMode === "image"
+                  ? "🖼️ 이미지 생성"
+                  : "▶ AI에게 보내기"}
             </button>
           </div>
         </div>
