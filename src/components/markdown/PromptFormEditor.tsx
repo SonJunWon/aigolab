@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { runLlmCode } from "../../lib/llm";
+import { useMdFileStore } from "../../store/mdFileStore";
 import type { OutputChunk } from "../../types/notebook";
 
 /* ─── 프롬프트 데이터 구조 ─── */
@@ -77,12 +78,16 @@ const FIELDS: { key: keyof PromptData; label: string; number: number; placeholde
 
 /* ─── 컴포넌트 ─── */
 export function PromptFormEditor({
+  fileId,
   content,
-  onContentChange,
 }: {
+  fileId: string;
   content: string;
-  onContentChange: (content: string) => void;
 }) {
+  // 파일 ID를 ref에 고정 — 언마운트 시에도 올바른 파일에 저장
+  const fileIdRef = useRef(fileId);
+  fileIdRef.current = fileId;
+  const updateFileContent = useMdFileStore((s) => s.updateFileContent);
   const [data, setData] = useState<PromptData>({ name: "", role: "", context: "", instruction: "", format: "", constraints: "" });
   const [query, setQuery] = useState("");
   const [outputs, setOutputs] = useState<OutputChunk[]>([]);
@@ -112,28 +117,33 @@ export function PromptFormEditor({
     }
   }, [content]);
 
-  // 필드 변경 → 마크다운으로 변환 → 상위에 전달 (디바운스)
+  // 필드 변경 → 마크다운으로 변환 → 파일에 직접 저장 (디바운스)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const onContentChangeRef = useRef(onContentChange);
-  onContentChangeRef.current = onContentChange;
+
+  const saveToFile = useCallback((newData: PromptData, newQuery: string) => {
+    const id = fileIdRef.current;
+    const md = toPromptMd(newData, newQuery);
+    updateFileContent(id, md);
+  }, [updateFileContent]);
 
   const syncToFile = useCallback((newData: PromptData, newQuery: string) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      onContentChangeRef.current(toPromptMd(newData, newQuery));
+      saveToFile(newData, newQuery);
     }, 1000);
-  }, []);
+  }, [saveToFile]);
 
   // 언마운트 시: 타이머 취소 + 현재 내용 즉시 저장
   useEffect(() => {
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
-      // 현재 데이터로 즉시 저장
       const md = toPromptMd(dataRef.current, queryRef.current);
       if (md.trim() !== "# 프롬프트\n") {
-        onContentChangeRef.current(md);
+        // fileIdRef에 고정된 ID로 저장 — 절대 다른 파일에 저장 안 됨
+        updateFileContent(fileIdRef.current, md);
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateField = (key: keyof PromptData, value: string) => {
