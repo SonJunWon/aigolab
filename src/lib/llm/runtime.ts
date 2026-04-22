@@ -17,6 +17,7 @@ import { chat } from "./router";
 import { embed, cosineSimilarity } from "./embedding";
 import { VectorStore } from "./vectorStore";
 import { exportTrace, replayTrace } from "./simulation";
+import { requireKey } from "./keys";
 import { LlmError } from "./types";
 import { chatWithTools as baseChatWithTools } from "./toolLoop";
 import type {
@@ -30,6 +31,7 @@ import {
   generateImage as baseGenerateImage,
   type ImageGenResponse,
 } from "../imageGen";
+import { GoogleGenAI } from "@google/genai";
 
 export interface LlmRunCallbacks {
   onStdout?: (text: string) => void;
@@ -207,6 +209,8 @@ export async function runLlmCode(
       "chat",
       "chatWithTools",
       "generateImage",
+      "GoogleGenAI",
+      "requireKey",
       "z",
       "toJsonSchema",
       "embed",
@@ -219,6 +223,8 @@ export async function runLlmCode(
       wrappedChat,
       wrappedChatWithToolsWithTrace,
       wrappedGenerateImage,
+      GoogleGenAI,
+      requireKey,
       z,
       toJSONSchema,
       embed,

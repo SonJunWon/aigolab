@@ -327,8 +327,7 @@ console.log("소요시간: " + result.latencyMs + "ms");
     } else if (modelOverride) {
       // 유료 모델: 직접 SDK 호출 (chat() 라우터 우회)
       code = `
-const { GoogleGenAI } = await import("@google/genai");
-const apiKey = await (await import("../lib/llm/keys")).requireKey("gemini");
+const apiKey = await requireKey("gemini");
 const ai = new GoogleGenAI({ apiKey });
 const model = ${JSON.stringify(modelOverride)};
 
@@ -354,8 +353,7 @@ console.log("⏱ " + latencyMs + "ms · " + model);
     } else if (hasAttachments) {
       // 첨부 파일 있으면 Gemini 직접 호출 (멀티모달)
       code = `
-const { GoogleGenAI } = await import("@google/genai");
-const apiKey = await (await import("../lib/llm/keys")).requireKey("gemini");
+const apiKey = await requireKey("gemini");
 const ai = new GoogleGenAI({ apiKey });
 const model = "gemini-2.5-flash";
 
