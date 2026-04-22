@@ -26,21 +26,40 @@ export async function saveNotebook(
   cells: StoredCell[],
   lessonHash?: string
 ): Promise<void> {
-  const db = await getDB();
-  const record: StoredNotebook = {
-    id,
-    cells,
-    updatedAt: Date.now(),
-    ...(lessonHash !== undefined ? { lessonHash } : {}),
-  };
-  await db.put("notebooks", record);
+  try {
+    const db = await Promise.race([
+      getDB(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("DB_TIMEOUT")), 3000),
+      ),
+    ]);
+    const record: StoredNotebook = {
+      id,
+      cells,
+      updatedAt: Date.now(),
+      ...(lessonHash !== undefined ? { lessonHash } : {}),
+    };
+    await db.put("notebooks", record);
+  } catch (err) {
+    console.warn("[saveNotebook] DB 접근 실패, 저장 건너뜀:", err);
+  }
 }
 
 export async function loadNotebook(
   id: string
 ): Promise<StoredNotebook | undefined> {
-  const db = await getDB();
-  return db.get("notebooks", id);
+  try {
+    const db = await Promise.race([
+      getDB(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("DB_TIMEOUT")), 3000),
+      ),
+    ]);
+    return await db.get("notebooks", id);
+  } catch (err) {
+    console.warn("[loadNotebook] DB 접근 실패, 원본 레슨 사용:", err);
+    return undefined;
+  }
 }
 
 export async function deleteNotebook(id: string): Promise<void> {
