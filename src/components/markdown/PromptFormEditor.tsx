@@ -32,6 +32,29 @@ const MODEL_OPTIONS: ModelOption[] = [
   { id: "gemini-3.1-pro", provider: "gemini", label: "Gemini 3.1 Pro", free: false, description: "고급 수학 및 코딩 · 유료 결제 필요" },
 ];
 
+/* ─── 첨부 파일 ─── */
+interface Attachment {
+  id: string;
+  name: string;
+  mimeType: string;
+  size: number;
+  base64: string;        // data 부분만 (data:...;base64, 이후)
+  preview?: string;      // 이미지일 경우 미리보기 URL
+}
+
+const ACCEPTED_TYPES = [
+  "image/png", "image/jpeg", "image/gif", "image/webp",
+  "application/pdf",
+];
+
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + "B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + "KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + "MB";
+}
+
 /* ─── 프롬프트 데이터 구조 ─── */
 interface PromptData {
   name: string;
@@ -117,8 +140,10 @@ export function PromptFormEditor({
   const [selectedModel, setSelectedModel] = useState("auto");
   const [promptMode, setPromptMode] = useState<PromptMode>("text");
   const [registeredKeys, setRegisteredKeys] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const initialized = useRef(false);
   const composing = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 등록된 API 키 확인
   useEffect(() => {
@@ -187,6 +212,55 @@ export function PromptFormEditor({
     syncToFile(data, value);
   };
 
+  // ─── 첨부 파일 처리 ───
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    for (const file of Array.from(files)) {
+      if (!ACCEPTED_TYPES.includes(file.type)) {
+        alert(`지원하지 않는 파일 형식입니다: ${file.name}\n지원 형식: 이미지(PNG, JPG, GIF, WebP), PDF`);
+        continue;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`파일이 너무 큽니다: ${file.name} (${formatFileSize(file.size)})\n최대 20MB까지 가능합니다.`);
+        continue;
+      }
+
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // "data:image/png;base64,..." 에서 base64 부분만 추출
+          resolve(result.split(",")[1]);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      const attachment: Attachment = {
+        id: crypto.randomUUID(),
+        name: file.name,
+        mimeType: file.type,
+        size: file.size,
+        base64,
+        preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
+      };
+
+      setAttachments((prev) => [...prev, attachment]);
+    }
+
+    // 입력 초기화 (같은 파일 재선택 허용)
+    e.target.value = "";
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments((prev) => {
+      const att = prev.find((a) => a.id === id);
+      if (att?.preview) URL.revokeObjectURL(att.preview);
+      return prev.filter((a) => a.id !== id);
+    });
+  };
+
   // ─── AI 실행 ───
   const handleRun = async () => {
     if (running) return;
@@ -221,6 +295,18 @@ export function PromptFormEditor({
       }
     }
 
+    // 첨부 파일이 있으면 반드시 Gemini 사용 (멀티모달)
+    const hasAttachments = attachments.length > 0;
+    if (hasAttachments && !registeredKeys.includes("gemini")) {
+      alert("첨부 파일 분석은 Gemini API 키가 필요합니다.\n마이페이지 > API 키 관리에서 등록해주세요.");
+      return;
+    }
+
+    // 첨부 파일 parts 코드 생성
+    const attachmentPartsCode = attachments.map((att) =>
+      `{ inlineData: { mimeType: ${JSON.stringify(att.mimeType)}, data: ${JSON.stringify(att.base64)} } }`
+    ).join(",\n      ");
+
     let code: string;
 
     if (promptMode === "image") {
@@ -252,7 +338,10 @@ ${systemMessage ? `config.systemInstruction = ${JSON.stringify(systemMessage)};`
 const startedAt = performance.now();
 const response = await ai.models.generateContent({
   model,
-  contents: [{ role: "user", parts: [{ text: ${JSON.stringify(actualQuery)} }] }],
+  contents: [{ role: "user", parts: [
+      { text: ${JSON.stringify(actualQuery)} },
+      ${attachmentPartsCode}
+    ] }],
   config,
 });
 
@@ -261,6 +350,33 @@ const latencyMs = Math.round(performance.now() - startedAt);
 console.log(text);
 console.log("\\n---");
 console.log("⏱ " + latencyMs + "ms · " + model);
+`;
+    } else if (hasAttachments) {
+      // 첨부 파일 있으면 Gemini 직접 호출 (멀티모달)
+      code = `
+const { GoogleGenAI } = await import("@google/genai");
+const apiKey = await (await import("../lib/llm/keys")).requireKey("gemini");
+const ai = new GoogleGenAI({ apiKey });
+const model = "gemini-2.5-flash";
+
+const config = {};
+${systemMessage ? `config.systemInstruction = ${JSON.stringify(systemMessage)};` : ""}
+
+const startedAt = performance.now();
+const response = await ai.models.generateContent({
+  model,
+  contents: [{ role: "user", parts: [
+      { text: ${JSON.stringify(actualQuery)} },
+      ${attachmentPartsCode}
+    ] }],
+  config,
+});
+
+const text = response.text ?? "";
+const latencyMs = Math.round(performance.now() - startedAt);
+console.log(text);
+console.log("\\n---");
+console.log("⏱ " + latencyMs + "ms · " + model + " (첨부 " + ${attachments.length} + "개 포함)");
 `;
     } else {
       // 무료 모델: chat() 라우터 사용
@@ -345,7 +461,65 @@ console.log("⏱ " + response.latencyMs + "ms · " + response.model);
           </div>
         ))}
 
-        {/* 구분선 + 설정 영역 */}
+        {/* 첨부 파일 영역 */}
+        <div className="border-t border-brand-subtle/50 pt-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs font-medium text-brand-textDim">📎 첨부 자료</span>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="px-2 py-1 rounded-md text-[11px] border border-brand-subtle text-brand-textDim
+                         hover:text-brand-text hover:border-brand-accent/40 transition-colors"
+            >
+              + 이미지/PDF 추가
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".png,.jpg,.jpeg,.gif,.webp,.pdf"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <span className="text-[10px] text-brand-textDim/40">Gemini 전용 · 최대 20MB</span>
+          </div>
+
+          {/* 첨부 파일 목록 */}
+          {attachments.length > 0 && (
+            <div className="space-y-1.5 mb-3">
+              {attachments.map((att) => (
+                <div
+                  key={att.id}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-panel/60 border border-brand-subtle"
+                >
+                  {/* 미리보기 */}
+                  {att.preview ? (
+                    <img src={att.preview} alt={att.name} className="w-10 h-10 rounded object-cover shrink-0" />
+                  ) : (
+                    <span className="w-10 h-10 rounded bg-brand-subtle/50 flex items-center justify-center text-lg shrink-0">📄</span>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs text-brand-text truncate">{att.name}</div>
+                    <div className="text-[10px] text-brand-textDim">
+                      {formatFileSize(att.size)} · {att.mimeType.startsWith("image/") ? "이미지" : "PDF"}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => removeAttachment(att.id)}
+                    className="text-[10px] text-red-400/60 hover:text-red-400 px-1 transition-colors"
+                  >삭제</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {attachments.length === 0 && (
+            <div className="text-[10px] text-brand-textDim/30 mb-3">
+              이미지나 PDF를 첨부하면 AI가 내용을 분석합니다
+            </div>
+          )}
+        </div>
+
+        {/* 설정 영역 */}
         <div className="border-t border-brand-subtle/50 pt-4 space-y-3">
 
           {/* 모드 + 모델 선택 */}
