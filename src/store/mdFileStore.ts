@@ -72,33 +72,67 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
   // ─── 초기화: IDB에서 로드 + 기본 폴더 생성 ───
   init: async () => {
     if (get().initialized) return;
-    const db = await getDB();
 
-    let folders = await db.getAll("mdFolders");
-    const files = await db.getAll("mdFiles");
-
-    // 기본 폴더가 없으면 생성
-    if (folders.length === 0) {
+    let db;
+    try {
+      // 5초 타임아웃 — DB 업그레이드가 막혀있으면 빈 상태로 시작
+      db = await Promise.race([
+        getDB(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("DB_TIMEOUT")), 5000),
+        ),
+      ]);
+    } catch (err) {
+      // 타임아웃 또는 DB 오류 시 빈 상태로 initialized 처리
+      console.warn("IndexedDB 초기화 실패, 빈 상태로 시작:", err);
       const now = Date.now();
-      const newFolders: StoredMdFolder[] = DEFAULT_FOLDERS.map((f) => ({
+      const fallbackFolders: StoredMdFolder[] = DEFAULT_FOLDERS.map((f) => ({
         ...f,
         id: genId(),
         createdAt: now,
         updatedAt: now,
       }));
-      const tx = db.transaction("mdFolders", "readwrite");
-      for (const f of newFolders) {
-        await tx.store.put(f);
-      }
-      await tx.done;
-      folders = newFolders;
+      set({ folders: fallbackFolders, files: [], initialized: true });
+      return;
     }
 
-    set({
-      folders: folders.sort((a, b) => a.order - b.order),
-      files: files.sort((a, b) => a.order - b.order),
-      initialized: true,
-    });
+    try {
+      let folders = await db.getAll("mdFolders");
+      const files = await db.getAll("mdFiles");
+
+      // 기본 폴더가 없으면 생성
+      if (folders.length === 0) {
+        const now = Date.now();
+        const newFolders: StoredMdFolder[] = DEFAULT_FOLDERS.map((f) => ({
+          ...f,
+          id: genId(),
+          createdAt: now,
+          updatedAt: now,
+        }));
+        const tx = db.transaction("mdFolders", "readwrite");
+        for (const f of newFolders) {
+          await tx.store.put(f);
+        }
+        await tx.done;
+        folders = newFolders;
+      }
+
+      set({
+        folders: folders.sort((a, b) => a.order - b.order),
+        files: files.sort((a, b) => a.order - b.order),
+        initialized: true,
+      });
+    } catch (err) {
+      console.warn("IndexedDB 데이터 로드 실패:", err);
+      const now = Date.now();
+      const fallbackFolders: StoredMdFolder[] = DEFAULT_FOLDERS.map((f) => ({
+        ...f,
+        id: genId(),
+        createdAt: now,
+        updatedAt: now,
+      }));
+      set({ folders: fallbackFolders, files: [], initialized: true });
+    }
   },
 
   // ─── 폴더 CRUD ───
