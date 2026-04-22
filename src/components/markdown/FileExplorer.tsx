@@ -1,14 +1,14 @@
 /**
  * 파일 탐색기 — 마크다운 워크스페이스 좌측 사이드바
  *
- * 기능: 폴더/파일 트리, 생성/삭제/이름변경, 드래그 이동, 검색
+ * 기능: 재귀 트리 구조, 생성/삭제/이름변경, 드래그 이동, 검색, 인라인 액션
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useMdFileStore } from "../../store/mdFileStore";
 import type { StoredMdFolder, StoredMdFile } from "../../storage/db";
 
-/* ─── 컨텍스트 메뉴 ─── */
+/* ─── 컨텍스트 메뉴 타입 ─── */
 interface ContextMenu {
   x: number;
   y: number;
@@ -16,30 +16,224 @@ interface ContextMenu {
   targetId?: string;
 }
 
-/* ─── 인라인 편집 ─── */
 interface InlineEdit {
   id: string;
   type: "folder" | "file";
   value: string;
 }
 
+/* ═══════════════════════════════════════════════ */
+/*  폴더 행 컴포넌트                                */
+/* ═══════════════════════════════════════════════ */
+function FolderRow({
+  folder,
+  depth,
+  isCollapsed,
+  totalCount,
+  isDropTarget,
+  isEditing,
+  editValue,
+  editInputRef,
+  onToggle,
+  onContextMenu,
+  onDragOver,
+  onDrop,
+  onEditChange,
+  onEditCommit,
+  onEditCancel,
+  onStartEdit,
+  onNewFile,
+  onNewSubfolder,
+  onDelete,
+  canDelete,
+}: {
+  folder: StoredMdFolder;
+  depth: number;
+  isCollapsed: boolean;
+  totalCount: number;
+  isDropTarget: boolean;
+  isEditing: boolean;
+  editValue: string;
+  editInputRef: React.RefObject<HTMLInputElement | null>;
+  onToggle: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent) => void;
+  onEditChange: (val: string) => void;
+  onEditCommit: () => void;
+  onEditCancel: () => void;
+  onStartEdit: () => void;
+  onNewFile: () => void;
+  onNewSubfolder: () => void;
+  onDelete: () => void;
+  canDelete: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const isEmpty = totalCount === 0;
+
+  return (
+    <div
+      className={`group flex items-center gap-1 py-1.5 rounded-lg cursor-pointer text-sm transition-all
+        ${isDropTarget ? "border border-brand-accent bg-brand-accent/10" : "border border-transparent"}
+        ${isEmpty ? "opacity-40 hover:opacity-70" : "opacity-100"}
+        hover:bg-brand-panel/60`}
+      style={{ paddingLeft: `${depth * 16 + 8}px`, paddingRight: "8px" }}
+      onClick={onToggle}
+      onContextMenu={onContextMenu}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <span className="text-[10px] text-brand-textDim w-3 shrink-0">
+        {isCollapsed ? "▶" : "▼"}
+      </span>
+      <span className="text-sm shrink-0">{isEmpty ? "📁" : "📂"}</span>
+
+      {isEditing ? (
+        <input
+          ref={editInputRef}
+          className="flex-1 min-w-0 bg-brand-bg border border-brand-accent rounded px-1 text-sm text-brand-text outline-none"
+          value={editValue}
+          onChange={(e) => onEditChange(e.target.value)}
+          onBlur={onEditCommit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onEditCommit();
+            if (e.key === "Escape") onEditCancel();
+          }}
+          onClick={(e) => e.stopPropagation()}
+        />
+      ) : (
+        <span className="flex-1 min-w-0 truncate" onDoubleClick={(e) => { e.stopPropagation(); onStartEdit(); }}>
+          {folder.name}
+        </span>
+      )}
+
+      {hovered && !isEditing ? (
+        <div className="flex items-center gap-0.5 shrink-0">
+          <button title="새 문서" className="w-5 h-5 flex items-center justify-center rounded text-[10px] hover:bg-brand-accent/20" onClick={(e) => { e.stopPropagation(); onNewFile(); }}>
+            +📄
+          </button>
+          <button title="하위 폴더" className="w-5 h-5 flex items-center justify-center rounded text-[10px] hover:bg-brand-accent/20" onClick={(e) => { e.stopPropagation(); onNewSubfolder(); }}>
+            +📁
+          </button>
+          <button
+            title={canDelete ? "삭제" : "파일이 있어 삭제 불가"}
+            className={`w-5 h-5 flex items-center justify-center rounded text-[10px] ${canDelete ? "hover:bg-red-500/20 text-red-400/60" : "text-brand-textDim/20 cursor-not-allowed"}`}
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          >🗑</button>
+        </div>
+      ) : (
+        totalCount > 0 ? (
+          <span className="text-[10px] text-brand-textDim shrink-0">{totalCount}</span>
+        ) : (
+          <span className="text-[10px] text-brand-textDim/50 shrink-0">◌</span>
+        )
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════ */
+/*  파일 행 컴포넌트                                */
+/* ═══════════════════════════════════════════════ */
+function FileRow({
+  file,
+  depth,
+  isActive,
+  isEditing,
+  editValue,
+  editInputRef,
+  isDragging,
+  onSelect,
+  onContextMenu,
+  onDragStart,
+  onDragEnd,
+  onEditChange,
+  onEditCommit,
+  onEditCancel,
+  onStartEdit,
+  onDelete,
+}: {
+  file: StoredMdFile;
+  depth: number;
+  isActive: boolean;
+  isEditing: boolean;
+  editValue: string;
+  editInputRef: React.RefObject<HTMLInputElement | null>;
+  isDragging: boolean;
+  onSelect: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  onEditChange: (val: string) => void;
+  onEditCommit: () => void;
+  onEditCancel: () => void;
+  onStartEdit: () => void;
+  onDelete: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      className={`flex items-center gap-1 py-1.5 rounded-lg cursor-pointer text-sm transition-all
+        ${isActive ? "bg-brand-accent/15 border-l-2 border-brand-accent" : "border-l-2 border-transparent"}
+        ${isDragging ? "opacity-40" : ""}
+        hover:bg-brand-panel/60`}
+      style={{ paddingLeft: `${depth * 16 + 20}px`, paddingRight: "8px" }}
+      onClick={onSelect}
+      onContextMenu={onContextMenu}
+      draggable
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <span className="text-sm shrink-0">📄</span>
+
+      {isEditing ? (
+        <input
+          ref={editInputRef}
+          className="flex-1 min-w-0 bg-brand-bg border border-brand-accent rounded px-1 text-sm text-brand-text outline-none"
+          value={editValue}
+          onChange={(e) => onEditChange(e.target.value)}
+          onBlur={onEditCommit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onEditCommit();
+            if (e.key === "Escape") onEditCancel();
+          }}
+          onClick={(e) => e.stopPropagation()}
+        />
+      ) : (
+        <span className="flex-1 min-w-0 truncate" onDoubleClick={(e) => { e.stopPropagation(); onStartEdit(); }}>
+          {file.name}
+        </span>
+      )}
+
+      {hovered && !isEditing ? (
+        <button
+          title="삭제"
+          className="w-5 h-5 flex items-center justify-center rounded text-[10px] text-red-400/60 hover:bg-red-500/20 shrink-0"
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+        >🗑</button>
+      ) : (
+        file.isFavorite && <span className="text-[10px] shrink-0">⭐</span>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════ */
+/*  메인 파일 탐색기                                */
+/* ═══════════════════════════════════════════════ */
 export function FileExplorer() {
   const {
-    folders,
-    files,
-    activeFileId,
-    searchQuery,
-    setActiveFile,
-    setSearchQuery,
-    createFolder,
-    createFile,
-    renameFolder,
-    renameFile,
-    deleteFolder,
-    deleteFile,
-    duplicateFile,
-    moveFile,
-    getFolderFileCount,
+    folders, files, activeFileId, searchQuery,
+    setActiveFile, setSearchQuery,
+    createFolder, createFile,
+    renameFolder, renameFile,
+    deleteFolder, deleteFile,
+    duplicateFile, moveFile,
     canDeleteFolder,
   } = useMdFileStore();
 
@@ -50,14 +244,12 @@ export function FileExplorer() {
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
 
-  // 외부 클릭 시 컨텍스트 메뉴 닫기
   useEffect(() => {
     const handler = () => setContextMenu(null);
     window.addEventListener("click", handler);
     return () => window.removeEventListener("click", handler);
   }, []);
 
-  // 인라인 편집 포커스
   useEffect(() => {
     if (inlineEdit && editInputRef.current) {
       editInputRef.current.focus();
@@ -65,239 +257,152 @@ export function FileExplorer() {
     }
   }, [inlineEdit]);
 
-  // ─── 폴더 접기/펼치기 ───
   const toggleFolder = useCallback((folderId: string) => {
     setCollapsedFolders((prev) => {
       const next = new Set(prev);
-      if (next.has(folderId)) next.delete(folderId);
-      else next.add(folderId);
+      next.has(folderId) ? next.delete(folderId) : next.add(folderId);
       return next;
     });
   }, []);
 
-  // ─── 검색 필터 ───
+  // 검색 필터
   const filteredFolders = searchQuery
     ? folders.filter((f) => f.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : folders;
-
   const filteredFiles = searchQuery
-    ? files.filter(
-        (f) =>
-          f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          f.content.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
+    ? files.filter((f) => f.name.toLowerCase().includes(searchQuery.toLowerCase()) || f.content.toLowerCase().includes(searchQuery.toLowerCase()))
     : files;
 
-  // ─── 인라인 편집 확정 ───
+  // 인라인 편집
   const commitEdit = async () => {
-    if (!inlineEdit || !inlineEdit.value.trim()) {
-      setInlineEdit(null);
-      return;
-    }
-    if (inlineEdit.type === "folder") {
-      await renameFolder(inlineEdit.id, inlineEdit.value.trim());
-    } else {
-      await renameFile(inlineEdit.id, inlineEdit.value.trim());
-    }
+    if (!inlineEdit || !inlineEdit.value.trim()) { setInlineEdit(null); return; }
+    if (inlineEdit.type === "folder") await renameFolder(inlineEdit.id, inlineEdit.value.trim());
+    else await renameFile(inlineEdit.id, inlineEdit.value.trim());
     setInlineEdit(null);
   };
 
-  // ─── 새 폴더/파일 생성 ───
-  const handleNewFolder = async () => {
-    const name = "새 폴더";
-    const folder = await createFolder(name);
-    setInlineEdit({ id: folder.id, type: "folder", value: name });
+  // 생성
+  const handleNewFolder = async (parentId?: string | null) => {
+    const folder = await createFolder("새 폴더", parentId);
+    setInlineEdit({ id: folder.id, type: "folder", value: "새 폴더" });
+    // 부모 폴더가 접혀있으면 펼치기
+    if (parentId) {
+      setCollapsedFolders((prev) => { const next = new Set(prev); next.delete(parentId); return next; });
+    }
   };
 
   const handleNewFile = async (folderId?: string | null) => {
-    const name = "새 문서";
-    const file = await createFile(name, folderId);
-    setInlineEdit({ id: file.id, type: "file", value: name });
-  };
-
-  // ─── 드래그 핸들러 ───
-  const handleDragStart = (id: string, type: "file" | "folder") => {
-    setDragItem({ id, type });
-  };
-
-  const handleDragOver = (e: React.DragEvent, folderId: string | null) => {
-    e.preventDefault();
-    setDropTarget(folderId);
-  };
-
-  const handleDrop = async (e: React.DragEvent, targetFolderId: string | null) => {
-    e.preventDefault();
-    if (dragItem?.type === "file") {
-      await moveFile(dragItem.id, targetFolderId);
+    const file = await createFile("새 문서", folderId);
+    setInlineEdit({ id: file.id, type: "file", value: "새 문서" });
+    if (folderId) {
+      setCollapsedFolders((prev) => { const next = new Set(prev); next.delete(folderId); return next; });
     }
-    setDragItem(null);
-    setDropTarget(null);
   };
 
-  const handleDragEnd = () => {
-    setDragItem(null);
-    setDropTarget(null);
-  };
-
-  // ─── 컨텍스트 메뉴 핸들러 ───
-  const handleContextMenu = (
-    e: React.MouseEvent,
-    type: "folder" | "file" | "blank",
-    targetId?: string,
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setContextMenu({ x: e.clientX, y: e.clientY, type, targetId });
-  };
-
-  // ─── 폴더 삭제 ───
+  // 삭제
   const handleDeleteFolder = async (id: string) => {
-    if (!canDeleteFolder(id)) {
-      alert("폴더 안의 파일을 먼저 삭제하거나 이동해주세요.");
-      return;
-    }
+    if (!canDeleteFolder(id)) { alert("폴더 안의 파일을 먼저 삭제하거나 이동해주세요."); return; }
     if (!confirm("이 폴더를 삭제하시겠습니까?")) return;
     await deleteFolder(id);
   };
 
-  // ─── 파일 삭제 ───
   const handleDeleteFile = async (id: string) => {
     if (!confirm("이 파일을 삭제하시겠습니까? 복구할 수 없습니다.")) return;
     await deleteFile(id);
   };
 
-  // ─── 파일 다운로드 ───
+  // 드래그
+  const handleDragOver = (e: React.DragEvent, folderId: string | null) => { e.preventDefault(); setDropTarget(folderId); };
+  const handleDrop = async (e: React.DragEvent, targetFolderId: string | null) => {
+    e.preventDefault();
+    if (dragItem?.type === "file") await moveFile(dragItem.id, targetFolderId);
+    setDragItem(null); setDropTarget(null);
+  };
+
+  // 컨텍스트 메뉴
+  const handleContextMenu = (e: React.MouseEvent, type: "folder" | "file" | "blank", targetId?: string) => {
+    e.preventDefault(); e.stopPropagation();
+    setContextMenu({ x: e.clientX, y: e.clientY, type, targetId });
+  };
+
+  // 다운로드
   const handleDownloadFile = (file: StoredMdFile) => {
     const blob = new Blob([file.content], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = file.name;
-    a.click();
+    const a = document.createElement("a"); a.href = url; a.download = file.name; a.click();
     URL.revokeObjectURL(url);
   };
 
-  // ─── 폴더 렌더링 ───
-  const renderFolder = (folder: StoredMdFolder) => {
-    const isCollapsed = collapsedFolders.has(folder.id);
-    const fileCount = getFolderFileCount(folder.id);
-    const isEmpty = fileCount === 0;
-    const isDropping = dropTarget === folder.id;
-    const isEditing = inlineEdit?.id === folder.id;
-    const folderFiles = filteredFiles.filter((f) => f.folderId === folder.id);
+  // 재귀 카운트
+  const getTotalCount = useCallback((folderId: string): number => {
+    const fc = filteredFiles.filter((f) => f.folderId === folderId).length;
+    const subs = filteredFolders.filter((f) => f.parentId === folderId);
+    return fc + subs.reduce((s, sf) => s + getTotalCount(sf.id), 0);
+  }, [filteredFiles, filteredFolders]);
 
-    return (
-      <div key={folder.id}>
-        {/* 폴더 행 */}
-        <div
-          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition-all
-            ${isDropping ? "border border-brand-accent bg-brand-accent/10" : "border border-transparent"}
-            ${isEmpty ? "opacity-40" : "opacity-100"}
-            hover:bg-brand-panel/60`}
-          onClick={() => toggleFolder(folder.id)}
-          onContextMenu={(e) => handleContextMenu(e, "folder", folder.id)}
-          onDragOver={(e) => handleDragOver(e, folder.id)}
-          onDrop={(e) => handleDrop(e, folder.id)}
-        >
-          <span className="text-[10px] text-brand-textDim w-3">
-            {isCollapsed ? "▶" : "▼"}
-          </span>
-          <span className="text-sm">{isEmpty ? "📁" : "📂"}</span>
+  // 재귀 폴더 렌더
+  const renderFolderTree = (parentId: string | null, depth: number) => {
+    const foldersAtLevel = filteredFolders.filter((f) => f.parentId === parentId).sort((a, b) => a.order - b.order);
+    return foldersAtLevel.map((folder) => {
+      const folderFiles = filteredFiles.filter((f) => f.folderId === folder.id);
+      const isCollapsed = collapsedFolders.has(folder.id);
 
-          {isEditing ? (
-            <input
-              ref={editInputRef}
-              className="flex-1 bg-brand-bg border border-brand-accent rounded px-1 text-sm text-brand-text outline-none"
-              value={inlineEdit.value}
-              onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })}
-              onBlur={commitEdit}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") commitEdit();
-                if (e.key === "Escape") setInlineEdit(null);
-              }}
-            />
-          ) : (
-            <span
-              className="flex-1 truncate"
-              onDoubleClick={(e) => {
-                e.stopPropagation();
-                setInlineEdit({ id: folder.id, type: "folder", value: folder.name });
-              }}
-            >
-              {folder.name}
-            </span>
-          )}
-
-          {!isEmpty && (
-            <span className="text-[10px] text-brand-textDim">{fileCount}</span>
-          )}
-          {isEmpty && (
-            <span className="text-[10px] text-brand-textDim/50">◌</span>
+      return (
+        <div key={folder.id}>
+          <FolderRow
+            folder={folder}
+            depth={depth}
+            isCollapsed={isCollapsed}
+            totalCount={getTotalCount(folder.id)}
+            isDropTarget={dropTarget === folder.id}
+            isEditing={inlineEdit?.id === folder.id}
+            editValue={inlineEdit?.id === folder.id ? inlineEdit.value : ""}
+            editInputRef={editInputRef}
+            onToggle={() => toggleFolder(folder.id)}
+            onContextMenu={(e) => handleContextMenu(e, "folder", folder.id)}
+            onDragOver={(e) => handleDragOver(e, folder.id)}
+            onDrop={(e) => handleDrop(e, folder.id)}
+            onEditChange={(val) => inlineEdit && setInlineEdit({ ...inlineEdit, value: val })}
+            onEditCommit={commitEdit}
+            onEditCancel={() => setInlineEdit(null)}
+            onStartEdit={() => setInlineEdit({ id: folder.id, type: "folder", value: folder.name })}
+            onNewFile={() => handleNewFile(folder.id)}
+            onNewSubfolder={() => handleNewFolder(folder.id)}
+            onDelete={() => handleDeleteFolder(folder.id)}
+            canDelete={canDeleteFolder(folder.id)}
+          />
+          {!isCollapsed && (
+            <>
+              {renderFolderTree(folder.id, depth + 1)}
+              {folderFiles.sort((a, b) => a.order - b.order).map((file) => (
+                <FileRow
+                  key={file.id}
+                  file={file}
+                  depth={depth + 1}
+                  isActive={activeFileId === file.id}
+                  isEditing={inlineEdit?.id === file.id}
+                  editValue={inlineEdit?.id === file.id ? inlineEdit.value : ""}
+                  editInputRef={editInputRef}
+                  isDragging={dragItem?.id === file.id}
+                  onSelect={() => setActiveFile(file.id)}
+                  onContextMenu={(e) => handleContextMenu(e, "file", file.id)}
+                  onDragStart={() => setDragItem({ id: file.id, type: "file" })}
+                  onDragEnd={() => { setDragItem(null); setDropTarget(null); }}
+                  onEditChange={(val) => inlineEdit && setInlineEdit({ ...inlineEdit, value: val })}
+                  onEditCommit={commitEdit}
+                  onEditCancel={() => setInlineEdit(null)}
+                  onStartEdit={() => setInlineEdit({ id: file.id, type: "file", value: file.name.replace(/\.md$/, "") })}
+                  onDelete={() => handleDeleteFile(file.id)}
+                />
+              ))}
+            </>
           )}
         </div>
-
-        {/* 하위 파일 목록 */}
-        {!isCollapsed && (
-          <div className="ml-4">
-            {folderFiles.map((file) => renderFile(file))}
-          </div>
-        )}
-      </div>
-    );
+      );
+    });
   };
 
-  // ─── 파일 렌더링 ───
-  const renderFile = (file: StoredMdFile) => {
-    const isActive = activeFileId === file.id;
-    const isEditing = inlineEdit?.id === file.id;
-    const isDragging = dragItem?.id === file.id;
-
-    return (
-      <div
-        key={file.id}
-        className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition-all
-          ${isActive ? "bg-brand-accent/15 border-l-2 border-brand-accent" : "border-l-2 border-transparent"}
-          ${isDragging ? "opacity-40" : ""}
-          hover:bg-brand-panel/60`}
-        onClick={() => setActiveFile(file.id)}
-        onContextMenu={(e) => handleContextMenu(e, "file", file.id)}
-        draggable
-        onDragStart={() => handleDragStart(file.id, "file")}
-        onDragEnd={handleDragEnd}
-      >
-        <span className="text-sm">📄</span>
-
-        {isEditing ? (
-          <input
-            ref={editInputRef}
-            className="flex-1 bg-brand-bg border border-brand-accent rounded px-1 text-sm text-brand-text outline-none"
-            value={inlineEdit.value}
-            onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })}
-            onBlur={commitEdit}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") commitEdit();
-              if (e.key === "Escape") setInlineEdit(null);
-            }}
-          />
-        ) : (
-          <span
-            className="flex-1 truncate"
-            onDoubleClick={(e) => {
-              e.stopPropagation();
-              const nameWithoutExt = file.name.replace(/\.md$/, "");
-              setInlineEdit({ id: file.id, type: "file", value: nameWithoutExt });
-            }}
-          >
-            {file.name}
-          </span>
-        )}
-
-        {file.isFavorite && <span className="text-[10px]">⭐</span>}
-      </div>
-    );
-  };
-
-  // 루트 레벨 파일 (폴더에 속하지 않은)
+  // 루트 레벨 파일
   const rootFiles = filteredFiles.filter((f) => f.folderId === null);
 
   return (
@@ -309,14 +414,9 @@ export function FileExplorer() {
     >
       {/* 헤더 */}
       <div className="px-3 py-3 border-b border-brand-subtle">
-        <div className="text-xs font-semibold text-brand-textDim uppercase tracking-wider mb-2">
-          내 문서
-        </div>
-        {/* 검색 */}
+        <div className="text-xs font-semibold text-brand-textDim uppercase tracking-wider mb-2">내 문서</div>
         <input
-          type="text"
-          placeholder="검색..."
-          value={searchQuery}
+          type="text" placeholder="검색..." value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full px-2 py-1.5 rounded-lg bg-brand-panel border border-brand-subtle text-xs text-brand-text
                      placeholder:text-brand-textDim/50 focus:outline-none focus:border-brand-accent transition-colors"
@@ -325,29 +425,39 @@ export function FileExplorer() {
 
       {/* 파일 트리 */}
       <div className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
-        {filteredFolders.filter((f) => f.parentId === null).map(renderFolder)}
+        {renderFolderTree(null, 0)}
         {rootFiles.length > 0 && (
           <div className="mt-2 pt-2 border-t border-brand-subtle/30">
-            {rootFiles.map(renderFile)}
+            {rootFiles.map((file) => (
+              <FileRow
+                key={file.id} file={file} depth={0}
+                isActive={activeFileId === file.id}
+                isEditing={inlineEdit?.id === file.id}
+                editValue={inlineEdit?.id === file.id ? inlineEdit.value : ""}
+                editInputRef={editInputRef}
+                isDragging={dragItem?.id === file.id}
+                onSelect={() => setActiveFile(file.id)}
+                onContextMenu={(e) => handleContextMenu(e, "file", file.id)}
+                onDragStart={() => setDragItem({ id: file.id, type: "file" })}
+                onDragEnd={() => { setDragItem(null); setDropTarget(null); }}
+                onEditChange={(val) => inlineEdit && setInlineEdit({ ...inlineEdit, value: val })}
+                onEditCommit={commitEdit}
+                onEditCancel={() => setInlineEdit(null)}
+                onStartEdit={() => setInlineEdit({ id: file.id, type: "file", value: file.name.replace(/\.md$/, "") })}
+                onDelete={() => handleDeleteFile(file.id)}
+              />
+            ))}
           </div>
         )}
       </div>
 
-      {/* 하단 버튼 + 사용량 */}
+      {/* 하단 버튼 */}
       <div className="px-3 py-3 border-t border-brand-subtle space-y-2">
         <div className="flex gap-2">
-          <button
-            onClick={handleNewFolder}
-            className="flex-1 py-1.5 rounded-lg text-[11px] border border-brand-subtle text-brand-textDim
-                       hover:text-brand-text hover:border-brand-accent/40 transition-colors"
-          >
+          <button onClick={() => handleNewFolder(null)} className="flex-1 py-1.5 rounded-lg text-[11px] border border-brand-subtle text-brand-textDim hover:text-brand-text hover:border-brand-accent/40 transition-colors">
             + 새 폴더
           </button>
-          <button
-            onClick={() => handleNewFile(null)}
-            className="flex-1 py-1.5 rounded-lg text-[11px] border border-brand-subtle text-brand-textDim
-                       hover:text-brand-text hover:border-brand-accent/40 transition-colors"
-          >
+          <button onClick={() => handleNewFile(null)} className="flex-1 py-1.5 rounded-lg text-[11px] border border-brand-subtle text-brand-textDim hover:text-brand-text hover:border-brand-accent/40 transition-colors">
             + 새 문서
           </button>
         </div>
@@ -365,106 +475,56 @@ export function FileExplorer() {
         >
           {contextMenu.type === "folder" && contextMenu.targetId && (
             <>
-              <button
-                className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10 transition-colors"
-                onClick={() => {
-                  handleNewFile(contextMenu.targetId);
-                  setContextMenu(null);
-                }}
-              >
+              <button className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10" onClick={() => { handleNewFile(contextMenu.targetId); setContextMenu(null); }}>
                 📄 새 문서 만들기
               </button>
-              <button
-                className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10 transition-colors"
-                onClick={() => {
-                  const folder = folders.find((f) => f.id === contextMenu.targetId);
-                  if (folder) setInlineEdit({ id: folder.id, type: "folder", value: folder.name });
-                  setContextMenu(null);
-                }}
-              >
+              <button className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10" onClick={() => { handleNewFolder(contextMenu.targetId); setContextMenu(null); }}>
+                📁 하위 폴더 만들기
+              </button>
+              <button className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10" onClick={() => {
+                const f = folders.find((f) => f.id === contextMenu.targetId);
+                if (f) setInlineEdit({ id: f.id, type: "folder", value: f.name });
+                setContextMenu(null);
+              }}>
                 ✏️ 이름 변경
               </button>
               <div className="border-t border-brand-subtle/50 my-1" />
               <button
-                className={`w-full text-left px-3 py-1.5 text-xs transition-colors
-                  ${canDeleteFolder(contextMenu.targetId) ? "text-red-400 hover:bg-red-500/10" : "text-brand-textDim/30 cursor-not-allowed"}`}
-                onClick={() => {
-                  if (contextMenu.targetId) handleDeleteFolder(contextMenu.targetId);
-                  setContextMenu(null);
-                }}
-                title={!canDeleteFolder(contextMenu.targetId!) ? "폴더 안의 파일을 먼저 삭제하거나 이동해주세요" : ""}
-              >
-                🗑 폴더 삭제
-              </button>
+                className={`w-full text-left px-3 py-1.5 text-xs ${canDeleteFolder(contextMenu.targetId) ? "text-red-400 hover:bg-red-500/10" : "text-brand-textDim/30 cursor-not-allowed"}`}
+                onClick={() => { if (contextMenu.targetId) handleDeleteFolder(contextMenu.targetId); setContextMenu(null); }}
+              >🗑 폴더 삭제</button>
             </>
           )}
-
           {contextMenu.type === "file" && contextMenu.targetId && (() => {
             const file = files.find((f) => f.id === contextMenu.targetId);
             return (
               <>
-                <button
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10 transition-colors"
-                  onClick={() => {
-                    if (file) {
-                      const nameWithoutExt = file.name.replace(/\.md$/, "");
-                      setInlineEdit({ id: file.id, type: "file", value: nameWithoutExt });
-                    }
-                    setContextMenu(null);
-                  }}
-                >
-                  ✏️ 이름 변경
-                </button>
-                <button
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10 transition-colors"
-                  onClick={async () => {
-                    if (contextMenu.targetId) await duplicateFile(contextMenu.targetId);
-                    setContextMenu(null);
-                  }}
-                >
-                  📋 복제
-                </button>
-                <button
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10 transition-colors"
-                  onClick={() => {
-                    if (file) handleDownloadFile(file);
-                    setContextMenu(null);
-                  }}
-                >
-                  📥 다운로드 (.md)
-                </button>
+                <button className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10" onClick={() => {
+                  if (file) setInlineEdit({ id: file.id, type: "file", value: file.name.replace(/\.md$/, "") });
+                  setContextMenu(null);
+                }}>✏️ 이름 변경</button>
+                <button className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10" onClick={async () => {
+                  if (contextMenu.targetId) await duplicateFile(contextMenu.targetId);
+                  setContextMenu(null);
+                }}>📋 복제</button>
+                <button className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10" onClick={() => {
+                  if (file) handleDownloadFile(file);
+                  setContextMenu(null);
+                }}>📥 다운로드 (.md)</button>
                 <div className="border-t border-brand-subtle/50 my-1" />
-                <button
-                  className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
-                  onClick={() => {
-                    if (contextMenu.targetId) handleDeleteFile(contextMenu.targetId);
-                    setContextMenu(null);
-                  }}
-                >
-                  🗑 삭제
-                </button>
+                <button className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10" onClick={() => {
+                  if (contextMenu.targetId) handleDeleteFile(contextMenu.targetId);
+                  setContextMenu(null);
+                }}>🗑 삭제</button>
               </>
             );
           })()}
-
           {contextMenu.type === "blank" && (
             <>
-              <button
-                className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10 transition-colors"
-                onClick={() => {
-                  handleNewFolder();
-                  setContextMenu(null);
-                }}
-              >
+              <button className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10" onClick={() => { handleNewFolder(null); setContextMenu(null); }}>
                 📁 새 폴더 만들기
               </button>
-              <button
-                className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10 transition-colors"
-                onClick={() => {
-                  handleNewFile(null);
-                  setContextMenu(null);
-                }}
-              >
+              <button className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10" onClick={() => { handleNewFile(null); setContextMenu(null); }}>
                 📄 새 문서 만들기
               </button>
             </>
