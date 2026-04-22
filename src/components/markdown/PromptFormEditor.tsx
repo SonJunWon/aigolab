@@ -26,10 +26,9 @@ const MODEL_OPTIONS: ModelOption[] = [
   { id: "auto", provider: "", label: "자동 선택 (무료)", free: true, description: "Groq → Gemini 순서로 자동 선택" },
   { id: "gemini", provider: "gemini", label: "Gemini 2.5 Flash (무료)", free: true, description: "Google AI · 무료 1,500회/일" },
   { id: "groq", provider: "groq", label: "Groq Llama 3.3 70B (무료)", free: true, description: "초고속 · 무료 14,400회/일" },
-  // Gemini 유료 모델 (API 키 등록 + 유료 결제 필요)
-  { id: "gemini-3.0-flash", provider: "gemini", label: "Gemini 3 빠른 모델", free: false, description: "빠르게 답변 · 유료 결제 필요" },
-  { id: "gemini-3.0", provider: "gemini", label: "Gemini 3 사고 모델", free: false, description: "복잡한 문제 해결 · 유료 결제 필요" },
-  { id: "gemini-3.1-pro", provider: "gemini", label: "Gemini 3.1 Pro", free: false, description: "고급 수학 및 코딩 · 유료 결제 필요" },
+  // Gemini 상위 모델 (유료 결제 필요할 수 있음)
+  { id: "gemini-2.5-pro", provider: "gemini", label: "Gemini 2.5 Pro (사고 모델)", free: false, description: "복잡한 추론 · 유료 결제 필요" },
+  { id: "gemini-2.0-flash", provider: "gemini", label: "Gemini 2.0 Flash", free: false, description: "빠른 응답 · 유료 결제 필요할 수 있음" },
 ];
 
 /* ─── 첨부 파일 ─── */
