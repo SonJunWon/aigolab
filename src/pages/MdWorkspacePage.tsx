@@ -81,15 +81,25 @@ export function MdWorkspacePage() {
     };
   }, [init]);
 
-  // 활성 파일이 속한 폴더의 이름으로 모드 결정
-  const activeFolder = useMemo(() => {
-    const file = getActiveFile();
-    if (!file?.folderId) return null;
-    return folders.find((f) => f.id === file.folderId) ?? null;
-  }, [activeFileId, folders, getActiveFile]);
+  // 활성 파일이 프롬프트/프로젝트 폴더 트리에 속하는지 재귀 체크
+  const isInFolderTree = useCallback((folderId: string | null, targetName: string): boolean => {
+    if (!folderId) return false;
+    const folder = folders.find((f) => f.id === folderId);
+    if (!folder) return false;
+    if (folder.name === targetName) return true;
+    // 상위 폴더를 재귀적으로 확인
+    return isInFolderTree(folder.parentId, targetName);
+  }, [folders]);
 
-  const isPromptFolder = activeFolder?.name === "프롬프트";
-  const isProjectFolder = activeFolder?.name === "프로젝트";
+  const isPromptFolder = useMemo(() => {
+    const file = getActiveFile();
+    return file ? isInFolderTree(file.folderId, "프롬프트") : false;
+  }, [activeFileId, getActiveFile, isInFolderTree]);
+
+  const isProjectFolder = useMemo(() => {
+    const file = getActiveFile();
+    return file ? isInFolderTree(file.folderId, "프로젝트") : false;
+  }, [activeFileId, getActiveFile, isInFolderTree]);
 
   // 활성 파일 변경 시 콘텐츠 로드 + 모드 자동 전환
   useEffect(() => {
