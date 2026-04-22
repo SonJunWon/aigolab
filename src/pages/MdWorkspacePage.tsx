@@ -5,8 +5,9 @@
  * 우측: Monaco 에디터 + 마크다운 미리보기 (분할/편집/미리보기 모드)
  */
 
-import { useEffect, useState, useCallback, useRef, lazy, Suspense } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
+import { marked } from "marked";
 import { useMdFileStore } from "../store/mdFileStore";
 import { FileExplorer } from "../components/markdown/FileExplorer";
 
@@ -312,54 +313,15 @@ export function MdWorkspacePage() {
   );
 }
 
-/* ─── 간단한 마크다운 미리보기 ─── */
+/* ─── 마크다운 미리보기 (marked 라이브러리 사용) ─── */
 function MdPreview({ content }: { content: string }) {
-  // 간단한 마크다운 → HTML 변환 (기본적인 것만)
-  const html = simpleMarkdownToHtml(content);
+  const html = useMemo(() => {
+    try {
+      return marked(content, { breaks: true, gfm: true }) as string;
+    } catch {
+      return `<p>${content}</p>`;
+    }
+  }, [content]);
+
   return <div dangerouslySetInnerHTML={{ __html: html }} />;
-}
-
-function simpleMarkdownToHtml(md: string): string {
-  let html = md
-    // 코드 블록
-    .replace(/```(\w*)\n([\s\S]*?)```/g, (_m, lang, code) => {
-      return `<pre><code class="language-${lang}">${escapeHtml(code.trim())}</code></pre>`;
-    })
-    // 인라인 코드
-    .replace(/`([^`]+)`/g, "<code>$1</code>")
-    // 제목
-    .replace(/^#### (.+)$/gm, "<h4>$1</h4>")
-    .replace(/^### (.+)$/gm, "<h3>$1</h3>")
-    .replace(/^## (.+)$/gm, "<h2>$1</h2>")
-    .replace(/^# (.+)$/gm, "<h1>$1</h1>")
-    // 굵게/기울임
-    .replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    // 취소선
-    .replace(/~~(.+?)~~/g, "<del>$1</del>")
-    // 인용
-    .replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>")
-    // 구분선
-    .replace(/^---$/gm, "<hr />")
-    // 목록 (간단)
-    .replace(/^- (.+)$/gm, "<li>$1</li>")
-    .replace(/^(\d+)\. (.+)$/gm, "<li>$2</li>")
-    // 링크
-    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-    // 줄바꿈
-    .replace(/\n\n/g, "</p><p>")
-    .replace(/\n/g, "<br />");
-
-  // 연속 li를 ul로 감싸기 (간단)
-  html = html.replace(/((?:<li>.*?<\/li>(?:<br \/>)?)+)/g, "<ul>$1</ul>");
-
-  return `<p>${html}</p>`;
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
 }
