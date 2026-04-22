@@ -115,8 +115,17 @@ function FolderRow({
       style={{ paddingLeft: `${depth * 16 + 8}px`, paddingRight: "8px" }}
       onClick={onToggle}
       onContextMenu={onContextMenu}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = "move";
+        onDragOver(e);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onDrop(e);
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -208,7 +217,11 @@ function FileRow({
       onClick={onSelect}
       onContextMenu={onContextMenu}
       draggable
-      onDragStart={onDragStart}
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", file.id);
+        onDragStart();
+      }}
       onDragEnd={onDragEnd}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
