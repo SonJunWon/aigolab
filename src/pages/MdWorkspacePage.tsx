@@ -263,7 +263,6 @@ export function MdWorkspacePage() {
                   <PromptFormEditor
                     key={activeFileId}
                     fileId={activeFileId}
-                    content={localContent}
                   />
                 </div>
               )}

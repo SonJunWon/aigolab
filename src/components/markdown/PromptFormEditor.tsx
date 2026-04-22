@@ -79,15 +79,15 @@ const FIELDS: { key: keyof PromptData; label: string; number: number; placeholde
 /* ─── 컴포넌트 ─── */
 export function PromptFormEditor({
   fileId,
-  content,
 }: {
   fileId: string;
-  content: string;
 }) {
   // 파일 ID를 ref에 고정 — 언마운트 시에도 올바른 파일에 저장
   const fileIdRef = useRef(fileId);
   fileIdRef.current = fileId;
   const updateFileContent = useMdFileStore((s) => s.updateFileContent);
+  // store에서 직접 파일 내용을 읽음 — localContent 경유하지 않음
+  const fileContent = useMdFileStore((s) => s.files.find((f) => f.id === fileId)?.content ?? "");
   const [data, setData] = useState<PromptData>({ name: "", role: "", context: "", instruction: "", format: "", constraints: "" });
   const [query, setQuery] = useState("");
   const [outputs, setOutputs] = useState<OutputChunk[]>([]);
@@ -101,12 +101,12 @@ export function PromptFormEditor({
   dataRef.current = data;
   queryRef.current = query;
 
-  // 파일 내용에서 프롬프트 파싱 (최초 1회)
+  // 파일 내용에서 프롬프트 파싱 (최초 1회, store에서 직접 읽은 내용 사용)
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
-    if (content.includes("## ")) {
-      const parsed = parsePromptMd(content);
+    if (fileContent.includes("## ")) {
+      const parsed = parsePromptMd(fileContent);
       const newData = { name: parsed.name, role: parsed.role, context: parsed.context, instruction: parsed.instruction, format: parsed.format, constraints: parsed.constraints };
       setData(newData);
       dataRef.current = newData;
@@ -115,7 +115,7 @@ export function PromptFormEditor({
         queryRef.current = parsed.lastQuery;
       }
     }
-  }, [content]);
+  }, [fileContent]);
 
   // 필드 변경 → 마크다운으로 변환 → 파일에 직접 저장 (디바운스)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
