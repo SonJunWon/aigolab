@@ -22,9 +22,13 @@ interface ModelOption {
 }
 
 const MODEL_OPTIONS: ModelOption[] = [
+  // 무료 모델
   { id: "auto", provider: "", label: "자동 선택 (무료)", free: true, description: "Groq → Gemini 순서로 자동 선택" },
   { id: "gemini", provider: "gemini", label: "Gemini 2.5 Flash", free: true, description: "Google AI · 무료 1,500회/일" },
   { id: "groq", provider: "groq", label: "Groq Llama 3.3 70B", free: true, description: "초고속 · 무료 14,400회/일" },
+  // Gemini 유료 모델 (API 키 등록 + 유료 결제 필요)
+  { id: "gemini-2.5-pro", provider: "gemini", label: "Gemini 2.5 Pro (유료)", free: false, description: "고성능 추론 · 유료 결제 필요" },
+  { id: "gemini-2.0-flash", provider: "gemini", label: "Gemini 2.0 Flash (유료)", free: false, description: "빠른 응답 · 유료 결제 필요" },
 ];
 
 /* ─── 프롬프트 데이터 구조 ─── */
@@ -200,10 +204,21 @@ export function PromptFormEditor({
 
     const systemMessage = systemParts.join("\n");
 
-    // provider 옵션
-    const providerCode = selectedModel !== "auto"
-      ? `provider: ${JSON.stringify(selectedModel)},`
-      : "";
+    // provider + model 옵션
+    const selectedOpt = MODEL_OPTIONS.find((o) => o.id === selectedModel);
+    let providerCode = "";
+    let modelOverride = "";
+
+    if (selectedModel !== "auto" && selectedOpt) {
+      if (selectedOpt.free) {
+        // 무료 모델: provider만 지정 (기본 모델 사용)
+        providerCode = `provider: ${JSON.stringify(selectedOpt.provider)},`;
+      } else {
+        // 유료 모델: provider + 모델명 직접 지정
+        providerCode = `provider: "gemini",`;
+        modelOverride = selectedModel; // gemini-2.5-pro 등
+      }
+    }
 
     let code: string;
 
@@ -222,8 +237,32 @@ console.log("[이미지 생성 완료]");
 console.log("프로바이더: " + result.provider);
 console.log("소요시간: " + result.latencyMs + "ms");
 `;
+    } else if (modelOverride) {
+      // 유료 모델: 직접 SDK 호출 (chat() 라우터 우회)
+      code = `
+const { GoogleGenAI } = await import("@google/genai");
+const apiKey = await (await import("../lib/llm/keys")).requireKey("gemini");
+const ai = new GoogleGenAI({ apiKey });
+const model = ${JSON.stringify(modelOverride)};
+
+const config = {};
+${systemMessage ? `config.systemInstruction = ${JSON.stringify(systemMessage)};` : ""}
+
+const startedAt = performance.now();
+const response = await ai.models.generateContent({
+  model,
+  contents: [{ role: "user", parts: [{ text: ${JSON.stringify(actualQuery)} }] }],
+  config,
+});
+
+const text = response.text ?? "";
+const latencyMs = Math.round(performance.now() - startedAt);
+console.log(text);
+console.log("\\n---");
+console.log("⏱ " + latencyMs + "ms · " + model);
+`;
     } else {
-      // 텍스트 생성 모드
+      // 무료 모델: chat() 라우터 사용
       code = `
 const response = await chat({
   messages: [
@@ -329,21 +368,47 @@ console.log("⏱ " + response.latencyMs + "ms · " + response.model);
                 <select
                   value={selectedModel}
                   onChange={(e) => {
-                    const model = e.target.value;
-                    setSelectedModel(model);
-                    // 키 미등록 모델 선택 시 경고
-                    if (model !== "auto" && !registeredKeys.includes(model)) {
-                      alert(`${model} API 키가 등록되어 있지 않습니다. 마이페이지 > API 키 관리에서 등록해주세요.`);
+                    const modelId = e.target.value;
+                    const opt = MODEL_OPTIONS.find((o) => o.id === modelId);
+                    setSelectedModel(modelId);
+
+                    if (!opt) return;
+
+                    // 키 미등록 시 경고
+                    if (opt.provider && !registeredKeys.includes(opt.provider)) {
+                      alert(`${opt.provider} API 키가 등록되어 있지 않습니다.\n마이페이지 > API 키 관리에서 등록해주세요.`);
+                      return;
+                    }
+
+                    // 유료 모델 선택 시 안내
+                    if (!opt.free) {
+                      alert(
+                        `${opt.label}은 유료 모델입니다.\n\n` +
+                        `Google AI Studio에서 유료 결제(Billing)가 활성화되어 있어야 사용할 수 있습니다.\n` +
+                        `유료 결제가 되어 있지 않으면 실행 시 오류가 발생합니다.\n\n` +
+                        `유료 결제 설정: https://aistudio.google.com → Settings → Billing`
+                      );
                     }
                   }}
                   className="px-2 py-1 rounded-lg bg-brand-panel border border-brand-subtle text-[11px] text-brand-text
                              focus:outline-none focus:border-brand-accent transition-colors"
                 >
-                  {MODEL_OPTIONS.map((opt) => (
-                    <option key={opt.id} value={opt.id}>
-                      {opt.label} {registeredKeys.includes(opt.provider) ? "✓" : opt.id === "auto" ? "" : "(미등록)"}
-                    </option>
-                  ))}
+                  <optgroup label="무료 모델">
+                    {MODEL_OPTIONS.filter((o) => o.free).map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.label} {opt.provider && registeredKeys.includes(opt.provider) ? "✓" : opt.id === "auto" ? "" : "(미등록)"}
+                      </option>
+                    ))}
+                  </optgroup>
+                  {registeredKeys.includes("gemini") && (
+                    <optgroup label="Gemini 유료 모델 (결제 필요)">
+                      {MODEL_OPTIONS.filter((o) => !o.free).map((opt) => (
+                        <option key={opt.id} value={opt.id}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
               </div>
             )}
