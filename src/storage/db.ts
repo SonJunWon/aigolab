@@ -95,19 +95,37 @@ const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<NotebookDB>> | null = null;
 
-export function getDB(): Promise<IDBPDatabase<NotebookDB>> {
+export async function getDB(): Promise<IDBPDatabase<NotebookDB>> {
   if (!dbPromise) {
-    dbPromise = openDB<NotebookDB>(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion) {
-        if (oldVersion < 1) {
-          db.createObjectStore("notebooks", { keyPath: "id" });
-          db.createObjectStore("progress", { keyPath: "id" });
-        }
-        // v2: 마크다운 스토어가 한때 여기 있었으나 별도 DB로 이관됨.
-        // 버전을 2로 유지하여 기존 v2 사용자의 다운그레이드 에러 방지.
-        // 이미 mdFolders/mdFiles가 있을 수 있으므로 삭제하지 않고 그냥 둠.
-      },
-    });
+    dbPromise = (async () => {
+      // 먼저 현재 DB 버전을 확인
+      const databases = await indexedDB.databases();
+      const existing = databases.find((d) => d.name === DB_NAME);
+      // 기존 DB가 v1이든 v2이든, 그 버전으로 열어서 업그레이드 차단 방지
+      const targetVersion = existing?.version
+        ? Math.max(existing.version, DB_VERSION)
+        : DB_VERSION;
+
+      return openDB<NotebookDB>(DB_NAME, targetVersion, {
+        upgrade(db, oldVersion) {
+          if (oldVersion < 1) {
+            db.createObjectStore("notebooks", { keyPath: "id" });
+            db.createObjectStore("progress", { keyPath: "id" });
+          }
+          // v2+: 마크다운 스토어는 별도 DB(aigolab-markdown)로 이관됨.
+          // 여기서는 추가 작업 없음.
+        },
+        blocked() {
+          // 다른 탭에서 구 버전 DB가 열려있으면 → 캐시 무효화 후 재시도
+          console.warn("[DB] 업그레이드 차단됨 — 다른 탭을 닫아주세요");
+          dbPromise = null;
+        },
+        blocking() {
+          // 이 탭이 다른 탭의 업그레이드를 막고 있을 때
+          dbPromise = null;
+        },
+      });
+    })();
   }
   return dbPromise;
 }
