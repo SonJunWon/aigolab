@@ -42,6 +42,28 @@ export interface StoredProgress {
   lastStudiedAt: number;
 }
 
+// ─── 마크다운 워크스페이스 ─────────────────────────
+export interface StoredMdFolder {
+  id: string;
+  name: string;
+  parentId: string | null;
+  order: number;
+  isDefault: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface StoredMdFile {
+  id: string;
+  name: string;
+  folderId: string | null;
+  content: string;
+  order: number;
+  isFavorite: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
 interface NotebookDB extends DBSchema {
   notebooks: {
     key: string;
@@ -51,6 +73,14 @@ interface NotebookDB extends DBSchema {
     key: string;
     value: StoredProgress;
   };
+  mdFolders: {
+    key: string;
+    value: StoredMdFolder;
+  };
+  mdFiles: {
+    key: string;
+    value: StoredMdFile;
+  };
 }
 
 // ─────────────────────────────────────────────────────────
@@ -58,7 +88,7 @@ interface NotebookDB extends DBSchema {
 // ─────────────────────────────────────────────────────────
 
 const DB_NAME = "python-notebook";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<NotebookDB>> | null = null;
 
@@ -71,7 +101,11 @@ export function getDB(): Promise<IDBPDatabase<NotebookDB>> {
           db.createObjectStore("notebooks", { keyPath: "id" });
           db.createObjectStore("progress", { keyPath: "id" });
         }
-        // 이후 버전 마이그레이션은 여기에 추가
+        // v2: 마크다운 워크스페이스
+        if (oldVersion < 2) {
+          db.createObjectStore("mdFolders", { keyPath: "id" });
+          db.createObjectStore("mdFiles", { keyPath: "id" });
+        }
       },
     });
   }

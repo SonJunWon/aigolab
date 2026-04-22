@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { path: "/coding", label: "🐍 코딩 실습" },
   { path: "/projects", label: "🧪 프로젝트" },
   { path: "/ai-dev", label: "🚀 AI 앱 개발" },
+  { path: "/my/markdown", label: "📝 마크다운" },
   { path: "/my", label: "👤 마이" },
 ];
 

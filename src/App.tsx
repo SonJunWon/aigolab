@@ -37,6 +37,7 @@ import { FAQPage } from "./pages/FAQPage";
 import { NoticesPage } from "./pages/NoticesPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ApiKeysPage } from "./pages/ApiKeysPage";
+import { MdWorkspacePage } from "./pages/MdWorkspacePage";
 import { JavaScriptPlaygroundPage } from "./pages/JavaScriptPlaygroundPage";
 import { SqlPlaygroundPage } from "./pages/SqlPlaygroundPage";
 import { ChatBot } from "./components/chatbot/ChatBot";
@@ -169,6 +170,7 @@ function AppInner() {
         {/* 마이페이지 · 관리자 */}
         <Route path="/my" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
         <Route path="/my/api-keys" element={<ProtectedRoute><ApiKeysPage /></ProtectedRoute>} />
+        <Route path="/my/markdown" element={<ProtectedRoute><MdWorkspacePage /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />

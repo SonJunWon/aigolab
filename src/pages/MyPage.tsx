@@ -209,6 +209,22 @@ export function MyPage() {
           </Link>
         </section>
 
+        {/* 마크다운 워크스페이스 링크 */}
+        <section className="mb-10">
+          <Link
+            to="/my/markdown"
+            className="group flex items-center gap-4 p-5 rounded-xl border border-brand-subtle bg-brand-panel
+                       hover:border-brand-accent/40 hover:shadow-lg transition-all"
+          >
+            <span className="text-2xl">📝</span>
+            <div className="flex-1">
+              <div className="text-base font-semibold group-hover:text-brand-accent transition-colors">마크다운 워크스페이스</div>
+              <div className="text-xs text-brand-textDim">프롬프트 관리, 학습 노트, AI 실험을 마크다운으로 작성하고 실행</div>
+            </div>
+            <span className="text-brand-textDim group-hover:text-brand-accent text-lg">→</span>
+          </Link>
+        </section>
+
         {/* 활동 히트맵 */}
         <section className="mb-10 p-5 rounded-xl border border-brand-subtle bg-brand-panel">
           <div className="flex items-center justify-between mb-4">
