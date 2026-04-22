@@ -5,7 +5,7 @@
  * 우측: Monaco 에디터 + 마크다운 미리보기 (분할/편집/미리보기 모드)
  */
 
-import { useEffect, useState, useCallback, lazy, Suspense } from "react";
+import { useEffect, useState, useCallback, useRef, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { useMdFileStore } from "../store/mdFileStore";
 import { FileExplorer } from "../components/markdown/FileExplorer";
@@ -30,10 +30,52 @@ export function MdWorkspacePage() {
   const [localContent, setLocalContent] = useState("");
   const [isDirty, setIsDirty] = useState(false);
   const [saveTimer, setSaveTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [loadProgress, setLoadProgress] = useState(0);
+  const [loadMessage, setLoadMessage] = useState("데이터베이스 연결 중...");
+  const [initError, setInitError] = useState<string | null>(null);
+  const initAttempted = useRef(false);
 
-  // 초기화
+  // 초기화 (프로그레시브 바 연동)
   useEffect(() => {
-    init();
+    if (initAttempted.current) return;
+    initAttempted.current = true;
+
+    let progressTimer: ReturnType<typeof setInterval>;
+
+    const doInit = async () => {
+      try {
+        setLoadProgress(10);
+        setLoadMessage("데이터베이스 연결 중...");
+
+        // 프로그레시브 바 애니메이션 (실제 진행과 별개로 시각적 피드백)
+        progressTimer = setInterval(() => {
+          setLoadProgress((prev) => {
+            if (prev >= 85) return prev; // 85%에서 멈춤 — 실제 완료 시 100%로
+            return prev + Math.random() * 15;
+          });
+        }, 300);
+
+        setLoadProgress(30);
+        setLoadMessage("폴더 및 파일 불러오는 중...");
+
+        await init();
+
+        setLoadProgress(100);
+        setLoadMessage("완료!");
+        clearInterval(progressTimer);
+      } catch (err) {
+        clearInterval(progressTimer);
+        setInitError(
+          err instanceof Error ? err.message : "초기화에 실패했습니다. 페이지를 새로고침해주세요.",
+        );
+      }
+    };
+
+    doInit();
+
+    return () => {
+      if (progressTimer) clearInterval(progressTimer);
+    };
   }, [init]);
 
   // 활성 파일 변경 시 콘텐츠 로드
@@ -87,10 +129,46 @@ export function MdWorkspacePage() {
   const charCount = localContent.length;
   const lineCount = localContent.split("\n").length;
 
+  if (initError) {
+    return (
+      <div className="min-h-screen bg-brand-bg flex items-center justify-center">
+        <div className="text-center max-w-sm">
+          <div className="text-3xl mb-3">⚠️</div>
+          <div className="text-sm text-red-400 mb-2">{initError}</div>
+          <div className="text-xs text-brand-textDim mb-4">
+            다른 탭에서 AIGoLab이 열려 있다면 닫고 다시 시도해주세요.
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 rounded-lg text-sm bg-brand-accent text-white hover:brightness-110 transition-all"
+          >
+            새로고침
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!initialized) {
     return (
       <div className="min-h-screen bg-brand-bg flex items-center justify-center">
-        <div className="text-brand-textDim text-sm">로딩 중...</div>
+        <div className="w-72 text-center">
+          <div className="text-3xl mb-4">📝</div>
+          <div className="text-sm text-brand-text mb-3">마크다운 워크스페이스</div>
+
+          {/* 프로그레시브 바 */}
+          <div className="w-full h-2 bg-brand-subtle/30 rounded-full overflow-hidden mb-3">
+            <div
+              className="h-full bg-brand-accent rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${Math.min(loadProgress, 100)}%` }}
+            />
+          </div>
+
+          <div className="text-xs text-brand-textDim">{loadMessage}</div>
+          <div className="text-[10px] text-brand-textDim/50 mt-1">
+            {Math.round(loadProgress)}%
+          </div>
+        </div>
       </div>
     );
   }

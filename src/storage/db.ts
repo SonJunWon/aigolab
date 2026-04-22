@@ -103,9 +103,22 @@ export function getDB(): Promise<IDBPDatabase<NotebookDB>> {
         }
         // v2: 마크다운 워크스페이스
         if (oldVersion < 2) {
-          db.createObjectStore("mdFolders", { keyPath: "id" });
-          db.createObjectStore("mdFiles", { keyPath: "id" });
+          if (!db.objectStoreNames.contains("mdFolders")) {
+            db.createObjectStore("mdFolders", { keyPath: "id" });
+          }
+          if (!db.objectStoreNames.contains("mdFiles")) {
+            db.createObjectStore("mdFiles", { keyPath: "id" });
+          }
         }
+      },
+      blocked() {
+        // 다른 탭에서 이전 버전 DB가 열려있으면 여기 도달
+        // 사용자에게 다른 탭을 닫으라고 안내
+        alert("데이터베이스 업그레이드가 필요합니다. 다른 탭의 AIGoLab을 닫고 이 페이지를 새로고침해주세요.");
+      },
+      blocking() {
+        // 이 탭이 다른 탭의 업그레이드를 막고 있을 때 — DB를 닫아서 허용
+        dbPromise = null;
       },
     });
   }
