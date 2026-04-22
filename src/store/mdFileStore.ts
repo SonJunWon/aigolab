@@ -5,7 +5,7 @@
  */
 
 import { create } from "zustand";
-import { getDB, type StoredMdFolder, type StoredMdFile } from "../storage/db";
+import { getMdDB, type StoredMdFolder, type StoredMdFile } from "../storage/db";
 
 /* ─── 상태 타입 ─── */
 interface MdFileState {
@@ -77,7 +77,7 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
     try {
       // 5초 타임아웃 — DB 업그레이드가 막혀있으면 빈 상태로 시작
       db = await Promise.race([
-        getDB(),
+        getMdDB(),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error("DB_TIMEOUT")), 5000),
         ),
@@ -152,14 +152,14 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
       updatedAt: Date.now(),
     };
 
-    const db = await getDB();
+    const db = await getMdDB();
     await db.put("mdFolders", folder);
     set({ folders: [...get().folders, folder].sort((a, b) => a.order - b.order) });
     return folder;
   },
 
   renameFolder: async (id, name) => {
-    const db = await getDB();
+    const db = await getMdDB();
     const folder = await db.get("mdFolders", id);
     if (!folder) return;
     folder.name = name;
@@ -170,14 +170,14 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
 
   deleteFolder: async (id) => {
     if (!get().canDeleteFolder(id)) return false;
-    const db = await getDB();
+    const db = await getMdDB();
     await db.delete("mdFolders", id);
     set({ folders: get().folders.filter((f) => f.id !== id) });
     return true;
   },
 
   reorderFolder: async (id, newOrder) => {
-    const db = await getDB();
+    const db = await getMdDB();
     const folder = await db.get("mdFolders", id);
     if (!folder) return;
     folder.order = newOrder;
@@ -204,7 +204,7 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
       updatedAt: Date.now(),
     };
 
-    const db = await getDB();
+    const db = await getMdDB();
     await db.put("mdFiles", file);
     set({
       files: [...get().files, file].sort((a, b) => a.order - b.order),
@@ -214,7 +214,7 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
   },
 
   renameFile: async (id, name) => {
-    const db = await getDB();
+    const db = await getMdDB();
     const file = await db.get("mdFiles", id);
     if (!file) return;
     file.name = ensureMdExt(name);
@@ -224,7 +224,7 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
   },
 
   deleteFile: async (id) => {
-    const db = await getDB();
+    const db = await getMdDB();
     await db.delete("mdFiles", id);
     const { activeFileId } = get();
     set({
@@ -234,7 +234,7 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
   },
 
   duplicateFile: async (id) => {
-    const db = await getDB();
+    const db = await getMdDB();
     const original = await db.get("mdFiles", id);
     if (!original) throw new Error("파일을 찾을 수 없습니다.");
 
@@ -254,7 +254,7 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
   },
 
   moveFile: async (fileId, targetFolderId) => {
-    const db = await getDB();
+    const db = await getMdDB();
     const file = await db.get("mdFiles", fileId);
     if (!file) return;
     file.folderId = targetFolderId;
@@ -264,7 +264,7 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
   },
 
   updateFileContent: async (id, content) => {
-    const db = await getDB();
+    const db = await getMdDB();
     const file = await db.get("mdFiles", id);
     if (!file) return;
     file.content = content;
@@ -274,7 +274,7 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
   },
 
   reorderFile: async (id, newOrder) => {
-    const db = await getDB();
+    const db = await getMdDB();
     const file = await db.get("mdFiles", id);
     if (!file) return;
     file.order = newOrder;
@@ -284,7 +284,7 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
   },
 
   toggleFavorite: async (id) => {
-    const db = await getDB();
+    const db = await getMdDB();
     const file = await db.get("mdFiles", id);
     if (!file) return;
     file.isFavorite = !file.isFavorite;

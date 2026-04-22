@@ -42,7 +42,18 @@ export interface StoredProgress {
   lastStudiedAt: number;
 }
 
-// ─── 마크다운 워크스페이스 ─────────────────────────
+interface NotebookDB extends DBSchema {
+  notebooks: {
+    key: string;
+    value: StoredNotebook;
+  };
+  progress: {
+    key: string;
+    value: StoredProgress;
+  };
+}
+
+// ─── 마크다운 워크스페이스 (별도 DB) ─────────────────
 export interface StoredMdFolder {
   id: string;
   name: string;
@@ -64,15 +75,7 @@ export interface StoredMdFile {
   updatedAt: number;
 }
 
-interface NotebookDB extends DBSchema {
-  notebooks: {
-    key: string;
-    value: StoredNotebook;
-  };
-  progress: {
-    key: string;
-    value: StoredProgress;
-  };
+interface MdWorkspaceDB extends DBSchema {
   mdFolders: {
     key: string;
     value: StoredMdFolder;
@@ -88,7 +91,7 @@ interface NotebookDB extends DBSchema {
 // ─────────────────────────────────────────────────────────
 
 const DB_NAME = "python-notebook";
-const DB_VERSION = 2;
+const DB_VERSION = 1;
 
 let dbPromise: Promise<IDBPDatabase<NotebookDB>> | null = null;
 
@@ -96,31 +99,32 @@ export function getDB(): Promise<IDBPDatabase<NotebookDB>> {
   if (!dbPromise) {
     dbPromise = openDB<NotebookDB>(DB_NAME, DB_VERSION, {
       upgrade(db, oldVersion) {
-        // v1: 최초 생성
         if (oldVersion < 1) {
           db.createObjectStore("notebooks", { keyPath: "id" });
           db.createObjectStore("progress", { keyPath: "id" });
         }
-        // v2: 마크다운 워크스페이스
-        if (oldVersion < 2) {
-          if (!db.objectStoreNames.contains("mdFolders")) {
-            db.createObjectStore("mdFolders", { keyPath: "id" });
-          }
-          if (!db.objectStoreNames.contains("mdFiles")) {
-            db.createObjectStore("mdFiles", { keyPath: "id" });
-          }
-        }
-      },
-      blocked() {
-        // 다른 탭에서 이전 버전 DB가 열려있으면 여기 도달
-        // 사용자에게 다른 탭을 닫으라고 안내
-        alert("데이터베이스 업그레이드가 필요합니다. 다른 탭의 AIGoLab을 닫고 이 페이지를 새로고침해주세요.");
-      },
-      blocking() {
-        // 이 탭이 다른 탭의 업그레이드를 막고 있을 때 — DB를 닫아서 허용
-        dbPromise = null;
       },
     });
   }
   return dbPromise;
+}
+
+// ─── 마크다운 워크스페이스 전용 DB (별도) ───
+const MD_DB_NAME = "aigolab-markdown";
+const MD_DB_VERSION = 1;
+
+let mdDbPromise: Promise<IDBPDatabase<MdWorkspaceDB>> | null = null;
+
+export function getMdDB(): Promise<IDBPDatabase<MdWorkspaceDB>> {
+  if (!mdDbPromise) {
+    mdDbPromise = openDB<MdWorkspaceDB>(MD_DB_NAME, MD_DB_VERSION, {
+      upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
+          db.createObjectStore("mdFolders", { keyPath: "id" });
+          db.createObjectStore("mdFiles", { keyPath: "id" });
+        }
+      },
+    });
+  }
+  return mdDbPromise;
 }
