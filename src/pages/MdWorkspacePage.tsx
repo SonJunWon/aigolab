@@ -10,18 +10,20 @@ import { Link } from "react-router-dom";
 import { marked } from "marked";
 import { useMdFileStore } from "../store/mdFileStore";
 import { FileExplorer } from "../components/markdown/FileExplorer";
+import { PromptFormEditor } from "../components/markdown/PromptFormEditor";
 
 const MonacoEditor = lazy(() =>
   import("@monaco-editor/react").then((mod) => ({ default: mod.default })),
 );
 
-type ViewMode = "split" | "edit" | "preview";
+type ViewMode = "split" | "edit" | "preview" | "prompt";
 
 export function MdWorkspacePage() {
   const {
     init,
     initialized,
     activeFileId,
+    folders,
     updateFileContent,
     getActiveFile,
     createFile,
@@ -79,17 +81,33 @@ export function MdWorkspacePage() {
     };
   }, [init]);
 
-  // 활성 파일 변경 시 콘텐츠 로드
+  // 활성 파일이 속한 폴더의 이름으로 모드 결정
+  const activeFolder = useMemo(() => {
+    const file = getActiveFile();
+    if (!file?.folderId) return null;
+    return folders.find((f) => f.id === file.folderId) ?? null;
+  }, [activeFileId, folders, getActiveFile]);
+
+  const isPromptFolder = activeFolder?.name === "프롬프트";
+  const isProjectFolder = activeFolder?.name === "프로젝트";
+
+  // 활성 파일 변경 시 콘텐츠 로드 + 모드 자동 전환
   useEffect(() => {
     const file = getActiveFile();
     if (file) {
       setLocalContent(file.content);
       setIsDirty(false);
+      // 프롬프트/프로젝트 폴더면 자동으로 프롬프트 모드
+      if (isPromptFolder || isProjectFolder) {
+        setViewMode("prompt");
+      } else if (viewMode === "prompt") {
+        setViewMode("split");
+      }
     } else {
       setLocalContent("");
       setIsDirty(false);
     }
-  }, [activeFileId, getActiveFile]);
+  }, [activeFileId, getActiveFile, isPromptFolder, isProjectFolder]);
 
   // 자동 저장 (1.5초 디바운스)
   const handleContentChange = useCallback(
@@ -196,14 +214,14 @@ export function MdWorkspacePage() {
         <div className="flex items-center gap-2">
           {/* 뷰 모드 탭 */}
           <div className="flex rounded-lg border border-brand-subtle overflow-hidden">
-            {(["edit", "split", "preview"] as ViewMode[]).map((mode) => (
+            {(["prompt", "edit", "split", "preview"] as ViewMode[]).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
                 className={`px-3 py-1 text-[11px] transition-colors
                   ${viewMode === mode ? "bg-brand-accent text-white" : "text-brand-textDim hover:text-brand-text"}`}
               >
-                {mode === "edit" ? "편집" : mode === "split" ? "분할" : "미리보기"}
+                {mode === "prompt" ? "프롬프트" : mode === "edit" ? "편집" : mode === "split" ? "분할" : "미리보기"}
               </button>
             ))}
           </div>
@@ -229,6 +247,20 @@ export function MdWorkspacePage() {
         <div className="flex-1 flex overflow-hidden">
           {activeFile ? (
             <>
+              {/* 프롬프트 양식 모드 */}
+              {viewMode === "prompt" && (
+                <div className="flex-1 overflow-hidden">
+                  <PromptFormEditor
+                    key={activeFileId}
+                    content={localContent}
+                    onContentChange={(newContent) => {
+                      setLocalContent(newContent);
+                      if (activeFileId) updateFileContent(activeFileId, newContent);
+                    }}
+                  />
+                </div>
+              )}
+
               {/* 에디터 */}
               {(viewMode === "edit" || viewMode === "split") && (
                 <div className={`${viewMode === "split" ? "w-1/2" : "w-full"} border-r border-brand-subtle`}>
