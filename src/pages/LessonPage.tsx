@@ -149,6 +149,8 @@ export function LessonPage() {
         savedCodeCells.length !== lessonCodeCells.length ||
         savedMdSignature !== lessonMdSignature;
 
+      console.log("[lesson-debug] useOriginal:", useOriginal, "saved:", !!saved, "lesson.cells:", lesson.cells.length, "lessonId:", lesson.id);
+
       if (useOriginal) {
         if (saved && saved.cells.length > 0) {
           console.warn(
@@ -157,6 +159,7 @@ export function LessonPage() {
               `md changed: ${savedMdSignature !== lessonMdSignature})`
           );
         }
+        console.log("[lesson-debug] calling loadCells with", lesson.cells.length, "cells, lang:", lesson.language);
         loadCells(lesson.cells, lesson.language);
       } else {
         // 모든 검증 통과 → 안전한 머지 (사용자 코드 보존)
