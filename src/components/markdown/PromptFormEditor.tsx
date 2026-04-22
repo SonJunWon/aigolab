@@ -160,7 +160,10 @@ export function PromptFormEditor({
   // ─── AI 실행 ───
   const handleRun = async () => {
     if (running) return;
-    if (!query.trim()) { alert("질문을 입력해주세요."); return; }
+
+    // 질문이 비어있으면 지시 내용을 질문으로 사용
+    const actualQuery = query.trim() || data.instruction.trim();
+    if (!actualQuery) { alert("질문 또는 지시 중 하나는 입력해주세요."); return; }
 
     // system 메시지 조합
     const systemParts: string[] = [];
@@ -177,7 +180,7 @@ export function PromptFormEditor({
 const response = await chat({
   messages: [
     ${systemMessage ? `{ role: "system", content: ${JSON.stringify(systemMessage)} },` : ""}
-    { role: "user", content: ${JSON.stringify(query.trim())} },
+    { role: "user", content: ${JSON.stringify(actualQuery)} },
   ],
 });
 console.log(response.text);
