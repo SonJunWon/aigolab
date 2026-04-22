@@ -8,18 +8,57 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useMdFileStore } from "../../store/mdFileStore";
 import type { StoredMdFolder, StoredMdFile } from "../../storage/db";
 
+/* ─── 한글 IME 안전 인라인 편집 입력 ─── */
+function InlineEditInput({
+  initialValue,
+  onCommit,
+  onCancel,
+}: {
+  initialValue: string;
+  onCommit: (value: string) => void;
+  onCancel: () => void;
+}) {
+  const [localValue, setLocalValue] = useState(initialValue);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const composingRef = useRef(false);
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, []);
+
+  const handleCommit = () => {
+    if (localValue.trim()) onCommit(localValue.trim());
+    else onCancel();
+  };
+
+  return (
+    <input
+      ref={inputRef}
+      className="flex-1 min-w-0 bg-brand-bg border border-brand-accent rounded px-1 text-sm text-brand-text outline-none"
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+      onCompositionStart={() => { composingRef.current = true; }}
+      onCompositionEnd={() => { composingRef.current = false; }}
+      onBlur={handleCommit}
+      onKeyDown={(e) => {
+        if (composingRef.current) return; // 한글 조합 중이면 무시
+        if (e.key === "Enter") handleCommit();
+        if (e.key === "Escape") onCancel();
+      }}
+      onClick={(e) => e.stopPropagation()}
+    />
+  );
+}
+
 /* ─── 컨텍스트 메뉴 타입 ─── */
 interface ContextMenu {
   x: number;
   y: number;
   type: "folder" | "file" | "blank";
   targetId?: string;
-}
-
-interface InlineEdit {
-  id: string;
-  type: "folder" | "file";
-  value: string;
 }
 
 /* ═══════════════════════════════════════════════ */
@@ -33,12 +72,10 @@ function FolderRow({
   isDropTarget,
   isEditing,
   editValue,
-  editInputRef,
   onToggle,
   onContextMenu,
   onDragOver,
   onDrop,
-  onEditChange,
   onEditCommit,
   onEditCancel,
   onStartEdit,
@@ -54,13 +91,11 @@ function FolderRow({
   isDropTarget: boolean;
   isEditing: boolean;
   editValue: string;
-  editInputRef: React.RefObject<HTMLInputElement | null>;
   onToggle: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
-  onEditChange: (val: string) => void;
-  onEditCommit: () => void;
+  onEditCommit: (val: string) => void;
   onEditCancel: () => void;
   onStartEdit: () => void;
   onNewFile: () => void;
@@ -91,17 +126,10 @@ function FolderRow({
       <span className="text-sm shrink-0">{isEmpty ? "📁" : "📂"}</span>
 
       {isEditing ? (
-        <input
-          ref={editInputRef}
-          className="flex-1 min-w-0 bg-brand-bg border border-brand-accent rounded px-1 text-sm text-brand-text outline-none"
-          value={editValue}
-          onChange={(e) => onEditChange(e.target.value)}
-          onBlur={onEditCommit}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onEditCommit();
-            if (e.key === "Escape") onEditCancel();
-          }}
-          onClick={(e) => e.stopPropagation()}
+        <InlineEditInput
+          initialValue={editValue}
+          onCommit={onEditCommit}
+          onCancel={onEditCancel}
         />
       ) : (
         <span className="flex-1 min-w-0 truncate" onDoubleClick={(e) => { e.stopPropagation(); onStartEdit(); }}>
@@ -143,13 +171,11 @@ function FileRow({
   isActive,
   isEditing,
   editValue,
-  editInputRef,
   isDragging,
   onSelect,
   onContextMenu,
   onDragStart,
   onDragEnd,
-  onEditChange,
   onEditCommit,
   onEditCancel,
   onStartEdit,
@@ -160,14 +186,12 @@ function FileRow({
   isActive: boolean;
   isEditing: boolean;
   editValue: string;
-  editInputRef: React.RefObject<HTMLInputElement | null>;
   isDragging: boolean;
   onSelect: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
   onDragStart: () => void;
   onDragEnd: () => void;
-  onEditChange: (val: string) => void;
-  onEditCommit: () => void;
+  onEditCommit: (val: string) => void;
   onEditCancel: () => void;
   onStartEdit: () => void;
   onDelete: () => void;
@@ -192,17 +216,10 @@ function FileRow({
       <span className="text-sm shrink-0">📄</span>
 
       {isEditing ? (
-        <input
-          ref={editInputRef}
-          className="flex-1 min-w-0 bg-brand-bg border border-brand-accent rounded px-1 text-sm text-brand-text outline-none"
-          value={editValue}
-          onChange={(e) => onEditChange(e.target.value)}
-          onBlur={onEditCommit}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onEditCommit();
-            if (e.key === "Escape") onEditCancel();
-          }}
-          onClick={(e) => e.stopPropagation()}
+        <InlineEditInput
+          initialValue={editValue}
+          onCommit={onEditCommit}
+          onCancel={onEditCancel}
         />
       ) : (
         <span className="flex-1 min-w-0 truncate" onDoubleClick={(e) => { e.stopPropagation(); onStartEdit(); }}>
@@ -239,23 +256,15 @@ export function FileExplorer() {
 
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
-  const [inlineEdit, setInlineEdit] = useState<InlineEdit | null>(null);
+  const [editingId, setEditingId] = useState<{ id: string; type: "folder" | "file"; initialValue: string } | null>(null);
   const [dragItem, setDragItem] = useState<{ id: string; type: "file" | "folder" } | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
-  const editInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handler = () => setContextMenu(null);
     window.addEventListener("click", handler);
     return () => window.removeEventListener("click", handler);
   }, []);
-
-  useEffect(() => {
-    if (inlineEdit && editInputRef.current) {
-      editInputRef.current.focus();
-      editInputRef.current.select();
-    }
-  }, [inlineEdit]);
 
   const toggleFolder = useCallback((folderId: string) => {
     setCollapsedFolders((prev) => {
@@ -273,18 +282,18 @@ export function FileExplorer() {
     ? files.filter((f) => f.name.toLowerCase().includes(searchQuery.toLowerCase()) || f.content.toLowerCase().includes(searchQuery.toLowerCase()))
     : files;
 
-  // 인라인 편집
-  const commitEdit = async () => {
-    if (!inlineEdit || !inlineEdit.value.trim()) { setInlineEdit(null); return; }
-    if (inlineEdit.type === "folder") await renameFolder(inlineEdit.id, inlineEdit.value.trim());
-    else await renameFile(inlineEdit.id, inlineEdit.value.trim());
-    setInlineEdit(null);
+  // 인라인 편집 확정
+  const commitEdit = async (value: string) => {
+    if (!editingId) return;
+    if (editingId.type === "folder") await renameFolder(editingId.id, value);
+    else await renameFile(editingId.id, value);
+    setEditingId(null);
   };
 
   // 생성
   const handleNewFolder = async (parentId?: string | null) => {
     const folder = await createFolder("새 폴더", parentId);
-    setInlineEdit({ id: folder.id, type: "folder", value: "새 폴더" });
+    setEditingId({ id: folder.id, type: "folder", initialValue: "새 폴더" });
     // 부모 폴더가 접혀있으면 펼치기
     if (parentId) {
       setCollapsedFolders((prev) => { const next = new Set(prev); next.delete(parentId); return next; });
@@ -293,7 +302,7 @@ export function FileExplorer() {
 
   const handleNewFile = async (folderId?: string | null) => {
     const file = await createFile("새 문서", folderId);
-    setInlineEdit({ id: file.id, type: "file", value: "새 문서" });
+    setEditingId({ id: file.id, type: "file", initialValue: "새 문서" });
     if (folderId) {
       setCollapsedFolders((prev) => { const next = new Set(prev); next.delete(folderId); return next; });
     }
@@ -355,17 +364,15 @@ export function FileExplorer() {
             isCollapsed={isCollapsed}
             totalCount={getTotalCount(folder.id)}
             isDropTarget={dropTarget === folder.id}
-            isEditing={inlineEdit?.id === folder.id}
-            editValue={inlineEdit?.id === folder.id ? inlineEdit.value : ""}
-            editInputRef={editInputRef}
+            isEditing={editingId?.id === folder.id}
+            editValue={editingId?.id === folder.id ? editingId.initialValue : ""}
             onToggle={() => toggleFolder(folder.id)}
             onContextMenu={(e) => handleContextMenu(e, "folder", folder.id)}
             onDragOver={(e) => handleDragOver(e, folder.id)}
             onDrop={(e) => handleDrop(e, folder.id)}
-            onEditChange={(val) => inlineEdit && setInlineEdit({ ...inlineEdit, value: val })}
             onEditCommit={commitEdit}
-            onEditCancel={() => setInlineEdit(null)}
-            onStartEdit={() => setInlineEdit({ id: folder.id, type: "folder", value: folder.name })}
+            onEditCancel={() => setEditingId(null)}
+            onStartEdit={() => setEditingId({ id: folder.id, type: "folder", initialValue: folder.name })}
             onNewFile={() => handleNewFile(folder.id)}
             onNewSubfolder={() => handleNewFolder(folder.id)}
             onDelete={() => handleDeleteFolder(folder.id)}
@@ -380,18 +387,16 @@ export function FileExplorer() {
                   file={file}
                   depth={depth + 1}
                   isActive={activeFileId === file.id}
-                  isEditing={inlineEdit?.id === file.id}
-                  editValue={inlineEdit?.id === file.id ? inlineEdit.value : ""}
-                  editInputRef={editInputRef}
+                  isEditing={editingId?.id === file.id}
+                  editValue={editingId?.id === file.id ? editingId.initialValue : ""}
                   isDragging={dragItem?.id === file.id}
                   onSelect={() => setActiveFile(file.id)}
                   onContextMenu={(e) => handleContextMenu(e, "file", file.id)}
                   onDragStart={() => setDragItem({ id: file.id, type: "file" })}
                   onDragEnd={() => { setDragItem(null); setDropTarget(null); }}
-                  onEditChange={(val) => inlineEdit && setInlineEdit({ ...inlineEdit, value: val })}
                   onEditCommit={commitEdit}
-                  onEditCancel={() => setInlineEdit(null)}
-                  onStartEdit={() => setInlineEdit({ id: file.id, type: "file", value: file.name.replace(/\.md$/, "") })}
+                  onEditCancel={() => setEditingId(null)}
+                  onStartEdit={() => setEditingId({ id: file.id, type: "file", initialValue: file.name.replace(/\.md$/, "") })}
                   onDelete={() => handleDeleteFile(file.id)}
                 />
               ))}
@@ -432,18 +437,16 @@ export function FileExplorer() {
               <FileRow
                 key={file.id} file={file} depth={0}
                 isActive={activeFileId === file.id}
-                isEditing={inlineEdit?.id === file.id}
-                editValue={inlineEdit?.id === file.id ? inlineEdit.value : ""}
-                editInputRef={editInputRef}
+                isEditing={editingId?.id === file.id}
+                editValue={editingId?.id === file.id ? editingId.initialValue : ""}
                 isDragging={dragItem?.id === file.id}
                 onSelect={() => setActiveFile(file.id)}
                 onContextMenu={(e) => handleContextMenu(e, "file", file.id)}
                 onDragStart={() => setDragItem({ id: file.id, type: "file" })}
                 onDragEnd={() => { setDragItem(null); setDropTarget(null); }}
-                onEditChange={(val) => inlineEdit && setInlineEdit({ ...inlineEdit, value: val })}
                 onEditCommit={commitEdit}
-                onEditCancel={() => setInlineEdit(null)}
-                onStartEdit={() => setInlineEdit({ id: file.id, type: "file", value: file.name.replace(/\.md$/, "") })}
+                onEditCancel={() => setEditingId(null)}
+                onStartEdit={() => setEditingId({ id: file.id, type: "file", initialValue: file.name.replace(/\.md$/, "") })}
                 onDelete={() => handleDeleteFile(file.id)}
               />
             ))}
@@ -483,7 +486,7 @@ export function FileExplorer() {
               </button>
               <button className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10" onClick={() => {
                 const f = folders.find((f) => f.id === contextMenu.targetId);
-                if (f) setInlineEdit({ id: f.id, type: "folder", value: f.name });
+                if (f) setEditingId({ id: f.id, type: "folder", initialValue: f.name });
                 setContextMenu(null);
               }}>
                 ✏️ 이름 변경
@@ -500,7 +503,7 @@ export function FileExplorer() {
             return (
               <>
                 <button className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10" onClick={() => {
-                  if (file) setInlineEdit({ id: file.id, type: "file", value: file.name.replace(/\.md$/, "") });
+                  if (file) setEditingId({ id: file.id, type: "file", initialValue: file.name.replace(/\.md$/, "") });
                   setContextMenu(null);
                 }}>✏️ 이름 변경</button>
                 <button className="w-full text-left px-3 py-1.5 text-xs hover:bg-brand-accent/10" onClick={async () => {
