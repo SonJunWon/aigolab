@@ -90,25 +90,51 @@ export function PromptFormEditor({
   const initialized = useRef(false);
   const composing = useRef(false);
 
+  // 현재 데이터를 ref로 유지 (언마운트 시 접근용)
+  const dataRef = useRef(data);
+  const queryRef = useRef(query);
+  dataRef.current = data;
+  queryRef.current = query;
+
   // 파일 내용에서 프롬프트 파싱 (최초 1회)
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
     if (content.includes("## ")) {
       const parsed = parsePromptMd(content);
-      setData({ name: parsed.name, role: parsed.role, context: parsed.context, instruction: parsed.instruction, format: parsed.format, constraints: parsed.constraints });
-      if (parsed.lastQuery) setQuery(parsed.lastQuery);
+      const newData = { name: parsed.name, role: parsed.role, context: parsed.context, instruction: parsed.instruction, format: parsed.format, constraints: parsed.constraints };
+      setData(newData);
+      dataRef.current = newData;
+      if (parsed.lastQuery) {
+        setQuery(parsed.lastQuery);
+        queryRef.current = parsed.lastQuery;
+      }
     }
   }, [content]);
 
   // 필드 변경 → 마크다운으로 변환 → 상위에 전달 (디바운스)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onContentChangeRef = useRef(onContentChange);
+  onContentChangeRef.current = onContentChange;
+
   const syncToFile = useCallback((newData: PromptData, newQuery: string) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      onContentChange(toPromptMd(newData, newQuery));
+      onContentChangeRef.current(toPromptMd(newData, newQuery));
     }, 1000);
-  }, [onContentChange]);
+  }, []);
+
+  // 언마운트 시: 타이머 취소 + 현재 내용 즉시 저장
+  useEffect(() => {
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      // 현재 데이터로 즉시 저장
+      const md = toPromptMd(dataRef.current, queryRef.current);
+      if (md.trim() !== "# 프롬프트\n") {
+        onContentChangeRef.current(md);
+      }
+    };
+  }, []);
 
   const updateField = (key: keyof PromptData, value: string) => {
     const newData = { ...data, [key]: value };

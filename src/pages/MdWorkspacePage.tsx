@@ -258,15 +258,19 @@ export function MdWorkspacePage() {
           {activeFile ? (
             <>
               {/* 프롬프트 양식 모드 */}
-              {viewMode === "prompt" && (
+              {viewMode === "prompt" && activeFileId && (
                 <div className="flex-1 overflow-hidden">
                   <PromptFormEditor
                     key={activeFileId}
                     content={localContent}
-                    onContentChange={(newContent) => {
-                      setLocalContent(newContent);
-                      if (activeFileId) updateFileContent(activeFileId, newContent);
-                    }}
+                    onContentChange={(() => {
+                      // 파일 ID를 클로저에 고정 — 파일 전환 후 저장이 엉뚱한 파일에 가는 것 방지
+                      const fileId = activeFileId;
+                      return (newContent: string) => {
+                        setLocalContent(newContent);
+                        updateFileContent(fileId, newContent);
+                      };
+                    })()}
                   />
                 </div>
               )}
