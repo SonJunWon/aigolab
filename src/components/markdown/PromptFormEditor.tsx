@@ -26,10 +26,11 @@ const MODEL_OPTIONS: ModelOption[] = [
   { id: "auto", provider: "", label: "자동 선택 (무료)", free: true, description: "Groq → Gemini 순서로 자동 선택" },
   { id: "gemini", provider: "gemini", label: "Gemini 2.5 Flash (무료)", free: true, description: "Google AI · 무료 1,500회/일" },
   { id: "groq", provider: "groq", label: "Groq Llama 3.3 70B (무료)", free: true, description: "초고속 · 무료 14,400회/일" },
-  // Gemini 상위 모델 (유료 결제 필요할 수 있음)
-  { id: "gemini-3.1-flash", provider: "gemini", label: "Gemini 3.1 Flash (경량/효율)", free: false, description: "빠른 응답 · 유료 결제 필요" },
-  { id: "gemini-3.1-pro", provider: "gemini", label: "Gemini 3.1 Pro (플래그십)", free: false, description: "고급 수학 및 코딩 · 유료 결제 필요" },
+  // Gemini 상위 모델
   { id: "gemini-2.5-pro", provider: "gemini", label: "Gemini 2.5 Pro (추론 특화)", free: false, description: "복잡한 추론 · 유료 결제 필요" },
+  { id: "gemini-2.0-flash", provider: "gemini", label: "Gemini 2.0 Flash", free: false, description: "빠른 응답 · 유료 결제 필요" },
+  // 직접 입력
+  { id: "custom", provider: "gemini", label: "직접 입력...", free: false, description: "모델명을 직접 입력" },
 ];
 
 /* ─── 첨부 파일 ─── */
@@ -138,6 +139,7 @@ export function PromptFormEditor({
   const [outputs, setOutputs] = useState<OutputChunk[]>([]);
   const [running, setRunning] = useState(false);
   const [selectedModel, setSelectedModel] = useState("auto");
+  const [customModelName, setCustomModelName] = useState("");
   const [promptMode, setPromptMode] = useState<PromptMode>("text");
   const [registeredKeys, setRegisteredKeys] = useState<string[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -284,14 +286,17 @@ export function PromptFormEditor({
     let providerCode = "";
     let modelOverride = "";
 
-    if (selectedModel !== "auto" && selectedOpt) {
+    if (selectedModel === "custom") {
+      // 직접 입력 모델
+      if (!customModelName.trim()) { alert("모델명을 입력해주세요."); return; }
+      providerCode = `provider: "gemini",`;
+      modelOverride = customModelName.trim();
+    } else if (selectedModel !== "auto" && selectedOpt) {
       if (selectedOpt.free) {
-        // 무료 모델: provider만 지정 (기본 모델 사용)
         providerCode = `provider: ${JSON.stringify(selectedOpt.provider)},`;
       } else {
-        // 유료 모델: provider + 모델명 직접 지정
         providerCode = `provider: "gemini",`;
-        modelOverride = selectedModel; // gemini-2.5-pro 등
+        modelOverride = selectedModel;
       }
     }
 
@@ -584,6 +589,18 @@ console.log("⏱ " + response.latencyMs + "ms · " + response.model);
                   )}
                 </select>
               </div>
+            )}
+
+            {/* 커스텀 모델명 입력 */}
+            {promptMode === "text" && selectedModel === "custom" && (
+              <input
+                type="text"
+                value={customModelName}
+                onChange={(e) => setCustomModelName(e.target.value)}
+                placeholder="모델명 입력 (예: gemini-3.1-flash)"
+                className="px-2 py-1 rounded-lg bg-brand-panel border border-brand-accent/40 text-[11px] text-brand-text
+                           placeholder:text-brand-textDim/40 focus:outline-none focus:border-brand-accent transition-colors w-48"
+              />
             )}
 
             {/* 이미지 모드 안내 */}
