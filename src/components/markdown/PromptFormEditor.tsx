@@ -28,7 +28,6 @@ const MODEL_OPTIONS: ModelOption[] = [
   { id: "groq", provider: "groq", label: "Groq Llama 3.3 70B (무료)", free: true, description: "초고속 · 무료 14,400회/일" },
   // Gemini 상위 모델
   { id: "gemini-2.5-pro", provider: "gemini", label: "Gemini 2.5 Pro (추론 특화)", free: false, description: "복잡한 추론 · 유료 결제 필요" },
-  { id: "gemini-2.0-flash", provider: "gemini", label: "Gemini 2.0 Flash", free: false, description: "빠른 응답 · 유료 결제 필요" },
   // 직접 입력
   { id: "custom", provider: "gemini", label: "직접 입력...", free: false, description: "모델명을 직접 입력" },
 ];
