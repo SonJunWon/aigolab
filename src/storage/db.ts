@@ -91,7 +91,7 @@ interface MdWorkspaceDB extends DBSchema {
 // ─────────────────────────────────────────────────────────
 
 const DB_NAME = "python-notebook";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<NotebookDB>> | null = null;
 
@@ -103,6 +103,9 @@ export function getDB(): Promise<IDBPDatabase<NotebookDB>> {
           db.createObjectStore("notebooks", { keyPath: "id" });
           db.createObjectStore("progress", { keyPath: "id" });
         }
+        // v2: 마크다운 스토어가 한때 여기 있었으나 별도 DB로 이관됨.
+        // 버전을 2로 유지하여 기존 v2 사용자의 다운그레이드 에러 방지.
+        // 이미 mdFolders/mdFiles가 있을 수 있으므로 삭제하지 않고 그냥 둠.
       },
     });
   }
