@@ -266,7 +266,7 @@ export function MdWorkspacePage() {
                 <div
                   className={`${viewMode === "split" ? "w-1/2" : "w-full"} overflow-y-auto`}
                 >
-                  <div className="p-6 max-w-none prose prose-invert prose-sm">
+                  <div className="p-6 max-w-none md-prose">
                     <MdPreview content={localContent} />
                   </div>
                 </div>
