@@ -9,7 +9,17 @@
 
 ## [Unreleased]
 
-### Security / Fixed
+(다음 릴리즈에 포함될 변경 사항을 여기에 누적합니다)
+
+---
+
+## [4.12.0] - 2026-04-23
+
+### Summary
+
+보안 감사 + 논리 결함 정리 릴리즈. v4.11.0 이후 누적된 마크다운 워크스페이스 v1, API 키 관리 페이지, AI 입문 준비 과정 14강 재구성 등 기능 변경도 함께 포함.
+
+### Security
 
 - **ChatBot `hasKey` 항상 truthy 버그 수정** (`src/components/chatbot/ChatBot.tsx`)
   - `getKey()` 가 `Promise<string | undefined>` 를 반환하는데 동기 truthy 체크로 처리해 키가 없어도 항상 `true` 로 평가되던 문제.
@@ -72,13 +82,47 @@
     2. Vercel Dashboard → Environment Variables 에서 동일 작업
     3. 로컬에서는 `vercel dev` 로 실행해야 `/api/*` 동작 (기존 `vite dev` 는 프론트만)
 
-### Planned (다음 v4.12.0 릴리즈 포함 예정)
+### Added — v4.11.0 이후 누적 기능 (v4.7~v4.11 공백 + 포스트 v4.11.0 일괄 반영)
 
-- v4.11.0 이후 누적된 마크다운 워크스페이스 v1, API 키 관리 페이지, AI 입문 12강 재구성, IndexedDB 안정화 요약
+**마크다운 워크스페이스 v1** (`/my/markdown`)
+- 파일 탐색기 (재귀 트리, 드래그 이동, 우클릭 메뉴, 인라인 이름변경)
+- Monaco 에디터 + 마크다운 미리보기 (편집/분할/미리보기 3모드)
+- 프롬프트 양식 편집기 (5칸 입력 → chat() 자동 호출, AI 모델 선택, 이미지/PDF 첨부)
+- 자동 저장 (1.5초 디바운스) + Ctrl+S + .md 다운로드
+- 별도 IndexedDB (`aigolab-markdown`)
+
+**API 키 관리 페이지** (`/my/api-keys`)
+- Gemini, Groq, Cloudflare Account ID / API Token 지원
+- 초보자 친화적 단계별 발급 가이드 + 트러블슈팅
+- localStorage + AES-GCM 암호화 (디바이스 키 non-extractable)
+
+**이미지 생성** (`lib/imageGen.ts`)
+- Gemini Imagen → Cloudflare Workers AI 폴백
+- 한→영 자동 번역 (chat() 경유)
+- LLM 셀에서 `generateImage()` 런타임 주입
+
+**AI 입문 준비 과정 13강 → 14강 재구성**
+- Ch04 AI 한계·환각·올바른 사용 철학 대폭 강화
+- Ch05 프롬프트 엔지니어링 재작성 + 워크스페이스 실습 연동
+- Ch06 마크다운 신규 추가
+- Ch07 용도별 AI 선택 + 실전 파이프라인
+
+**SQL Playground / JS Playground**
+- sql.js 기반 SQL 연습장 (Chinook 스키마)
+- JavaScript 런타임 플레이그라운드
+
+### Fixed — v4.11.0 이후 누적 버그 수정
+
+- IndexedDB 버전 충돌 일괄 수정 (v2 다운그레이드 차단, 3초 타임아웃 + 폴백, 버전 자동 감지)
+- 레슨 로딩 hang 방지 (getDB 3초 타임아웃)
+- 마크다운 워크스페이스: 파일명 한글 IME 조합 안전 처리, 드래그 이동 수정, 프롬프트 파일 전환 내용 오염 방지 (`fileIdRef` 직접 참조)
+- Gemini 유료 모델 런타임 실행 (GoogleGenAI/requireKey AsyncFunction 파라미터 주입)
+- Gemini 모델 ID 실제 API 명과 일치
+- SQL Worker 캐시 무효화 + 테이블 검증 강화
 
 ---
 
-> **참고**: CHANGELOG 는 4.6.0 이후 기록이 누락되어 있으며, 4.7~4.11 버전 변경 사항은 git 태그/커밋 이력으로 확인할 수 있습니다. 다음 v4.12.0 릴리즈 노트에서 공백 구간을 묶어 요약 재정리 예정.
+> **CHANGELOG 연속성 공백**: v4.7 ~ v4.11 개별 버전 변경 사항은 본 릴리즈에서 일괄 반영. 세부 이력은 git 태그 및 커밋 히스토리 참조.
 
 ---
 
