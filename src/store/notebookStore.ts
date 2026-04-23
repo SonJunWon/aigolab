@@ -50,6 +50,8 @@ interface NotebookState {
   ) => void;
   setLanguage: (language: SupportedLanguage) => void;
   resetNotebook: () => void;
+  /** 로그아웃 시 인메모리 상태 완전 초기화 — 다음 사용자로 데이터 유출 방지 */
+  clear: () => void;
 
   // ── 셀 조작 ────────────────────────────────────
   insertCellAbove: (cellId: string, type: CellType) => string;
@@ -134,6 +136,15 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       cells: initialCells,
       executionCounter: 0,
       selectedCellId: initialCells[1]?.id ?? initialCells[0]?.id ?? null,
+    });
+  },
+
+  clear: () => {
+    set({
+      cells: [],
+      executionCounter: 0,
+      selectedCellId: null,
+      language: "python",
     });
   },
 

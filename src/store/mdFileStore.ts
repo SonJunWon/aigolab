@@ -43,6 +43,13 @@ interface MdFileState {
   getFilesInFolder: (folderId: string | null) => StoredMdFile[];
   getFolderFileCount: (folderId: string) => number;
   canDeleteFolder: (folderId: string) => boolean;
+
+  /**
+   * 로그아웃 시 인메모리 상태만 초기화 (IndexedDB 는 디바이스 로컬 저장이라
+   * 보존). 다음 사용자가 로그인하고 워크스페이스를 열면 init() 에서 IDB
+   * 내용을 다시 읽어오므로, 이전 사용자 파일이 화면에 남는 것만 막는다.
+   */
+  clear: () => void;
 }
 
 /* ─── 기본 폴더 ─── */
@@ -314,4 +321,13 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
   canDeleteFolder: (folderId) => {
     return get().files.filter((f) => f.folderId === folderId).length === 0;
   },
+
+  clear: () =>
+    set({
+      folders: [],
+      files: [],
+      activeFileId: null,
+      searchQuery: "",
+      initialized: false,
+    }),
 }));

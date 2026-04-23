@@ -121,8 +121,12 @@ export function ChatBot() {
           question: cleanQuestion,
           aiResponse: res.text,
         });
-        // 텔레그램으로 관리자 알림 (서버 프록시 경유, 사용자 이메일은 JWT 에서 도출)
-        sendTelegramNotification({
+        // 텔레그램으로 관리자 알림 (서버 프록시 경유, 사용자 이메일은 JWT 에서 도출).
+        // 내부에서 네트워크 오류는 catch 후 console.error 만 찍고 삼키므로,
+        // 여기서 await 해도 상위 try/catch 에 전파되지 않고 UI 도 블로킹되지 않음.
+        // 단, await 를 넣어 두면 Promise 완료 전에 finally 가 돌아 로딩 상태가
+        // 먼저 풀리는 혼선을 피할 수 있음 + StrictMode 의 unhandled-promise 경고 회피.
+        await sendTelegramNotification({
           question: cleanQuestion,
         });
       }

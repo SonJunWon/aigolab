@@ -78,6 +78,8 @@ interface FileState {
   setLoaded: (loaded: boolean) => void;
   getFileList: () => FileEntry[];
   getFolders: () => string[];
+  /** 로그아웃 시 인메모리 파일 트리 초기화 — 다음 사용자 유출 방지 */
+  clear: () => void;
 }
 
 export const DEFAULT_FILES: Record<string, FileEntry> = {
@@ -404,4 +406,17 @@ export const useFileStore = create<FileState>((set, get) => ({
     }
     return [...folders].sort();
   },
+
+  clear: () =>
+    set({
+      files: {},
+      activeFile: null,
+      openTabs: [],
+      output: [],
+      running: false,
+      collapsedFolders: new Set(),
+      loaded: false,
+      dirtyFiles: new Set(),
+      saveStatus: "saved",
+    }),
 }));

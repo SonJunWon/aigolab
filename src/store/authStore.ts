@@ -1,7 +1,29 @@
 import { create } from "zustand";
 import { supabase } from "../lib/supabase";
 import { useProfileStore } from "./profileStore";
+import { useNotebookStore } from "./notebookStore";
+import { useProgressStore } from "./progressStore";
+import { useFileStore } from "./fileStore";
+import { useMdFileStore } from "./mdFileStore";
 import type { User, Session } from "@supabase/supabase-js";
+
+/**
+ * 로그아웃/세션 해제 시 모든 사용자 범위 인메모리 스토어 초기화.
+ * 공용 기기에서 사용자 A → 사용자 B 로 전환될 때 이전 세션 데이터가
+ * 화면에 남아 유출되는 것을 막는다.
+ *
+ * 주의: IndexedDB 는 디바이스 로컬 저장소라 여기서 비우지 않는다.
+ * (본인 기기에서 다시 로그인 시 복원 편의 유지) — 필요 시 별도 "로컬
+ * 데이터 삭제" UI 로 처리할 것. 레슨 노트북 등 일부 IDB 데이터가
+ * 디바이스 공유 시 유출될 가능성은 향후 user.id 네임스페이싱으로 해결.
+ */
+function clearAllUserStores() {
+  useProfileStore.getState().clear();
+  useNotebookStore.getState().clear();
+  useProgressStore.getState().clear();
+  useFileStore.getState().clear();
+  useMdFileStore.getState().clear();
+}
 
 interface AuthState {
   user: User | null;
@@ -59,7 +81,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (session?.user) {
         void useProfileStore.getState().loadForUser(session.user.id);
       } else {
-        useProfileStore.getState().clear();
+        clearAllUserStores();
       }
     });
   },
@@ -99,6 +121,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     await supabase.auth.signOut();
     set({ user: null, session: null });
-    useProfileStore.getState().clear();
+    clearAllUserStores();
   },
 }));

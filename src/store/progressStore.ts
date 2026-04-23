@@ -47,6 +47,8 @@ interface ProgressState {
   migrateToServer: () => Promise<void>;
   /** 모든 진도 로드 (이어서 학습 배너용) */
   loadAll: () => Promise<ProgressData[]>;
+  /** 로그아웃 시 인메모리 진도 상태 초기화 (다음 사용자 유출 방지) */
+  clear: () => void;
 }
 
 const progressKey = (language: Language, track: Track) => `${language}:${track}`;
@@ -229,5 +231,13 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     }
 
     return items;
+  },
+
+  clear: () => {
+    set({
+      data: {},
+      loadedKeys: new Set(),
+      migrated: false,
+    });
   },
 }));

@@ -29,6 +29,21 @@
     - 글로서리 툴팁 (`data-desc`) 및 기본 마크다운 태그는 모두 보존
   - 의존성: `dompurify ^3.4.1`, `@types/dompurify ^3.0.5`
 
+- **로그아웃 시 인메모리 사용자 스토어 일괄 초기화** (L4)
+  - 기존 `signOut()` 은 `profileStore.clear()` 만 호출 → 공용 기기에서 사용자 A → B 전환 시 A 의 노트북 셀 / 진도 / 프로젝트 파일 / 마크다운 워크스페이스가 UI 에 남아있던 문제.
+  - 조치:
+    - `notebookStore.clear()`, `progressStore.clear()`, `fileStore.clear()`, `mdFileStore.clear()` 신설
+    - `authStore` 에 `clearAllUserStores()` 헬퍼 추가, `signOut()` 과 `onAuthStateChange(null)` 양쪽에서 호출
+  - 한계: IndexedDB 자체는 디바이스 공유라 본 수정으로 처리하지 않음 (user.id 네임스페이싱은 별도 과제). 주석으로 명시.
+
+- **텔레그램 알림 fire-and-forget 제거** (L5)
+  - `ChatBot.tsx` 의 `sendTelegramNotification()` 호출이 `await` 없이 실행돼 `finally` 블록이 Promise 완료 전에 돌아가던 문제 + StrictMode unhandled-promise 경고 가능성.
+  - `await` 추가. 내부에서 에러를 이미 삼키므로 UI 블로킹 / 사용자 피드백은 변함 없음.
+
+- **FileReader Promise 미완료 무한 대기 방지** (L6)
+  - `PromptFormEditor.tsx` 이미지/PDF 첨부 경로의 Promise 가 `reject` / `onerror` 없이 `resolve` 만 등록돼 파일 읽기 실패 시 await 가 영구 hang.
+  - `reader.onerror` / `reader.onabort` 핸들러 추가 + 상위 try/catch 로 감싸 사용자에게 alert.
+
 - **PRO 콘텐츠 URL 직접 입력 우회 차단** (상세 페이지 접근 제어 3곳 추가)
   - 기존: 목록 페이지(CurriculumPage/ProjectsPage/CoursesPage)는 잠금 UI + paywall 모달이 있었으나, **상세 페이지는 권한 검증 전무**. `/coding/learn/python/intermediate/xx`, `/projects/xx/work`, `/courses/xx` 를 URL 로 직접 입력하면 PRO 콘텐츠 노출.
   - 영향: 책 구매자 PRO 인증 코드 시스템이 도입돼도 URL 우회로 무력화 가능.

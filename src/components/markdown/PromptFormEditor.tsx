@@ -228,15 +228,24 @@ export function PromptFormEditor({
         continue;
       }
 
-      const base64 = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          // "data:image/png;base64,..." 에서 base64 부분만 추출
-          resolve(result.split(",")[1]);
-        };
-        reader.readAsDataURL(file);
-      });
+      let base64: string;
+      try {
+        base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            // "data:image/png;base64,..." 에서 base64 부분만 추출
+            resolve(result.split(",")[1]);
+          };
+          reader.onerror = () => reject(reader.error ?? new Error("파일 읽기 실패"));
+          reader.onabort = () => reject(new Error("파일 읽기 취소됨"));
+          reader.readAsDataURL(file);
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        alert(`파일을 읽을 수 없습니다: ${file.name}\n${msg}`);
+        continue;
+      }
 
       const attachment: Attachment = {
         id: crypto.randomUUID(),
