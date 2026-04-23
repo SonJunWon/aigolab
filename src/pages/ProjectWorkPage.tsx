@@ -12,6 +12,9 @@ import { useStudyTimeTracking } from "../hooks/useStudyTimeTracking";
 import { useFileStore } from "../store/fileStore";
 import { runActiveFile } from "../runtime/fileRunner";
 import { pythonRunner } from "../runtime/pythonRunner";
+import { useEntitlements } from "../hooks/useEntitlements";
+import { canAccessProject } from "../content/access";
+import { LockedContentScreen } from "../components/paywall/LockedContentScreen";
 
 const MIN_OUTPUT_H = 40;
 const MAX_OUTPUT_H = 600;
@@ -61,6 +64,9 @@ export function ProjectWorkPage() {
   const running = useFileStore((s) => s.running);
   const activeFile = useFileStore((s) => s.activeFile);
   const storeLoadProject = useFileStore((s) => s.loadProject);
+
+  // 접근 권한 — PRO 프로젝트 URL 직접 입력 시 하드 잠금
+  const { entitlements, loading: entitlementsLoading } = useEntitlements();
 
   // 학습 시간 추적
   useStudyTimeTracking(!!project);
@@ -216,6 +222,19 @@ export function ProjectWorkPage() {
   };
 
   if (!project) return <Navigate to="/projects" replace />;
+
+  // PRO 프로젝트 접근 제어 — URL 직접 입력 우회 차단
+  if (!entitlementsLoading && !canAccessProject(project.id, entitlements)) {
+    return (
+      <LockedContentScreen
+        icon={project.icon}
+        title={project.title}
+        kind="AI 프로젝트"
+        backTo="/projects"
+        backLabel="← 프로젝트 목록"
+      />
+    );
+  }
 
   const isReady = status === "ready";
   const statusDot = {

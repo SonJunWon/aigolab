@@ -19,6 +19,9 @@ import {
 } from "../storage/notebookRepo";
 import { downloadIpynb } from "../utils/exportNotebook";
 import type { Language, Lesson, Track } from "../types/lesson";
+import { useEntitlements } from "../hooks/useEntitlements";
+import { canAccessLesson } from "../content/access";
+import { LockedContentScreen } from "../components/paywall/LockedContentScreen";
 
 export function LessonPage() {
   const { language, track, lessonId } = useParams<{
@@ -36,6 +39,9 @@ export function LessonPage() {
   const completeLesson = useProgressStore((s) => s.completeLesson);
   const setCurrent = useProgressStore((s) => s.setCurrent);
   const isCompleted = useProgressStore((s) => s.isCompleted);
+
+  // 접근 권한 — PRO 레슨 URL 직접 입력 시 하드 잠금에 사용
+  const { entitlements, loading: entitlementsLoading } = useEntitlements();
 
   const lang = language ? getLanguage(language) : undefined;
   const trk = track ? getTrack(track) : undefined;
@@ -200,6 +206,29 @@ export function LessonPage() {
 
   if (!lang || !trk) return <Navigate to="/coding" replace />;
   if (!lesson) return <Navigate to={`/coding/learn/${lang.id}/${trk.id}`} replace />;
+
+  // PRO 레슨 접근 제어 — URL 직접 입력 우회 차단.
+  // entitlements 로딩 중엔 판단 보류 (빈 배열이 PRO 사용자를 잠시 잠가버리는 플래시 방지).
+  if (!entitlementsLoading) {
+    const canAccess = canAccessLesson(
+      lang.id as Language,
+      trk.id as Track,
+      entitlements,
+      lesson.id,
+      lesson.order,
+    );
+    if (!canAccess) {
+      return (
+        <LockedContentScreen
+          icon={lang.icon}
+          title={`${lang.name} · ${trk.name} — ${lesson.title}`}
+          kind="코딩 실습 레슨"
+          backTo={`/coding/learn/${lang.id}/${trk.id}`}
+          backLabel="← 커리큘럼으로"
+        />
+      );
+    }
+  }
 
   // 이전/다음 챕터 찾기 — 워크샵 레슨은 별도 시퀀스 사용
   const isWorkshop = lesson.order >= 99;

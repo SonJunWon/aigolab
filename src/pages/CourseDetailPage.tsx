@@ -7,6 +7,9 @@ import { InlineCodeRunner } from "../components/course/InlineCodeRunner";
 import { useAuthStore } from "../store/authStore";
 import { saveCourseProgress } from "../storage/supabaseQuizRepo";
 import { useStudyTimeTracking } from "../hooks/useStudyTimeTracking";
+import { useEntitlements } from "../hooks/useEntitlements";
+import { canAccessCourse } from "../content/access";
+import { LockedContentScreen } from "../components/paywall/LockedContentScreen";
 import type { CourseSection } from "../types/course";
 
 export function CourseDetailPage() {
@@ -14,6 +17,9 @@ export function CourseDetailPage() {
   const course = courseId ? getCourseById(courseId) : undefined;
 
   const user = useAuthStore((s) => s.user);
+
+  // 접근 권한 — PRO 강의 URL 직접 입력 시 하드 잠금
+  const { entitlements, loading: entitlementsLoading } = useEntitlements();
 
   // 강의 열람 기록 저장
   useEffect(() => {
@@ -26,6 +32,19 @@ export function CourseDetailPage() {
   useStudyTimeTracking(!!course);
 
   if (!course) return <Navigate to="/courses" replace />;
+
+  // PRO 강의 접근 제어 — URL 직접 입력 우회 차단
+  if (!entitlementsLoading && !canAccessCourse(course.id, entitlements)) {
+    return (
+      <LockedContentScreen
+        icon={course.icon}
+        title={course.title}
+        kind="AI 강의"
+        backTo="/courses"
+        backLabel="← 강의 목록"
+      />
+    );
+  }
 
   const nextCourse = course.nextCourseId
     ? getCourseById(course.nextCourseId)

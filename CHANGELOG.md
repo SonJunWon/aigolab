@@ -29,6 +29,17 @@
     - 글로서리 툴팁 (`data-desc`) 및 기본 마크다운 태그는 모두 보존
   - 의존성: `dompurify ^3.4.1`, `@types/dompurify ^3.0.5`
 
+- **PRO 콘텐츠 URL 직접 입력 우회 차단** (상세 페이지 접근 제어 3곳 추가)
+  - 기존: 목록 페이지(CurriculumPage/ProjectsPage/CoursesPage)는 잠금 UI + paywall 모달이 있었으나, **상세 페이지는 권한 검증 전무**. `/coding/learn/python/intermediate/xx`, `/projects/xx/work`, `/courses/xx` 를 URL 로 직접 입력하면 PRO 콘텐츠 노출.
+  - 영향: 책 구매자 PRO 인증 코드 시스템이 도입돼도 URL 우회로 무력화 가능.
+  - 조치:
+    - `src/components/paywall/LockedContentScreen.tsx` 신설 — 하드 잠금 전용 UI
+    - `src/pages/LessonPage.tsx` — `canAccessLesson()` 체크 + 잠금 화면
+    - `src/pages/ProjectWorkPage.tsx` — `canAccessProject()` 체크 + 잠금 화면
+    - `src/pages/CourseDetailPage.tsx` — `canAccessCourse()` 체크 + 잠금 화면
+    - 3곳 모두 `useEntitlements().loading` 대기 후 판정 → PRO 사용자 플래시 방지
+  - 참고: `canAccessLesson` 함수는 `access.ts` 에 이미 존재했으나 어디에서도 호출되지 않던 상태 — 이번 수정으로 연결.
+
 - **텔레그램 봇 토큰 클라이언트 번들 노출 제거** (서버 프록시 이관)
   - 기존 `VITE_TELEGRAM_BOT_TOKEN` / `VITE_TELEGRAM_CHAT_ID` 는 Vite 빌드 시점에 클라이언트 JS 에 평문으로 박혀 누구나 DevTools 로 추출 가능했음.
   - 공격 범위: 봇 토큰 탈취 → 관리자 chat 에 스팸/피싱 메시지 발송 가능.
