@@ -10,6 +10,7 @@
 import { useMemo } from "react";
 import MarkdownIt from "markdown-it";
 import { lookupGlossary } from "../content/ai-engineering/glossary";
+import { sanitizeHtml } from "../lib/sanitizeHtml";
 
 const md = new MarkdownIt({
   html: true,
@@ -90,9 +91,11 @@ export function Markdown({ content, className = "md-prose" }: Props) {
   const html = useMemo(() => {
     try {
       const rendered = md.render(preprocess(content));
-      return injectGlossaryTooltips(rendered);
+      const withGlossary = injectGlossaryTooltips(rendered);
+      return sanitizeHtml(withGlossary);
     } catch {
-      return content;
+      // 렌더링 실패 시 원문도 sanitize 후 반환 (원문에 HTML 엔티티가 섞여있을 수 있음)
+      return sanitizeHtml(content);
     }
   }, [content]);
 

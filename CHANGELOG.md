@@ -16,9 +16,21 @@
   - 증상: 키 미등록 상태에서도 경고 배너가 숨겨지고, 입력란/전송 버튼이 비활성화되지 않음.
   - 조치: `useState` + `useEffect` 로 비동기 결과를 상태화, `isOpen` / `user` 변경 시 재검사. 복호화 실패 시 `false` 로 안전 폴백.
 
+- **마크다운 렌더링 XSS 방어 도입** (DOMPurify)
+  - `markdown-it { html: true }` / `marked` 출력이 `dangerouslySetInnerHTML` 에 sanitize 없이 주입되던 상태.
+  - 공격 벡터: 사용자가 입력한 마크다운(워크스페이스/노트북 셀)에 `<img src=x onerror="...">` 가 섞이면 같은 오리진 스크립트 실행 → `decryptString()` 으로 API 키 평문 추출 가능.
+  - 조치:
+    - 공용 sanitizer 도입 (`src/lib/sanitizeHtml.ts`, DOMPurify 3.x)
+    - 3개 렌더러 출력에 일괄 적용:
+      - `src/components/Markdown.tsx` (레슨/프로젝트 — 심층방어)
+      - `src/components/notebook/MarkdownCell.tsx` (노트북 마크다운 셀)
+      - `src/pages/MdWorkspacePage.tsx` MdPreview (마크다운 워크스페이스 — 최고 위험)
+    - `<a target="_blank">` 자동 `rel="noopener noreferrer"` 보강
+    - 글로서리 툴팁 (`data-desc`) 및 기본 마크다운 태그는 모두 보존
+  - 의존성: `dompurify ^3.4.1`, `@types/dompurify ^3.0.5`
+
 ### Planned (다음 v4.12.0 릴리즈 포함 예정)
 
-- 마크다운 렌더링 XSS 보호 (`Markdown.tsx` `html:true` → sanitizer 도입)
 - `.env.local` 로컬 보관 정책 정리
 - v4.11.0 이후 누적된 마크다운 워크스페이스 v1, API 키 관리 페이지, AI 입문 12강 재구성, IndexedDB 안정화 요약
 

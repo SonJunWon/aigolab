@@ -11,6 +11,7 @@ import { marked } from "marked";
 import { useMdFileStore } from "../store/mdFileStore";
 import { FileExplorer } from "../components/markdown/FileExplorer";
 import { PromptFormEditor } from "../components/markdown/PromptFormEditor";
+import { sanitizeHtml } from "../lib/sanitizeHtml";
 
 const MonacoEditor = lazy(() =>
   import("@monaco-editor/react").then((mod) => ({ default: mod.default })),
@@ -355,9 +356,12 @@ export function MdWorkspacePage() {
 function MdPreview({ content }: { content: string }) {
   const html = useMemo(() => {
     try {
-      return marked(content, { breaks: true, gfm: true }) as string;
+      const rendered = marked(content, { breaks: true, gfm: true }) as string;
+      // 사용자 입력 → 반드시 sanitize (XSS 차단)
+      return sanitizeHtml(rendered);
     } catch {
-      return `<p>${content}</p>`;
+      // 원문 자체도 사용자 입력이므로 sanitize 경유
+      return sanitizeHtml(`<p>${content}</p>`);
     }
   }, [content]);
 

@@ -3,6 +3,7 @@ import MarkdownIt from "markdown-it";
 import type { Cell } from "../../types/notebook";
 import { useNotebookStore } from "../../store/notebookStore";
 import { lookupGlossary } from "../../content/ai-engineering/glossary";
+import { sanitizeHtml } from "../../lib/sanitizeHtml";
 
 interface Props {
   cell: Cell;
@@ -67,7 +68,7 @@ export function MarkdownCell({ cell, isSelected }: Props) {
 
   // 렌더 모드 — ==용어== 패턴을 글로서리 툴팁으로 변환
   const rawHtml = md.render(cell.source || "*(빈 마크다운 셀 — 더블클릭하여 편집)*");
-  const html = rawHtml.replace(/==([^=]+)==/g, (_, term: string) => {
+  const withGlossary = rawHtml.replace(/==([^=]+)==/g, (_, term: string) => {
     const entry = lookupGlossary(term.trim());
     if (!entry) return term.trim();
     const desc = `${entry.ko} — ${entry.desc}`
@@ -77,6 +78,8 @@ export function MarkdownCell({ cell, isSelected }: Props) {
       .replace(/>/g, "&gt;");
     return `<span class="glossary-term" data-desc="${desc}" tabindex="0">${term.trim()}</span>`;
   });
+  // 사용자 입력이 포함되므로 반드시 sanitize 후 주입
+  const html = sanitizeHtml(withGlossary);
 
   return (
     <div
