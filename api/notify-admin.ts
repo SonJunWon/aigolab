@@ -17,8 +17,11 @@
  *   VITE_SUPABASE_URL      — 이미 등록됨 (공유 가능)
  *   VITE_SUPABASE_ANON_KEY — 이미 등록됨 (공유 가능)
  *   VITE_APP_URL           — (옵션) 관리자 대시보드 링크 베이스
+ *
+ * 런타임: Vercel Node.js (Fluid Compute). req/res 는 Node 스타일.
  */
 
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? "";
@@ -27,21 +30,29 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL ?? "";
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY ?? "";
 const APP_URL = process.env.VITE_APP_URL ?? "https://aigolab.co.kr";
 
-export default async function handler(req: Request): Promise<Response> {
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse,
+): Promise<void> {
   if (req.method !== "POST") {
-    return Response.json({ error: "Method not allowed" }, { status: 405 });
+    res.status(405).json({ error: "Method not allowed" });
+    return;
   }
 
   // ─── 인증 ─────────────────────────────────────────────────
-  const auth = req.headers.get("authorization");
-  if (!auth?.startsWith("Bearer ")) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  // Node 스타일: headers 는 소문자 키의 일반 객체
+  const authHeader = req.headers["authorization"];
+  const auth = Array.isArray(authHeader) ? authHeader[0] : authHeader;
+  if (!auth || !auth.startsWith("Bearer ")) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
   }
   const token = auth.slice("Bearer ".length);
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     console.error("[notify-admin] Supabase 환경변수 미설정");
-    return Response.json({ error: "Server misconfigured" }, { status: 500 });
+    res.status(500).json({ error: "Server misconfigured" });
+    return;
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -50,32 +61,28 @@ export default async function handler(req: Request): Promise<Response> {
     error: authErr,
   } = await supabase.auth.getUser(token);
   if (authErr || !user) {
-    return Response.json({ error: "Invalid session" }, { status: 401 });
+    res.status(401).json({ error: "Invalid session" });
+    return;
   }
 
   // ─── 입력 검증 ────────────────────────────────────────────
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return Response.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-  const question =
-    typeof body === "object" && body !== null && "question" in body
-      ? (body as { question: unknown }).question
-      : undefined;
-
+  // Vercel 은 Content-Type: application/json 이면 req.body 를 자동 파싱
+  const body = req.body as { question?: unknown } | undefined;
+  const question = body?.question;
   if (!question || typeof question !== "string") {
-    return Response.json({ error: "Invalid question" }, { status: 400 });
+    res.status(400).json({ error: "Invalid question" });
+    return;
   }
   if (question.length > 2000) {
-    return Response.json({ error: "Question too long" }, { status: 413 });
+    res.status(413).json({ error: "Question too long" });
+    return;
   }
 
   // ─── 구성 검증 ────────────────────────────────────────────
   if (!BOT_TOKEN || !CHAT_ID) {
     console.error("[notify-admin] TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID 미설정");
-    return Response.json({ error: "Not configured" }, { status: 500 });
+    res.status(500).json({ error: "Not configured" });
+    return;
   }
 
   // ─── 메시지 조립 + 발송 ───────────────────────────────────
@@ -105,12 +112,13 @@ export default async function handler(req: Request): Promise<Response> {
     if (!tgRes.ok) {
       const respBody = await tgRes.text();
       console.error("[notify-admin] Telegram 실패:", tgRes.status, respBody);
-      return Response.json({ error: "Telegram API error" }, { status: 502 });
+      res.status(502).json({ error: "Telegram API error" });
+      return;
     }
-    return Response.json({ ok: true });
+    res.status(200).json({ ok: true });
   } catch (err) {
     console.error("[notify-admin] 네트워크 오류:", err);
-    return Response.json({ error: "Internal error" }, { status: 500 });
+    res.status(500).json({ error: "Internal error" });
   }
 }
 
