@@ -9,7 +9,22 @@
 
 ## [Unreleased]
 
-(다음 릴리즈에 포함될 변경 사항을 여기에 누적합니다)
+### Security / Fixed
+
+- **ChatBot `hasKey` 항상 truthy 버그 수정** (`src/components/chatbot/ChatBot.tsx`)
+  - `getKey()` 가 `Promise<string | undefined>` 를 반환하는데 동기 truthy 체크로 처리해 키가 없어도 항상 `true` 로 평가되던 문제.
+  - 증상: 키 미등록 상태에서도 경고 배너가 숨겨지고, 입력란/전송 버튼이 비활성화되지 않음.
+  - 조치: `useState` + `useEffect` 로 비동기 결과를 상태화, `isOpen` / `user` 변경 시 재검사. 복호화 실패 시 `false` 로 안전 폴백.
+
+### Planned (다음 v4.12.0 릴리즈 포함 예정)
+
+- 마크다운 렌더링 XSS 보호 (`Markdown.tsx` `html:true` → sanitizer 도입)
+- `.env.local` 로컬 보관 정책 정리
+- v4.11.0 이후 누적된 마크다운 워크스페이스 v1, API 키 관리 페이지, AI 입문 12강 재구성, IndexedDB 안정화 요약
+
+---
+
+> **참고**: CHANGELOG 는 4.6.0 이후 기록이 누락되어 있으며, 4.7~4.11 버전 변경 사항은 git 태그/커밋 이력으로 확인할 수 있습니다. 다음 v4.12.0 릴리즈 노트에서 공백 구간을 묶어 요약 재정리 예정.
 
 ---
 

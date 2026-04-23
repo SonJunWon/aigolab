@@ -32,6 +32,7 @@ export function ChatBot() {
   const [tab, setTab] = useState<"chat" | "inquiries">("chat");
   const [inquiries, setInquiries] = useState<AdminInquiry[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [hasKey, setHasKey] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -58,8 +59,20 @@ export function ChatBot() {
     })();
   }, [user, isOpen, tab]);
 
-  // API 키 확인
-  const hasKey = !!(getKey("groq") || getKey("gemini"));
+  // API 키 확인 — getKey는 Promise를 반환하므로 비동기로 풀어서 상태에 저장한다.
+  // 사용자가 다른 탭에서 키를 등록한 뒤 챗봇을 열 수도 있으므로 isOpen 변경 시마다 재검사.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [groq, gemini] = await Promise.all([getKey("groq"), getKey("gemini")]);
+        if (!cancelled) setHasKey(!!(groq || gemini));
+      } catch {
+        if (!cancelled) setHasKey(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, user]);
 
   // 메시지 전송
   const handleSend = useCallback(async () => {
