@@ -29,9 +29,25 @@
     - 글로서리 툴팁 (`data-desc`) 및 기본 마크다운 태그는 모두 보존
   - 의존성: `dompurify ^3.4.1`, `@types/dompurify ^3.0.5`
 
+- **텔레그램 봇 토큰 클라이언트 번들 노출 제거** (서버 프록시 이관)
+  - 기존 `VITE_TELEGRAM_BOT_TOKEN` / `VITE_TELEGRAM_CHAT_ID` 는 Vite 빌드 시점에 클라이언트 JS 에 평문으로 박혀 누구나 DevTools 로 추출 가능했음.
+  - 공격 범위: 봇 토큰 탈취 → 관리자 chat 에 스팸/피싱 메시지 발송 가능.
+  - 조치:
+    - 신규 Vercel Function: `api/notify-admin.ts`
+      - Supabase JWT 로 호출자 인증 (로그인 사용자만 허용)
+      - 질문 길이/타입 검증 (최대 2000자)
+      - 서버 환경변수 `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` 사용
+    - 클라이언트 `lib/telegramNotify.ts` 는 `/api/notify-admin` 으로 fetch
+    - 사용자 이메일은 서버가 JWT 에서 도출 (클라이언트가 임의 이메일 주장 불가)
+    - `vercel.json` rewrite 에 `/api/*` 제외 패턴 추가
+    - `.env.example` 에 VITE_ 접두사 공개 경고 + 서버 전용 변수 안내 추가
+  - **운영 액션 필요** (배포 전):
+    1. 로컬 `.env.local` 에서 `VITE_TELEGRAM_*` 제거 → `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` 추가 (VITE_ 빼고)
+    2. Vercel Dashboard → Environment Variables 에서 동일 작업
+    3. 로컬에서는 `vercel dev` 로 실행해야 `/api/*` 동작 (기존 `vite dev` 는 프론트만)
+
 ### Planned (다음 v4.12.0 릴리즈 포함 예정)
 
-- `.env.local` 로컬 보관 정책 정리
 - v4.11.0 이후 누적된 마크다운 워크스페이스 v1, API 키 관리 페이지, AI 입문 12강 재구성, IndexedDB 안정화 요약
 
 ---

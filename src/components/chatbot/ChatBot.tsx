@@ -121,9 +121,8 @@ export function ChatBot() {
           question: cleanQuestion,
           aiResponse: res.text,
         });
-        // 텔레그램으로 관리자 알림
+        // 텔레그램으로 관리자 알림 (서버 프록시 경유, 사용자 이메일은 JWT 에서 도출)
         sendTelegramNotification({
-          userEmail: user.email ?? "알 수 없음",
           question: cleanQuestion,
         });
       }
