@@ -152,7 +152,7 @@ AI는 특정 직업만을 위한 기술이 아닙니다.
 
 ### 2. 코드 셀 (파란색 테두리)
 - **코드를 직접 실행**할 수 있는 셀입니다.
-- 셀 왼쪽 위의 **▶ 실행 버튼**을 클릭하거나, 키보드에서 **Shift + Enter**를 누르면 실행됩니다.
+- 셀 왼쪽 위의 **▶ 실행 버튼**을 클릭하거나, 키보드에서 **Cmd + Enter**(Mac) / **Ctrl + Enter**(Windows·Linux)를 누르면 실행됩니다.
 - 실행 결과가 셀 아래에 나타납니다.
 
 ### 3. AI 셀 (보라색 테두리)
@@ -167,7 +167,7 @@ AI는 특정 직업만을 위한 기술이 아닙니다.
 | 방법 | 설명 |
 |------|------|
 | **▶ 버튼 클릭** | 셀 왼쪽 위의 재생 버튼 클릭 |
-| **Shift + Enter** | 키보드로 빠르게 실행 (추천!) |
+| **Cmd + Enter** (Mac) / **Ctrl + Enter** (Windows·Linux) | 키보드로 빠르게 실행 (추천!) |
 
 실행 상태는 셀 왼쪽에 표시됩니다:
 - \`[ ]\` — 아직 실행하지 않음
@@ -189,7 +189,7 @@ AI는 특정 직업만을 위한 기술이 아닙니다.
 
 아래 파란색 셀이 보이시나요? 이것이 **코드 셀**입니다.
 
-**▶ 버튼을 클릭**하거나 **Shift + Enter**를 눌러서 실행해보세요!`,
+**▶ 버튼을 클릭**하거나 **Cmd + Enter** (Mac) / **Ctrl + Enter** (Windows·Linux)를 눌러서 실행해보세요!`,
     },
 
     {
@@ -204,7 +204,7 @@ console.log(message);
 console.log("1 + 1 =", 1 + 1);
 console.log("오늘의 날짜:", new Date().toLocaleDateString("ko-KR"));`,
       hints: [
-        "셀을 클릭한 뒤 Shift + Enter를 눌러보세요.",
+        "셀을 클릭한 뒤 Cmd + Enter (Mac) 또는 Ctrl + Enter (Windows·Linux)를 눌러보세요.",
         "실행 결과가 셀 아래에 나타납니다.",
       ],
     },
@@ -315,7 +315,7 @@ API 키를 등록했다면, 이제 AI와 대화해 볼 차례입니다!
 아래 AI 셀을 실행하면 **Google Gemini AI**에게 "안녕?"이라고 인사를 보냅니다.
 AI가 어떤 답변을 할지 직접 확인해보세요.
 
-**▶ 버튼을 클릭하거나 Shift + Enter를 눌러주세요!**`,
+**▶ 버튼을 클릭하거나 Cmd + Enter (Mac) / Ctrl + Enter (Windows·Linux)를 눌러주세요!**`,
     },
 
     {
@@ -406,7 +406,7 @@ console.log(response.text);`,
 | 배운 것 | 내용 |
 |---------|------|
 | AIGoLab 교육 철학 | 기본기 + '왜?' + 파이프라인 사고 + 범용 기초 |
-| 노트북 사용법 | 설명 셀, 코드 셀, AI 셀의 차이. Shift+Enter로 실행 |
+| 노트북 사용법 | 설명 셀, 코드 셀, AI 셀의 차이. Cmd+Enter / Ctrl+Enter로 실행 |
 | API 키 등록 | Google AI Studio에서 Gemini API 키 발급 → AIGoLab에 등록 |
 | 첫 AI 대화 | \`chat()\` 함수로 AI에게 메시지를 보내고 답변 받기 |
 
@@ -428,13 +428,13 @@ AI가 어떤 질문에 잘 답하고, 어떤 질문에 어려워하는지 직접
         question: "AIGoLab에서 코드를 실행하려면 어떻게 해야 하나요?",
         options: [
           "프로그램을 따로 설치한다",
-          "셀의 ▶ 버튼을 클릭하거나 Shift + Enter를 누른다",
+          "셀의 ▶ 버튼을 클릭하거나 Cmd + Enter (Mac) / Ctrl + Enter (Windows·Linux)를 누른다",
           "코드를 복사해서 메모장에 붙여넣는다",
           "관리자에게 실행을 요청한다",
         ],
         correctIndex: 1,
         explanation:
-          "AIGoLab의 셀은 ▶ 버튼 클릭 또는 Shift + Enter 키보드 단축키로 실행할 수 있습니다. 별도의 프로그램 설치가 필요 없어요!",
+          "AIGoLab의 셀은 ▶ 버튼 클릭 또는 Cmd + Enter (Mac) / Ctrl + Enter (Windows·Linux) 키보드 단축키로 실행할 수 있습니다. 별도의 프로그램 설치가 필요 없어요!",
       },
       {
         type: "multiple-choice",

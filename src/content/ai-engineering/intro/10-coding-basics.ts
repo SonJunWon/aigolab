@@ -1,7 +1,7 @@
 import type { Lesson } from "../../../types/lesson";
 
 export const lesson10: Lesson = {
-  id: "ai-intro-09-coding-basics",
+  id: "ai-intro-10-coding-basics",
   language: "ai-engineering",
   track: "intro",
   order: 10,

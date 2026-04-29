@@ -2,7 +2,7 @@ import type { Lesson } from "../../../types/lesson";
 import type { Quiz } from "../../../types/quiz";
 
 export const lesson13: Lesson = {
-  id: "ai-intro-12-next-steps",
+  id: "ai-intro-13-next-steps",
   language: "ai-engineering",
   track: "intro",
   order: 13,

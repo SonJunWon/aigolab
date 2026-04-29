@@ -123,7 +123,7 @@ const response = await chat({
 });
 
 console.log("AI의 답:", response.text);`,
-      hints: ["Shift+Enter를 여러 번 눌러보세요. 매번 다른 한 단어가 나올 거예요."],
+      hints: ["Cmd+Enter (Mac) / Ctrl+Enter (Windows·Linux)를 여러 번 눌러보세요. 매번 다른 한 단어가 나올 거예요."],
     },
     {
       type: "markdown",

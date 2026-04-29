@@ -13,6 +13,51 @@
 
 ---
 
+## [4.13.0] - 2026-04-29
+
+### Summary
+
+AI 입문(intro) 트랙 14강의 레슨 ID 를 책 챕터 번호와 정합화. Ch08~Ch13 의 ID 가 책보다 한 칸씩 어긋나 URL·다운로드 파일명이 챕터 번호와 불일치하던 문제 해소. 외부 북마크와 기존 사용자 진도가 깨지지 않도록 레거시 리다이렉트 + IDB 1회 마이그레이션 + Supabase 데이터 마이그레이션 SQL 동반.
+
+### Changed
+
+- **AI 입문 트랙 레슨 ID 슬러그 정합화** (`src/content/ai-engineering/intro/`)
+  - 6개 파일 rename + `id:` 필드 갱신 (Ch08~Ch13):
+    - `ai-intro-07-file-extensions` → `ai-intro-08-file-extensions`
+    - `ai-intro-08-internet-api`    → `ai-intro-09-internet-api`
+    - `ai-intro-09-coding-basics`   → `ai-intro-10-coding-basics`
+    - `ai-intro-10-dev-tools`       → `ai-intro-11-dev-tools`
+    - `ai-intro-11-vibe-coding`     → `ai-intro-12-vibe-coding`
+    - `ai-intro-12-next-steps`      → `ai-intro-13-next-steps`
+  - `index.ts` import 경로 일괄 갱신
+  - `order` 필드는 변경 없음 (이미 0~13으로 정상)
+
+- **레거시 ID 리다이렉트** (`src/content/ai-engineering/intro/legacyIds.ts` 신규)
+  - `LEGACY_AI_INTRO_ID_MAP` 6개 매핑 정의
+  - `LessonPage.tsx` 에서 `getLessonById` 가 undefined 반환 시 매핑 조회 → `<Navigate replace>` 로 신 URL 이동
+  - 외부 공유 링크·검색 인덱스·SEO 보존
+
+- **IDB 1회 마이그레이션** (`src/storage/aiIntroIdMigration.ts` 신규)
+  - 앱 부팅 시 `runAiIntroIdMigration()` 호출 (`App.tsx`)
+  - notebooks 스토어: 구 ID 키 → 신 ID 키 복사 후 구 키 삭제
+  - progress 스토어: `completedLessons[]`·`currentLesson` 의 구 ID 치환
+  - `localStorage` 플래그로 1회만 수행 (중복 방지)
+
+### Database
+
+- **Supabase 마이그레이션 SQL** (`supabase/migrations/v4.x_ai_intro_id_migration.sql` 신규)
+  - `user_progress.current_lesson` 단일 문자열 치환
+  - `user_progress.completed_lessons` text[] 내부 요소 치환
+  - `quiz_results.quiz_id` 치환 (UNIQUE 충돌 방지: 신 ID 행이 이미 있으면 구 행 삭제 후 update)
+  - 트랜잭션 + 멱등 — 안전하게 여러 번 실행 가능
+  - 작업자가 Supabase Dashboard SQL Editor 에서 수동 실행
+
+### Docs (book2/ai-intro)
+
+- Ch08~Ch12 의 [플랫폼에서 실습하기 →] 링크를 신 슬러그로 갱신 (총 5곳)
+
+---
+
 ## [4.12.0] - 2026-04-23
 
 ### Summary

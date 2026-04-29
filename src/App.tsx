@@ -44,6 +44,7 @@ import { ChatBot } from "./components/chatbot/ChatBot";
 import { useProgressStore } from "./store/progressStore";
 import { useKeyModalStore } from "./store/keyModalStore";
 import { KeySetupModal } from "./components/llm/KeySetupModal";
+import { runAiIntroIdMigration } from "./storage/aiIntroIdMigration";
 
 /** 라우트 변경 시 스크롤 최상단으로 복원 */
 function ScrollToTop() {
@@ -118,6 +119,11 @@ function AppInner() {
   useEffect(() => {
     void initialize();
   }, [initialize]);
+
+  // AI 입문 트랙 ID 마이그레이션 (구 슬러그 → 신 슬러그) — 1회 수행
+  useEffect(() => {
+    void runAiIntroIdMigration();
+  }, []);
 
   // 로그인 시 IDB → Supabase 진도 마이그레이션
   useEffect(() => {

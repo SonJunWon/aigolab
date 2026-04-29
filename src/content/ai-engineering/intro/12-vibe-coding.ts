@@ -2,7 +2,7 @@ import type { Lesson } from "../../../types/lesson";
 import type { Quiz } from "../../../types/quiz";
 
 export const lesson12: Lesson = {
-  id: "ai-intro-11-vibe-coding",
+  id: "ai-intro-12-vibe-coding",
   language: "ai-engineering",
   track: "intro",
   order: 12,

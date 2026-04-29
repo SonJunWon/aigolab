@@ -22,6 +22,7 @@ import type { Language, Lesson, Track } from "../types/lesson";
 import { useEntitlements } from "../hooks/useEntitlements";
 import { canAccessLesson } from "../content/access";
 import { LockedContentScreen } from "../components/paywall/LockedContentScreen";
+import { resolveLegacyAiIntroId } from "../content/ai-engineering/intro/legacyIds";
 
 export function LessonPage() {
   const { language, track, lessonId } = useParams<{
@@ -205,7 +206,16 @@ export function LessonPage() {
   }, [lesson, loadCells, lang, trk, setCurrent]);
 
   if (!lang || !trk) return <Navigate to="/coding" replace />;
-  if (!lesson) return <Navigate to={`/coding/learn/${lang.id}/${trk.id}`} replace />;
+  if (!lesson) {
+    // 레거시 ID(이전 슬러그)로 들어온 경우 신 ID로 영구 리다이렉트
+    if (lang.id === "ai-engineering" && trk.id === "intro" && lessonId) {
+      const newId = resolveLegacyAiIntroId(lessonId);
+      if (newId) {
+        return <Navigate to={`/coding/learn/${lang.id}/${trk.id}/${newId}`} replace />;
+      }
+    }
+    return <Navigate to={`/coding/learn/${lang.id}/${trk.id}`} replace />;
+  }
 
   // PRO 레슨 접근 제어 — URL 직접 입력 우회 차단.
   // entitlements 로딩 중엔 판단 보류 (빈 배열이 PRO 사용자를 잠시 잠가버리는 플래시 방지).
