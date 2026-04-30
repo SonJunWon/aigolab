@@ -75,11 +75,7 @@ export function NoticesPage() {
 
   const filtered = NOTICES
     .filter((n) => !categoryFilter || n.category === categoryFilter)
-    .sort((a, b) => {
-      // 고정 먼저, 그 다음 날짜 역순
-      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-      return b.date.localeCompare(a.date);
-    });
+    .sort((a, b) => b.date.localeCompare(a.date));
 
   const openNotice = filtered.find((n) => n.id === selectedNotice);
 
