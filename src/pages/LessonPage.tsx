@@ -18,9 +18,11 @@ import {
   computeLessonHash,
 } from "../storage/notebookRepo";
 import { downloadIpynb } from "../utils/exportNotebook";
-import type { Language, Lesson, Track } from "../types/lesson";
+import type { Language, LessonCell, Track } from "../types/lesson";
 import { useEntitlements } from "../hooks/useEntitlements";
 import { canAccessLesson } from "../content/access";
+import { isWorkshopPro } from "../content/tier";
+import { fetchWorkshopBody } from "../lib/contentBody";
 import { LockedContentScreen } from "../components/paywall/LockedContentScreen";
 import { resolveLegacyAiIntroId } from "../content/ai-engineering/intro/legacyIds";
 
@@ -50,6 +52,30 @@ export function LessonPage() {
     lang && trk && lessonId
       ? getLessonById(lang.id as Language, trk.id as Track, lessonId)
       : undefined;
+
+  // PRO 워크샵 본문(cells)은 클라 번들에서 분리돼 있어(H1) 권한 확인 후 서버에서
+  // fetch 한다. 그 외 모든 레슨은 lesson.cells 를 그대로 사용(동작 불변).
+  const isProWorkshop = !!lesson && isWorkshopPro(lesson.order);
+  const [fetchedCells, setFetchedCells] = useState<LessonCell[] | null>(null);
+  // 런타임 재시작 상태 — 모든 hook 은 early return 보다 위에 있어야 함(rules-of-hooks).
+  const [restarting, setRestarting] = useState(false);
+  const sourceCells: LessonCell[] = isProWorkshop
+    ? fetchedCells ?? []
+    : lesson?.cells ?? [];
+  // 노트북 로드를 시작해도 되는가: PRO 워크샵은 본문 도착 후에만(빈 셀로 흐름 진입 방지).
+  const cellsReady = !isProWorkshop || fetchedCells !== null;
+
+  // PRO 워크샵 본문 fetch (권한 없으면 403 → null → 잠금화면이 처리)
+  useEffect(() => {
+    if (!isProWorkshop || !lesson) return;
+    let cancelled = false;
+    void fetchWorkshopBody(lesson.id).then((cells) => {
+      if (!cancelled && cells) setFetchedCells(cells);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isProWorkshop, lesson]);
 
   // 레슨 진입 시 항상 스크롤 최상단
   // 셀 로딩 후 DOM이 커지면서 스크롤이 밀리므로 여러 타이밍에 강제 스크롤
@@ -91,7 +117,8 @@ export function LessonPage() {
   }, [menuOpen]);
 
   // 자동 저장 — loadState가 ready일 때만 활성화
-  const lessonHash = lesson ? computeLessonHash(lesson.cells) : undefined;
+  const lessonHash =
+    lesson && cellsReady ? computeLessonHash(sourceCells) : undefined;
   useAutoSave(lesson?.id ?? null, loadState === "ready", lessonHash);
 
   // 학습 시간 추적 (로그인 사용자만)
@@ -107,6 +134,8 @@ export function LessonPage() {
   // 레슨 전환 시: 저장된 노트북이 있으면 그걸로, 없으면 원본 레슨으로 로드
   useEffect(() => {
     if (!lesson) return;
+    // PRO 워크샵은 서버 본문(cells) 도착 전에는 노트북 흐름을 시작하지 않는다.
+    if (!cellsReady) return;
 
     let cancelled = false;
     setLoadState("loading");
@@ -128,12 +157,12 @@ export function LessonPage() {
       // IndexedDB 에 저장. 이후 lesson 과 같은 개수가 되면 v3.18.3 머지가
       // 잘못된 데이터를 그대로 가져오는 문제 발생. markdown 도 비교해 콘텐츠
       // 변경을 더 정밀하게 감지.
-      const lessonCodeCells = lesson.cells.filter((c) => c.type === "code");
+      const lessonCodeCells = sourceCells.filter((c) => c.type === "code");
       const savedCodeCells = saved
         ? saved.cells.filter((c) => c.type === "code")
         : [];
 
-      const lessonMdSignature = lesson.cells
+      const lessonMdSignature = sourceCells
         .filter((c) => c.type === "markdown")
         .map((c) => c.source)
         .join("\n---\n");
@@ -147,7 +176,7 @@ export function LessonPage() {
       // v3.18.5: lesson 콘텐츠 해시 비교가 가장 강력한 검증.
       // saved.lessonHash 가 없으면 (legacy 데이터) 무조건 무효화.
       // 있어도 현재 lesson 해시와 다르면 무효화 — 콘텐츠 변경 정확 감지.
-      const currentLessonHash = computeLessonHash(lesson.cells);
+      const currentLessonHash = computeLessonHash(sourceCells);
       const useOriginal =
         !saved ||
         saved.cells.length === 0 ||
@@ -155,8 +184,6 @@ export function LessonPage() {
         saved.lessonHash !== currentLessonHash ||
         savedCodeCells.length !== lessonCodeCells.length ||
         savedMdSignature !== lessonMdSignature;
-
-      console.log("[lesson-debug] useOriginal:", useOriginal, "saved:", !!saved, "lesson.cells:", lesson.cells.length, "lessonId:", lesson.id);
 
       if (useOriginal) {
         if (saved && saved.cells.length > 0) {
@@ -166,13 +193,12 @@ export function LessonPage() {
               `md changed: ${savedMdSignature !== lessonMdSignature})`
           );
         }
-        console.log("[lesson-debug] calling loadCells with", lesson.cells.length, "cells, lang:", lesson.language);
-        loadCells(lesson.cells, lesson.language);
+        loadCells(sourceCells, lesson.language);
       } else {
         // 모든 검증 통과 → 안전한 머지 (사용자 코드 보존)
         const savedCodeQueue = savedCodeCells.map((c) => c.source);
         let qIdx = 0;
-        const merged = lesson.cells.map((lessonCell) => {
+        const merged = sourceCells.map((lessonCell) => {
           if (lessonCell.type === "code") {
             const userSource = savedCodeQueue[qIdx];
             qIdx += 1;
@@ -203,7 +229,9 @@ export function LessonPage() {
     return () => {
       cancelled = true;
     };
-  }, [lesson, loadCells, lang, trk, setCurrent]);
+    // sourceCells/cellsReady 추가: PRO 워크샵 본문 도착 시 재실행해 노트북을 채운다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson, loadCells, lang, trk, setCurrent, cellsReady, fetchedCells]);
 
   if (!lang || !trk) return <Navigate to="/coding" replace />;
   if (!lesson) {
@@ -238,6 +266,15 @@ export function LessonPage() {
         />
       );
     }
+  }
+
+  // 권한 통과한 PRO 워크샵: 서버 본문 도착 전엔 로딩 표시(빈 노트북 진입 방지).
+  if (isProWorkshop && !cellsReady) {
+    return (
+      <div className="min-h-screen bg-brand-bg flex items-center justify-center">
+        <div className="text-brand-textDim text-sm">워크샵을 불러오는 중…</div>
+      </div>
+    );
   }
 
   // 이전/다음 챕터 찾기 — 워크샵 레슨은 별도 시퀀스 사용
@@ -301,11 +338,10 @@ export function LessonPage() {
       return;
     }
     await deleteNotebook(lesson.id);
-    loadCells((lesson as Lesson).cells, lesson.language);
+    loadCells(sourceCells, lesson.language);
   };
 
   // ─── 런타임 재시작: 변수/함수 셰도잉 등 막혔을 때 회복용 ───
-  const [restarting, setRestarting] = useState(false);
   const handleRestartRuntime = async () => {
     if (restarting) return;
     if (

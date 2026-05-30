@@ -19,7 +19,9 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { PROJECTS, type Project, type ProjectStep } from "../src/content/projects.data";
-import { isProjectPro } from "../src/content/tier";
+import { WORKSHOP_LESSONS } from "../src/content/ai-engineering/workshops/data";
+import { isProjectPro, isWorkshopPro } from "../src/content/tier";
+import type { Lesson } from "../src/types/lesson";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const APP_ROOT = resolve(__dirname, "..");
@@ -95,4 +97,69 @@ writeGenerated(
 
 console.log(
   `[split-content] projects: ${clientProjects.length} total, ${Object.keys(proBodies).length} PRO 본문 분리`,
+);
+
+// ─────────────────────────────────────────────────────────
+// workshops 도메인 (Lesson.cells 기반)
+// ─────────────────────────────────────────────────────────
+
+type Cell = Lesson["cells"][number];
+
+/** 마크다운 셀들에서 ==용어== 추출 (WorkshopDetailPage 와 동일 규칙). */
+function glossaryFromCells(cells: Cell[]): string[] {
+  const terms: string[] = [];
+  for (const c of cells) {
+    if (c.type !== "markdown") continue;
+    for (const m of c.source.matchAll(/==([^=]+)==/g)) {
+      const t = m[1].trim();
+      if (!terms.includes(t)) terms.push(t);
+    }
+  }
+  return terms;
+}
+
+const clientWorkshops: Lesson[] = [];
+const proWorkshopBodies: Record<string, Cell[]> = {};
+const workshopTeaser: Record<string, { llmCellCount: number; glossaryTerms: string[] }> = {};
+
+for (const w of WORKSHOP_LESSONS) {
+  if (isWorkshopPro(w.order)) {
+    // PRO: 실제 본문(전체 cells)을 서버로 분리. 클라엔 첫 마크다운 셀(인트로 티저)만.
+    proWorkshopBodies[w.id] = w.cells;
+    workshopTeaser[w.id] = {
+      llmCellCount: w.cells.filter((c) => c.type === "llm-code").length,
+      glossaryTerms: glossaryFromCells(w.cells),
+    };
+    const firstMd = w.cells.find((c) => c.type === "markdown");
+    clientWorkshops.push({ ...w, cells: firstMd ? [firstMd] : [] });
+  } else {
+    // 무료 워크샵(W00~W06): 전체 그대로 클라이언트에 유지.
+    clientWorkshops.push(w);
+  }
+}
+
+writeGenerated(
+  "src/content/ai-engineering/workshops/generated.ts",
+  `import type { Lesson } from "../../../types/lesson";\n\n` +
+    `export interface WorkshopTeaserMeta {\n  llmCellCount: number;\n  glossaryTerms: string[];\n}\n\n` +
+    `export const CLIENT_WORKSHOP_LESSONS: Lesson[] = ${JSON.stringify(clientWorkshops, null, 2)};\n\n` +
+    `export const WORKSHOP_TEASER_META: Record<string, WorkshopTeaserMeta> = ${JSON.stringify(
+      workshopTeaser,
+      null,
+      2,
+    )};\n`,
+);
+
+writeGenerated(
+  "api/_generated/proWorkshops.generated.ts",
+  `/** PRO 워크샵 본문(cells) — 서버 전용. Vercel Function 이 인증 후 제공. */\n` +
+    `export const PRO_WORKSHOP_BODIES: Record<string, unknown[]> = ${JSON.stringify(
+      proWorkshopBodies,
+      null,
+      2,
+    )};\n`,
+);
+
+console.log(
+  `[split-content] workshops: ${clientWorkshops.length} total, ${Object.keys(proWorkshopBodies).length} PRO 본문 분리`,
 );

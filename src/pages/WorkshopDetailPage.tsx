@@ -6,7 +6,7 @@
  */
 
 import { Link, Navigate, useParams } from "react-router-dom";
-import { WORKSHOP_LESSONS } from "../content/ai-engineering/workshops";
+import { WORKSHOP_LESSONS, WORKSHOP_TEASER_META } from "../content/ai-engineering/workshops";
 import { useProgressStore } from "../store/progressStore";
 import type { Lesson } from "../types/lesson";
 
@@ -55,18 +55,24 @@ function extractWorkshopInfo(lesson: Lesson) {
   const descMatch = firstMd.match(/이 워크샵에서 만들 것[\s\S]*?\n\n\*\*(.*?)\*\*/);
   const mainDesc = descMatch?.[1] ?? lesson.subtitle ?? "";
 
-  // Part A / Part B 셀 개수
-  const llmCodeCount = lesson.cells.filter((c) => c.type === "llm-code").length;
   const hasQuiz = !!lesson.quiz;
 
-  // 학습 키워드 추출 (== == 용어)
-  const glossaryTerms: string[] = [];
-  for (const cell of lesson.cells) {
-    if (cell.type === "markdown") {
-      const matches = cell.source.matchAll(/==([^=]+)==/g);
-      for (const m of matches) {
-        const term = m[1].trim();
-        if (!glossaryTerms.includes(term)) glossaryTerms.push(term);
+  // PRO 워크샵은 본문(cells)이 클라 번들에서 분리돼 있어, llm 셀 수·용어는
+  // codegen 이 만든 티저 메타에서 가져온다(없으면 현재 cells 에서 파생 — 무료 워크샵).
+  const meta = WORKSHOP_TEASER_META[lesson.id];
+  const llmCodeCount =
+    meta?.llmCellCount ??
+    lesson.cells.filter((c) => c.type === "llm-code").length;
+
+  const glossaryTerms: string[] = meta?.glossaryTerms ?? [];
+  if (!meta) {
+    for (const cell of lesson.cells) {
+      if (cell.type === "markdown") {
+        const matches = cell.source.matchAll(/==([^=]+)==/g);
+        for (const m of matches) {
+          const term = m[1].trim();
+          if (!glossaryTerms.includes(term)) glossaryTerms.push(term);
+        }
       }
     }
   }

@@ -8,10 +8,39 @@
 
 import { supabase } from "./supabase";
 import type { Project } from "../content/projects";
+import type { LessonCell } from "../types/lesson";
 
 export interface ProjectBody {
   steps: Project["steps"];
   starterFiles: Project["starterFiles"];
+}
+
+/** PRO 워크샵 본문(cells)을 서버에서 가져온다. 실패 시 null. */
+export async function fetchWorkshopBody(
+  id: string,
+): Promise<LessonCell[] | null> {
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return null;
+
+    const res = await fetch(
+      `/api/workshop-content?id=${encodeURIComponent(id)}`,
+      { headers: { Authorization: `Bearer ${session.access_token}` } },
+    );
+    if (!res.ok) {
+      if (res.status !== 403) {
+        console.error("[contentBody] workshop fetch 실패:", res.status);
+      }
+      return null;
+    }
+    const data = (await res.json()) as { cells: LessonCell[] };
+    return data.cells;
+  } catch (err) {
+    console.error("[contentBody] 네트워크 오류:", err);
+    return null;
+  }
 }
 
 /** PRO 프로젝트 본문(steps·starterFiles)을 서버에서 가져온다. 실패 시 null. */
