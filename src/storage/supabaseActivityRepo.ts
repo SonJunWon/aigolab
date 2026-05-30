@@ -7,6 +7,7 @@
  */
 
 import { supabase } from "../lib/supabase";
+import { runSerial } from "../lib/serialQueue";
 
 export interface DailyActivity {
   activity_date: string;   // "YYYY-MM-DD"
@@ -52,28 +53,32 @@ export async function addStudySeconds(
   if (seconds <= 0) return;
   const today = kstDateString();
 
-  // 기존 레코드 조회
-  const { data: existing } = await supabase
-    .from("daily_activity")
-    .select("study_seconds")
-    .eq("user_id", userId)
-    .eq("activity_date", today)
-    .maybeSingle();
+  // 같은 (user, 날짜) 행에 대한 select-then-upsert 를 직렬화해 동시 호출 시
+  // 누적값이 유실되는 lost update 를 방지(H2).
+  await runSerial(`activity:${userId}:${today}`, async () => {
+    // 기존 레코드 조회
+    const { data: existing } = await supabase
+      .from("daily_activity")
+      .select("study_seconds")
+      .eq("user_id", userId)
+      .eq("activity_date", today)
+      .maybeSingle();
 
-  const newSeconds = (existing?.study_seconds ?? 0) + seconds;
+    const newSeconds = (existing?.study_seconds ?? 0) + seconds;
 
-  const { error } = await supabase.from("daily_activity").upsert(
-    {
-      user_id: userId,
-      activity_date: today,
-      study_seconds: newSeconds,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id,activity_date" }
-  );
-  if (error) {
-    console.error("[activity] addStudySeconds error:", error.message);
-  }
+    const { error } = await supabase.from("daily_activity").upsert(
+      {
+        user_id: userId,
+        activity_date: today,
+        study_seconds: newSeconds,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,activity_date" }
+    );
+    if (error) {
+      console.error("[activity] addStudySeconds error:", error.message);
+    }
+  });
 }
 
 /**
@@ -82,27 +87,30 @@ export async function addStudySeconds(
 export async function incrementCompletedToday(userId: string): Promise<void> {
   const today = kstDateString();
 
-  const { data: existing } = await supabase
-    .from("daily_activity")
-    .select("completed_count")
-    .eq("user_id", userId)
-    .eq("activity_date", today)
-    .maybeSingle();
+  // addStudySeconds 와 같은 행 키로 직렬화 — 동시 완료 시 카운트 유실 방지(H2).
+  await runSerial(`activity:${userId}:${today}`, async () => {
+    const { data: existing } = await supabase
+      .from("daily_activity")
+      .select("completed_count")
+      .eq("user_id", userId)
+      .eq("activity_date", today)
+      .maybeSingle();
 
-  const newCount = (existing?.completed_count ?? 0) + 1;
+    const newCount = (existing?.completed_count ?? 0) + 1;
 
-  const { error } = await supabase.from("daily_activity").upsert(
-    {
-      user_id: userId,
-      activity_date: today,
-      completed_count: newCount,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id,activity_date" }
-  );
-  if (error) {
-    console.error("[activity] incrementCompletedToday error:", error.message);
-  }
+    const { error } = await supabase.from("daily_activity").upsert(
+      {
+        user_id: userId,
+        activity_date: today,
+        completed_count: newCount,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,activity_date" }
+    );
+    if (error) {
+      console.error("[activity] incrementCompletedToday error:", error.message);
+    }
+  });
 }
 
 /**

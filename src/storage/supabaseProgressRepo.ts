@@ -4,6 +4,7 @@
  */
 
 import { supabase } from "../lib/supabase";
+import { runSerial } from "../lib/serialQueue";
 
 export interface SupabaseProgress {
   language: string;
@@ -81,42 +82,44 @@ export async function markLessonCompletedInSupabase(
   track: string,
   lessonId: string
 ): Promise<void> {
-  // 기존 진도 가져오기
-  const existing = await loadProgressFromSupabase(userId, language, track);
+  // 같은 (user, language, track) 행에 대한 read-modify-write 를 직렬화해
+  // 연속 완료 시 completed_lessons 가 유실되는 lost update 를 방지(H2).
+  await runSerial(`progress:${userId}:${language}:${track}`, async () => {
+    // 기존 진도 가져오기
+    const existing = await loadProgressFromSupabase(userId, language, track);
 
-  if (existing) {
-    const completed = existing.completed_lessons.includes(lessonId)
-      ? existing.completed_lessons
-      : [...existing.completed_lessons, lessonId];
+    if (existing) {
+      const completed = existing.completed_lessons.includes(lessonId)
+        ? existing.completed_lessons
+        : [...existing.completed_lessons, lessonId];
 
-    const { error } = await supabase
-      .from("user_progress")
-      .update({
-        completed_lessons: completed,
+      const { error } = await supabase
+        .from("user_progress")
+        .update({
+          completed_lessons: completed,
+          current_lesson: lessonId,
+          last_studied_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId)
+        .eq("language", language)
+        .eq("track", track);
+
+      if (error) console.error("[supabase] markComplete update error:", error.message);
+    } else {
+      const { error } = await supabase.from("user_progress").insert({
+        user_id: userId,
+        language,
+        track,
+        completed_lessons: [lessonId],
         current_lesson: lessonId,
         last_studied_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", userId)
-      .eq("language", language)
-      .eq("track", track);
+      });
 
-    if (error) console.error("[supabase] markComplete update error:", error.message);
-    else console.log("[supabase] markComplete OK (update)", lessonId);
-  } else {
-    const { error } = await supabase.from("user_progress").insert({
-      user_id: userId,
-      language,
-      track,
-      completed_lessons: [lessonId],
-      current_lesson: lessonId,
-      last_studied_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    });
-
-    if (error) console.error("[supabase] markComplete insert error:", error.message);
-    else console.log("[supabase] markComplete OK (insert)", lessonId);
-  }
+      if (error) console.error("[supabase] markComplete insert error:", error.message);
+    }
+  });
 }
 
 /**
@@ -128,30 +131,34 @@ export async function setCurrentLessonInSupabase(
   track: string,
   lessonId: string
 ): Promise<void> {
-  const existing = await loadProgressFromSupabase(userId, language, track);
+  // markLessonCompleted 와 같은 행 키로 직렬화 — current_lesson/last_studied_at
+  // 갱신이 완료 기록 갱신과 겹쳐 서로의 결과를 덮어쓰지 않도록 한다(H2).
+  await runSerial(`progress:${userId}:${language}:${track}`, async () => {
+    const existing = await loadProgressFromSupabase(userId, language, track);
 
-  if (existing) {
-    await supabase
-      .from("user_progress")
-      .update({
+    if (existing) {
+      await supabase
+        .from("user_progress")
+        .update({
+          current_lesson: lessonId,
+          last_studied_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId)
+        .eq("language", language)
+        .eq("track", track);
+    } else {
+      await supabase.from("user_progress").insert({
+        user_id: userId,
+        language,
+        track,
+        completed_lessons: [],
         current_lesson: lessonId,
         last_studied_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", userId)
-      .eq("language", language)
-      .eq("track", track);
-  } else {
-    await supabase.from("user_progress").insert({
-      user_id: userId,
-      language,
-      track,
-      completed_lessons: [],
-      current_lesson: lessonId,
-      last_studied_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    });
-  }
+      });
+    }
+  });
 }
 
 /**
