@@ -1,0 +1,44 @@
+name: Supabase Keep-Alive
+
+# Supabase 무료 플랜 자동 일시정지(7일 비활성) 방지 — Vercel Cron 과 이중화.
+# Vercel 배포 상태와 무관하게 GitHub 에서 독립적으로 Supabase 에 핑을 보낸다.
+#
+# 필요한 레포 Secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_URL       예: https://xxxx.supabase.co
+#   SUPABASE_ANON_KEY  공개 anon key (클라이언트 번들에도 들어가는 값)
+#
+# 주의: GitHub 는 레포가 60일간 활동(커밋)이 없으면 예약 워크플로를 자동
+#       비활성화한다. 정기적으로 커밋하면 문제없다. 수동 실행도 가능(run workflow).
+
+on:
+  schedule:
+    # 3일마다 06:17 UTC (정시는 부하로 지연/누락될 수 있어 분을 살짝 어긋나게).
+    - cron: "17 6 */3 * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase (real DB query)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::SUPABASE_URL / SUPABASE_ANON_KEY 시크릿이 설정되지 않았습니다."
+            exit 1
+          fi
+          # 실제 Postgres 쿼리 — RLS 가 행을 걸러도 쿼리는 DB 에서 실행되어 활성으로 집계됨.
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/profiles?select=user_id&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+          echo "Supabase 응답 코드: $code"
+          # 200(데이터)·206(부분)·401/403(RLS 거부)·404 모두 "DB 에 도달"했다는 의미라 활성 목적 달성.
+          # 000(연결 실패: 일시정지·DNS·다운)만 실패로 처리.
+          if [ "$code" = "000" ]; then
+            echo "::error::Supabase 에 연결하지 못했습니다(일시정지/다운 가능)."
+            exit 1
+          fi
+          echo "✅ Keep-alive 성공"
