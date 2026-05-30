@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import type { editor as MonacoEditor } from "monaco-editor";
 import { FileTree } from "../components/ide/FileTree";
@@ -6,7 +6,9 @@ import { EditorTabs } from "../components/ide/EditorTabs";
 import { IdeEditor } from "../components/ide/IdeEditor";
 import { OutputPanel } from "../components/ide/OutputPanel";
 import { ProjectGuidePanel } from "../components/project/ProjectGuidePanel";
-import { getProjectById } from "../content/projects";
+import { getProjectById, type Project } from "../content/projects";
+import { isProjectPro } from "../content/tier";
+import { fetchProjectBody } from "../lib/contentBody";
 import { usePyodideStatus } from "../hooks/usePyodideStatus";
 import { useStudyTimeTracking } from "../hooks/useStudyTimeTracking";
 import { useFileStore } from "../store/fileStore";
@@ -58,7 +60,41 @@ function savePanels(p: PanelState) {
  */
 export function ProjectWorkPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const project = projectId ? getProjectById(projectId) : undefined;
+  // 메타데이터(+무료 본문)는 번들에서 동기 로드. PRO 본문(steps·starterFiles)은
+  // 클라 번들에 없으므로(H1) 권한 확인 후 서버에서 비동기 fetch 해 병합한다.
+  const baseProject = projectId ? getProjectById(projectId) : undefined;
+  // PRO 본문(steps·starterFiles)은 서버에서 받아 별도 보관 후 메타와 병합.
+  const [proBody, setProBody] = useState<{
+    id: string;
+    steps: Project["steps"];
+    starterFiles: Project["starterFiles"];
+  } | null>(null);
+
+  useEffect(() => {
+    if (!baseProject || !isProjectPro(baseProject.id)) return;
+    let cancelled = false;
+    void fetchProjectBody(baseProject.id).then((body) => {
+      if (cancelled || !body) return; // 권한 없으면(403) null → 잠금화면이 처리
+      setProBody({
+        id: baseProject.id,
+        steps: body.steps,
+        starterFiles: body.starterFiles,
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [baseProject]);
+
+  // 메타(동기) + 서버 본문(도착 시) 병합. 무료 프로젝트는 baseProject 그대로.
+  const project = useMemo(() => {
+    if (!baseProject) return undefined;
+    if (proBody && proBody.id === baseProject.id) {
+      return { ...baseProject, steps: proBody.steps, starterFiles: proBody.starterFiles };
+    }
+    return baseProject;
+  }, [baseProject, proBody]);
+
   const { status, version } = usePyodideStatus();
 
   const running = useFileStore((s) => s.running);
