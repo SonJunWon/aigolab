@@ -13,6 +13,47 @@
 
 ---
 
+## [4.14.0] - 2026-05-30
+
+플랫폼 전반 보안 점검 후 발견된 항목 수정 + PRO 콘텐츠 서버 게이팅 도입.
+
+### Security
+
+- **PRO 콘텐츠 서버 게이팅 (H1)** — 유료 콘텐츠 본문이 클라이언트 번들에 전량
+  포함돼 결제 우회 추출이 가능하던 문제 차단.
+  - 빌드 타임 코드젠(`scripts/split-content.ts`)으로 PRO 본문을 클라(stripped)/
+    서버용으로 분리. 클라엔 메타데이터 + 티저만 남김.
+  - **프로젝트**(14개): step 정답·스니펫·스타터 코드 분리 → `api/project-content`
+    가 JWT + entitlement(projects-pro/all-pro/admin) 검증 후 제공.
+  - **워크샵**(34개, order≥107): 전체 cells 분리, 첫 인트로 셀만 클라 유지 →
+    `api/workshop-content` 가 JWT + entitlement(all-pro/admin) 검증 후 제공.
+  - 권한자는 상세 진입 시 `lib/contentBody.ts` 로 런타임 fetch.
+- **로그아웃/사용자전환 시 IndexedDB 데이터 격리 (C1)** — 공용 기기에서 이전
+  사용자의 IDE 프로젝트·레슨 노트북·마크다운이 노출되던 문제 차단. 모든 로컬
+  IDB 키를 `usr:<uid>:` 네임스페이스화 + 마크다운 `ownerId` 필터 + 레거시 1회
+  마이그레이션.
+- **Supabase 무료 플랜 자동 일시정지 방지** — Vercel Cron + GitHub Actions 이중화
+  keep-alive 로 7일 비활성 시 프로젝트가 paused 되어 앱 전체가 죽는 문제 예방.
+
+### Fixed
+
+- **진도 마이그레이션 부활 (C2)** — IDB→Supabase 진도 마이그레이션이 매 세션
+  재실행돼 서버에서 지운 진도가 부활하던 문제. 사용자별 영구 플래그 + 성공 후
+  IDB 진도 삭제로 차단.
+- **진도 로드 실패 캐싱 (H3)** — `ensureLoaded` 가 로드 실패 시 키를 롤백하지
+  않아 세션 내내 진도가 빈 채로 고착되던 문제. 실패 시 재시도 가능하도록 롤백.
+- **진도/활동 동기화 lost update (H2)** — 동시 완료·타이머 flush 시 read-modify
+  -write 가 서로 덮어써 완료기록·카운트가 유실되던 문제. 행 단위 직렬화로 같은
+  탭 유실 차단(`lib/serialQueue.ts`).
+- LessonPage 의 `restarting` useState 를 early-return 위로 이동 (rules-of-hooks).
+
+### Changed
+
+- 빌드 파이프라인에 콘텐츠 코드젠 선행(`npm run codegen`), `tsx`/`fake-indexeddb`
+  devDependency 추가, 시뮬레이션 테스트 스위트 추가(`npm test`).
+
+---
+
 ## [4.13.3] - 2026-04-30
 
 ### Changed
