@@ -46,8 +46,8 @@ Ch00에서 이미 등록했다면 바로 사용할 수 있어요!
 
 | 서비스 | 용도 | 무료 한도 | 필수? |
 |--------|------|----------|-------|
-| **Google Gemini** | 이미지 생성 (Imagen 3) | 하루 약 50회 | 필수 |
-| Cloudflare Workers AI | Gemini 한도 초과 시 폴백 | 하루 약 200회 | 선택 |
+| **Google Gemini** | 이미지 생성 (Imagen 계열) | 하루 무료 한도 | 필수 |
+| Cloudflare Workers AI | Gemini 한도 초과 시 폴백 | 하루 무료 한도 | 선택 |
 
 ## 이미 Gemini 키가 있다면?
 
