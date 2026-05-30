@@ -13,9 +13,9 @@ import type { User, Session } from "@supabase/supabase-js";
  * 화면에 남아 유출되는 것을 막는다.
  *
  * 주의: IndexedDB 는 디바이스 로컬 저장소라 여기서 비우지 않는다.
- * (본인 기기에서 다시 로그인 시 복원 편의 유지) — 필요 시 별도 "로컬
- * 데이터 삭제" UI 로 처리할 것. 레슨 노트북 등 일부 IDB 데이터가
- * 디바이스 공유 시 유출될 가능성은 향후 user.id 네임스페이싱으로 해결.
+ * (본인 기기에서 다시 로그인 시 복원 편의 유지). 디바이스 공유 시 다른
+ * 사용자에게 노출되던 문제(C1)는 IDB 키를 사용자별로 네임스페이스화하여
+ * 해결됨 (storage/localOwner.ts — `usr:<uid>:<키>`, 마크다운은 ownerId 필터).
  */
 function clearAllUserStores() {
   useProfileStore.getState().clear();

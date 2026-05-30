@@ -6,6 +6,7 @@
 
 import { create } from "zustand";
 import { getMdDB, type StoredMdFolder, type StoredMdFile } from "../storage/db";
+import { ownerId } from "../storage/localOwner";
 
 /* ─── 상태 타입 ─── */
 interface MdFileState {
@@ -104,8 +105,14 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
     }
 
     try {
-      let folders = await db.getAll("mdFolders");
-      const files = await db.getAll("mdFiles");
+      // 현재 로그인 사용자 소유 레코드만 로드 (공용 기기 유출 방지 C1).
+      const owner = ownerId();
+      let folders = (await db.getAll("mdFolders")).filter(
+        (f) => f.ownerId === owner,
+      );
+      const files = (await db.getAll("mdFiles")).filter(
+        (f) => f.ownerId === owner,
+      );
 
       // 기본 폴더가 없으면 생성
       if (folders.length === 0) {
@@ -115,6 +122,7 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
           id: genId(),
           createdAt: now,
           updatedAt: now,
+          ownerId: owner,
         }));
         const tx = db.transaction("mdFolders", "readwrite");
         for (const f of newFolders) {
@@ -157,6 +165,7 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
       isDefault: false,
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      ownerId: ownerId(),
     };
 
     const db = await getMdDB();
@@ -209,6 +218,7 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
       isFavorite: false,
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      ownerId: ownerId(),
     };
 
     const db = await getMdDB();
@@ -253,6 +263,7 @@ export const useMdFileStore = create<MdFileState>((set, get) => ({
       order: original.order + 0.5,
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      ownerId: ownerId(),
     };
 
     await db.put("mdFiles", copy);

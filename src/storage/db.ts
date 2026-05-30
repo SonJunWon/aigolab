@@ -62,6 +62,8 @@ export interface StoredMdFolder {
   isDefault: boolean;
   createdAt: number;
   updatedAt: number;
+  /** 소유자(로그인 사용자) id. 공용 기기 유출 방지(C1). 레거시 레코드는 undefined. */
+  ownerId?: string;
 }
 
 export interface StoredMdFile {
@@ -73,6 +75,8 @@ export interface StoredMdFile {
   isFavorite: boolean;
   createdAt: number;
   updatedAt: number;
+  /** 소유자(로그인 사용자) id. 공용 기기 유출 방지(C1). 레거시 레코드는 undefined. */
+  ownerId?: string;
 }
 
 interface MdWorkspaceDB extends DBSchema {

@@ -45,6 +45,7 @@ import { useProgressStore } from "./store/progressStore";
 import { useKeyModalStore } from "./store/keyModalStore";
 import { KeySetupModal } from "./components/llm/KeySetupModal";
 import { runAiIntroIdMigration } from "./storage/aiIntroIdMigration";
+import { runLocalOwnerMigration } from "./storage/localOwnerMigration";
 
 /** 라우트 변경 시 스크롤 최상단으로 복원 */
 function ScrollToTop() {
@@ -120,16 +121,18 @@ function AppInner() {
     void initialize();
   }, [initialize]);
 
-  // AI 입문 트랙 ID 마이그레이션 (구 슬러그 → 신 슬러그) — 1회 수행
+  // IDB 마이그레이션 — 순서가 중요하므로 단일 체인으로 직렬 실행:
+  //  ① AI 입문 트랙 ID (구 슬러그 → 신 슬러그) — 프리픽스 없는 IDB 키 전제
+  //  ② 로컬 데이터 소유자 네임스페이스 (반드시 ① 이후, 로그인 사용자 필요)
+  //  ③ IDB → Supabase 진도 마이그레이션 (① 의 슬러그 재매핑 이후라야 신 ID 로 이관)
   useEffect(() => {
-    void runAiIntroIdMigration();
-  }, []);
-
-  // 로그인 시 IDB → Supabase 진도 마이그레이션
-  useEffect(() => {
-    if (user) {
-      void migrateToServer();
-    }
+    void (async () => {
+      await runAiIntroIdMigration();
+      if (user) {
+        await runLocalOwnerMigration(user.id);
+        await migrateToServer();
+      }
+    })();
   }, [user, migrateToServer]);
 
   return (
