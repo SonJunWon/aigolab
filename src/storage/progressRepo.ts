@@ -97,3 +97,13 @@ export async function listAllProgress(): Promise<StoredProgress[]> {
   const db = await getDB();
   return db.getAll("progress");
 }
+
+/**
+ * IDB 진도 전체 삭제.
+ * 로그인 후 IDB → Supabase 마이그레이션을 완료한 뒤 호출 — 이후 매 세션마다
+ * 오래된 IDB 진도가 다시 병합되어 서버에서 지운 진도가 부활하는 문제(C2)를 막는다.
+ */
+export async function clearAllProgress(): Promise<void> {
+  const db = await getDB();
+  await db.clear("progress");
+}

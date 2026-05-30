@@ -5,6 +5,7 @@ import {
   setCurrentLesson as setCurrentInIDB,
   resetProgress as resetInIDB,
   listAllProgress as listAllFromIDB,
+  clearAllProgress as clearAllInIDB,
 } from "../storage/progressRepo";
 import {
   loadProgressFromSupabase,
@@ -73,28 +74,39 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
 
     let progress: ProgressData | null = null;
 
-    if (userId) {
-      // 로그인: Supabase에서 로드
-      console.log("[progress] loading from Supabase:", language, track, "userId:", userId);
-      const remote = await loadProgressFromSupabase(userId, language, track);
-      console.log("[progress] Supabase result:", remote);
-      if (remote) {
-        progress = {
-          completedLessons: remote.completed_lessons,
-          currentLesson: remote.current_lesson ?? undefined,
-          lastStudiedAt: new Date(remote.last_studied_at).getTime(),
-        };
+    try {
+      if (userId) {
+        // 로그인: Supabase에서 로드
+        const remote = await loadProgressFromSupabase(userId, language, track);
+        if (remote) {
+          progress = {
+            completedLessons: remote.completed_lessons,
+            currentLesson: remote.current_lesson ?? undefined,
+            lastStudiedAt: new Date(remote.last_studied_at).getTime(),
+          };
+        }
+      } else {
+        // 비로그인: IDB에서 로드
+        const local = await loadFromIDB(language, track);
+        if (local) {
+          progress = {
+            completedLessons: local.completedLessons,
+            currentLesson: local.currentLesson,
+            lastStudiedAt: local.lastStudiedAt,
+          };
+        }
       }
-    } else {
-      // 비로그인: IDB에서 로드
-      const local = await loadFromIDB(language, track);
-      if (local) {
-        progress = {
-          completedLessons: local.completedLessons,
-          currentLesson: local.currentLesson,
-          lastStudiedAt: local.lastStudiedAt,
-        };
-      }
+    } catch (e) {
+      // 로드 실패(네트워크 단절 등) 시 loadedKeys 에서 key 를 롤백해
+      // 다음 호출이 재시도하도록 한다. 롤백하지 않으면 67번 줄 early-return 에
+      // 영구히 걸려 세션 내내 진도가 빈 채로 고착된다(H3).
+      console.error("[progress] ensureLoaded error:", e);
+      set((s) => {
+        const next = new Set(s.loadedKeys);
+        next.delete(key);
+        return { loadedKeys: next };
+      });
+      return;
     }
 
     if (progress) {
@@ -188,6 +200,16 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     const userId = getUserId();
     if (!userId) return;
 
+    // 사용자별 영구 플래그 — 마이그레이션은 사용자당 1회만 수행한다.
+    // (인메모리 플래그만 쓰면 세션마다 재실행되어, 서버에서 지운 진도가
+    //  오래된 IDB 데이터로 매번 부활하는 문제가 있었음 — C2)
+    const flagKey = `aigolab.progressMigrated.${userId}`;
+    const hasWindow = typeof window !== "undefined";
+    if (hasWindow && localStorage.getItem(flagKey) === "done") {
+      set({ migrated: true });
+      return;
+    }
+
     try {
       const allLocal = await listAllFromIDB();
       if (allLocal.length > 0) {
@@ -202,8 +224,13 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
           }))
         );
       }
+      // 마이그레이션 성공 → IDB 진도 제거(재병합/부활 방지) + 영구 플래그.
+      await clearAllInIDB();
+      if (hasWindow) localStorage.setItem(flagKey, "done");
     } catch (e) {
+      // 실패 시 플래그·clear 를 남기지 않아 다음 세션에 재시도한다.
       console.error("[progressStore] migration error:", e);
+      return;
     }
 
     // 캐시 리셋해서 다음 로드 시 Supabase에서 가져오게
