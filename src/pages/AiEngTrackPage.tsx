@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { useProgressStore } from "../store/progressStore";
 import { LESSONS as BEGINNER_LESSONS } from "../content/ai-engineering/beginner";
 import { LESSONS as INTERMEDIATE1_LESSONS } from "../content/ai-engineering/intermediate1";
+import { LESSONS as INTERMEDIATE2_LESSONS } from "../content/ai-engineering/intermediate2";
 
 export function AiEngTrackPage() {
   const isCompleted = useProgressStore((s) => s.isCompleted);
@@ -22,6 +23,9 @@ export function AiEngTrackPage() {
   ).length;
   const inter1Done = INTERMEDIATE1_LESSONS.filter((l) =>
     isCompleted("ai-engineering", "intermediate1", l.id)
+  ).length;
+  const inter2Done = INTERMEDIATE2_LESSONS.filter((l) =>
+    isCompleted("ai-engineering", "intermediate2", l.id)
   ).length;
 
   return (
@@ -137,22 +141,41 @@ export function AiEngTrackPage() {
             </p>
           </div>
 
-          {/* 중급2 — 에이전틱 — 준비 중 */}
-          <div className="block p-6 sm:p-7 rounded-2xl border border-brand-subtle/50 bg-brand-panel/40 opacity-70">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="text-3xl grayscale">📙</div>
+          {/* 중급2 — 에이전틱 */}
+          <Link
+            to="/coding/learn/ai-engineering/intermediate2"
+            className="group block p-6 sm:p-7 rounded-2xl border border-orange-500/30 bg-gradient-to-br from-orange-500/8 to-brand-panel/80
+                       hover:border-orange-400/60 hover:shadow-lg hover:shadow-orange-500/10 transition-all"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="text-3xl">📙</div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold">중급2 — 에이전틱</h2>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-subtle text-brand-textDim font-semibold">준비 중</span>
+                  <h2 className="text-lg font-semibold group-hover:text-orange-400 transition-colors">
+                    중급2 — 에이전틱
+                  </h2>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-orange-500 text-white font-semibold">
+                    {INTERMEDIATE2_LESSONS.length}강
+                  </span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500 text-white font-semibold">NEW</span>
                 </div>
-                <p className="text-xs text-brand-textDim">트윈에 손발 달기 — 오케스트레이션·메모리·실연동·HITL·배포</p>
+                <p className="text-xs text-brand-textDim">트윈에 손발 달기 — 도구·오케스트레이션·HITL</p>
               </div>
+              <span className="text-brand-textDim group-hover:text-orange-400 group-hover:translate-x-1 transition-all">→</span>
             </div>
-            <p className="text-sm text-brand-textDim leading-relaxed">
-              지식 트윈이 "안다"면, 중급2 는 트윈이 "한다". 프로덕션 에이전트로 확장합니다.
+            <p className="text-sm text-brand-textDim mb-3 leading-relaxed">
+              견고한 에이전트 · 오케스트레이션 · 메모리 · 실연동+HITL · 평가·관측 · 비용·보안 · 배포형 Capstone.
+              "안다"를 넘어 "한다"로.
             </p>
-          </div>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {["Agent", "오케스트레이션", "HITL", "MCP 소비", "평가", "가드레일"].map((t) => (
+                <span key={t} className="px-2 py-0.5 rounded-md text-[10px] bg-orange-500/10 text-orange-300">{t}</span>
+              ))}
+            </div>
+            <div className="text-xs text-brand-textDim">
+              📖 {INTERMEDIATE2_LESSONS.length}강 · ⏱️ ~9시간 · ✅ {inter2Done}강 완료 · 선수: 중급1 권장
+            </div>
+          </Link>
         </section>
 
         {/* 학습 흐름 */}

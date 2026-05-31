@@ -39,6 +39,10 @@ import {
   LESSONS as AIENG_INTERMEDIATE1,
   LESSON_SUMMARIES as AIENG_INTERMEDIATE1_SUMMARIES,
 } from "./ai-engineering/intermediate1";
+import {
+  LESSONS as AIENG_INTERMEDIATE2,
+  LESSON_SUMMARIES as AIENG_INTERMEDIATE2_SUMMARIES,
+} from "./ai-engineering/intermediate2";
 import { WORKSHOP_LESSONS } from "./ai-engineering/workshops";
 
 type Curriculum = {
@@ -93,6 +97,10 @@ const CURRICULA: Partial<Record<Language, Partial<Record<Track, Curriculum>>>> =
     intermediate1: {
       lessons: AIENG_INTERMEDIATE1,
       summaries: AIENG_INTERMEDIATE1_SUMMARIES,
+    },
+    intermediate2: {
+      lessons: AIENG_INTERMEDIATE2,
+      summaries: AIENG_INTERMEDIATE2_SUMMARIES,
     },
   },
 };
