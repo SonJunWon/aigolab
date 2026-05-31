@@ -12,6 +12,7 @@ function LessonPageWrapper() {
   return <LessonPage key={lessonId} />;
 }
 import { AiDevPage } from "./pages/AiDevPage";
+import { AiEngTrackPage } from "./pages/AiEngTrackPage";
 import { WorkshopListPage } from "./pages/WorkshopListPage";
 import { WorkshopDetailPage } from "./pages/WorkshopDetailPage";
 import { ProgressDashboardPage } from "./pages/ProgressDashboardPage";
@@ -165,7 +166,7 @@ function AppInner() {
         <Route path="/coding/ide" element={<ProtectedRoute><IdePage /></ProtectedRoute>} />
 
         {/* AI 앱 개발 */}
-        <Route path="/ai-dev/track" element={<ProtectedRoute><Navigate to="/coding/learn/ai-engineering/beginner" replace /></ProtectedRoute>} />
+        <Route path="/ai-dev/track" element={<ProtectedRoute><AiEngTrackPage /></ProtectedRoute>} />
         <Route path="/ai-dev/workshop" element={<ProtectedRoute><WorkshopListPage /></ProtectedRoute>} />
         <Route path="/ai-dev/workshop/:workshopId" element={<ProtectedRoute><WorkshopDetailPage /></ProtectedRoute>} />
         <Route path="/ai-dev/progress" element={<ProtectedRoute><ProgressDashboardPage /></ProtectedRoute>} />

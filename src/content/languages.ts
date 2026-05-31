@@ -56,6 +56,18 @@ export const TRACKS: TrackInfo[] = [
     description: "이미 다른 언어를 알고 있어요. 이 언어만의 특징을 빠르게 배울게요.",
   },
   {
+    id: "intermediate1",
+    name: "중급1 — 지식과 컨텍스트",
+    description: "모델을 다시 훈련시키지 말고, 옆에 항상 최신인 '지식 트윈'을 붙여라. RAG·Context 심화로 영속·인용·멀티턴 트윈을 짓는 과정.",
+    estimatedHours: 8,
+  },
+  {
+    id: "intermediate2",
+    name: "중급2 — 에이전틱",
+    description: "지식 트윈에 손발을 단다. 오케스트레이션·메모리·실연동·HITL·평가·배포까지 프로덕션 에이전트.",
+    estimatedHours: 9,
+  },
+  {
     id: "data-science",
     name: "데이터 과학",
     description: "NumPy, Pandas, Matplotlib 부터 정제·결합·그룹분석·미니프로젝트까지 10강 완주 코스.",

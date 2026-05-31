@@ -35,6 +35,10 @@ import {
   LESSONS as AIENG_INTRO,
   LESSON_SUMMARIES as AIENG_INTRO_SUMMARIES,
 } from "./ai-engineering/intro";
+import {
+  LESSONS as AIENG_INTERMEDIATE1,
+  LESSON_SUMMARIES as AIENG_INTERMEDIATE1_SUMMARIES,
+} from "./ai-engineering/intermediate1";
 import { WORKSHOP_LESSONS } from "./ai-engineering/workshops";
 
 type Curriculum = {
@@ -85,6 +89,10 @@ const CURRICULA: Partial<Record<Language, Partial<Record<Track, Curriculum>>>> =
       // 커리큘럼 페이지에는 12강만 표시 (summaries 는 12강만)
       lessons: [...AIENG_BEGINNER, ...WORKSHOP_LESSONS],
       summaries: AIENG_BEGINNER_SUMMARIES,
+    },
+    intermediate1: {
+      lessons: AIENG_INTERMEDIATE1,
+      summaries: AIENG_INTERMEDIATE1_SUMMARIES,
     },
   },
 };
