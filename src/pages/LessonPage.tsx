@@ -116,10 +116,13 @@ export function LessonPage() {
     return () => document.removeEventListener("mousedown", onClick);
   }, [menuOpen]);
 
-  // 자동 저장 — loadState가 ready일 때만 활성화
+  // 자동 저장 — loadState가 ready일 때만 활성화.
+  // 친화 미리보기 트랙은 보존할 사용자 코드가 없고, 저장본 병합이 비-코드 콘텐츠를
+  // 비우는 엣지케이스가 있어 자동저장을 끈다(항상 원본 신선 로드).
   const lessonHash =
     lesson && cellsReady ? computeLessonHash(sourceCells) : undefined;
-  useAutoSave(lesson?.id ?? null, loadState === "ready", lessonHash);
+  const autoSaveEnabled = loadState === "ready" && trk?.id !== "friendly-preview";
+  useAutoSave(lesson?.id ?? null, autoSaveEnabled, lessonHash);
 
   // 학습 시간 추적 (로그인 사용자만)
   useStudyTimeTracking(!!lesson);
@@ -178,6 +181,9 @@ export function LessonPage() {
       // 있어도 현재 lesson 해시와 다르면 무효화 — 콘텐츠 변경 정확 감지.
       const currentLessonHash = computeLessonHash(sourceCells);
       const useOriginal =
+        // 코드 셀이 없는 강의(친화 강의 등)는 보존할 사용자 코드가 없으므로 항상 원본 로드.
+        // (저장본 병합이 비-코드 콘텐츠를 비우는 엣지케이스 방지)
+        lessonCodeCells.length === 0 ||
         !saved ||
         saved.cells.length === 0 ||
         !saved.lessonHash ||

@@ -4,7 +4,7 @@
 
 import type { Trace } from "../lib/llm/types";
 
-export type CellType = "code" | "markdown" | "llm-code";
+export type CellType = "code" | "markdown" | "llm-code" | "ai-try" | "quiz-input";
 
 export type CellStatus = "idle" | "queued" | "running" | "success" | "error";
 

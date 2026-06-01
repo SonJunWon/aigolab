@@ -13,7 +13,7 @@ import type { Trace } from "../lib/llm/types";
  * registry 에는 별도 런타임 등록 없이 동작 — T9 LLM 셀 런타임 참조.
  */
 export type Language = "python" | "javascript" | "sql" | "ai-engineering";
-export type Track = "beginner" | "intermediate" | "data-science" | "ml-practice" | "intro" | "intermediate1" | "intermediate2";
+export type Track = "beginner" | "intermediate" | "data-science" | "ml-practice" | "intro" | "intermediate1" | "intermediate2" | "friendly-preview";
 
 /** 콘텐츠의 언어 메타데이터 */
 export interface LanguageInfo {
@@ -60,7 +60,31 @@ export interface Lesson {
 export type LessonCell =
   | LessonMarkdownCell
   | LessonCodeCell
-  | LessonLlmCodeCell;
+  | LessonLlmCodeCell
+  | LessonAiTryCell
+  | LessonQuizInputCell;
+
+/**
+ * 친화 강의용 — 실제 LLM에 바로 물어보는 입력창 셀.
+ * source 는 JSON 문자열: { "title"?, "prompt"?, "placeholder"?, "note"?, "showTemp"? }
+ */
+export interface LessonAiTryCell {
+  type: "ai-try";
+  source: string;
+  hints?: string[];
+  solution?: string;
+}
+
+/**
+ * 친화 강의용 — 답을 직접 입력하고 제출하면 해설이 공개되는 퀴즈 셀.
+ * source 는 JSON 문자열: { "question": string, "answer": string }
+ */
+export interface LessonQuizInputCell {
+  type: "quiz-input";
+  source: string;
+  hints?: string[];
+  solution?: string;
+}
 
 export interface LessonMarkdownCell {
   type: "markdown";

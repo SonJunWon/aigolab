@@ -68,6 +68,12 @@ export const TRACKS: TrackInfo[] = [
     estimatedHours: 9,
   },
   {
+    id: "friendly-preview",
+    name: "친화 버전 미리보기",
+    description: "일반 사용자 친화 스타일(카드·비유·입력창·샘플 사례) 강의 미리보기. 검토용.",
+    estimatedHours: 1,
+  },
+  {
     id: "data-science",
     name: "데이터 과학",
     description: "NumPy, Pandas, Matplotlib 부터 정제·결합·그룹분석·미니프로젝트까지 10강 완주 코스.",

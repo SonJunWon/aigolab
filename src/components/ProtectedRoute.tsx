@@ -5,7 +5,7 @@
  * "로그인 없이 둘러보기" 옵션은 제공하지 않고, 회원가입/로그인으로 안내합니다.
  */
 
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 
 interface Props {
@@ -15,6 +15,13 @@ interface Props {
 export function ProtectedRoute({ children }: Props) {
   const user = useAuthStore((s) => s.user);
   const initialized = useAuthStore((s) => s.initialized);
+  const { pathname } = useLocation();
+
+  // 검토 편의: 로컬(dev)에서만 '친화 버전 미리보기' 트랙은 로그인 없이 열람 허용.
+  // import.meta.env.DEV 가드로 프로덕션 빌드에는 절대 적용되지 않음.
+  if (import.meta.env.DEV && pathname.includes("/ai-engineering/friendly-preview")) {
+    return <>{children}</>;
+  }
 
   // 아직 세션 복원 중이면 로딩 표시
   if (!initialized) {

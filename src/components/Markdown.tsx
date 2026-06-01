@@ -87,12 +87,37 @@ function injectGlossaryTooltips(html: string): string {
   });
 }
 
+/**
+ * 친화 강의 카드 변환 — 특정 이모지로 시작하는 blockquote 를 카드 div 로 변환.
+ * 예: `> 🃏 ...` → <div class="lesson-card lc-default">...</div>
+ */
+const CARD_MAP: Array<[string, string]> = [
+  ["🎯", "lc-key"],   // 딱 하나만 기억하세요 (강조)
+  ["🎬", "lc-case"],  // 샘플 사례
+  ["🖼️", "lc-image"], // 이미지 제안 (점선)
+  ["🤖", "lc-ai"],    // AI 입력 안내(셀로 대체되지만 잔존 시)
+  ["📝", "lc-quiz"],  // 직접 답해보기
+  ["🃏", "lc-default"],
+];
+function convertCards(html: string): string {
+  return html.replace(/<blockquote>([\s\S]*?)<\/blockquote>/g, (whole, inner: string) => {
+    const text = inner.replace(/<[^>]+>/g, "").replace(/^\s+/, "");
+    for (const [emoji, cls] of CARD_MAP) {
+      if (text.startsWith(emoji)) {
+        return `<div class="lesson-card ${cls}">${inner}</div>`;
+      }
+    }
+    return whole; // 일반 인용문은 그대로
+  });
+}
+
 export function Markdown({ content, className = "md-prose" }: Props) {
   const html = useMemo(() => {
     try {
       const rendered = md.render(preprocess(content));
       const withGlossary = injectGlossaryTooltips(rendered);
-      return sanitizeHtml(withGlossary);
+      const withCards = convertCards(withGlossary);
+      return sanitizeHtml(withCards);
     } catch {
       // 렌더링 실패 시 원문도 sanitize 후 반환 (원문에 HTML 엔티티가 섞여있을 수 있음)
       return sanitizeHtml(content);

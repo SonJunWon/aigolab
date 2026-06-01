@@ -5,6 +5,8 @@ import { runCell } from "../../runtime/runCell";
 import { CodeCell } from "./CodeCell";
 import { LlmCodeCell } from "./LlmCodeCell";
 import { MarkdownCell } from "./MarkdownCell";
+import { AiTryCell } from "./AiTryCell";
+import { QuizInputCell } from "./QuizInputCell";
 
 interface Props {
   cell: Cell;
@@ -104,6 +106,10 @@ export function CellShell({ cell, isSelected, onSelect }: Props) {
           <CodeCell cell={cell} isSelected={isSelected} />
         ) : cell.type === "llm-code" ? (
           <LlmCodeCell cell={cell} isSelected={isSelected} />
+        ) : cell.type === "ai-try" ? (
+          <AiTryCell cell={cell} isSelected={isSelected} />
+        ) : cell.type === "quiz-input" ? (
+          <QuizInputCell cell={cell} isSelected={isSelected} />
         ) : (
           <MarkdownCell cell={cell} isSelected={isSelected} />
         )}
