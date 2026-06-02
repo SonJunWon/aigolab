@@ -244,6 +244,14 @@
     background: rgba(255,255,255,0.02);
     color: #9ca3af;
   }
+  /* 강의 본문 이미지(스크린샷 등) — 반응형 + 액자 */
+  .md-prose img {
+    @apply rounded-lg my-2 block;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.03);
+  }
   .md-prose .lc-quiz { border-left: 4px solid #fbbf24; background: rgba(251,191,36,0.06); }
   .md-prose .lc-ai { border-left: 4px solid #34d399; background: rgba(52,211,153,0.06); }
   .md-prose .lc-key {

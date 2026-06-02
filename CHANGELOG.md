@@ -13,6 +13,18 @@
 
 ---
 
+## [4.23.2] - 2026-06-02
+
+### Added
+
+- **MCP 04강 Notion에 실제 연결 화면(스크린샷 3장) + 설명 추가** — 클로드 코드 예시로
+  ① 서버 추가 명령(`claude mcp add … mcp.notion.com/mcp`) ② 노션 OAuth 권한 동의(워크스페이스·
+  허용 범위) ③ 연결 성공(`Authentication successful`). 각 이미지에 "무엇을 보는지" 설명 +
+  앱별 차이 안내. 이미지 `public/lessons/mcp-notion/`.
+- 마크다운 본문 이미지 스타일(`.md-prose img` — 반응형·액자) 추가.
+
+---
+
 ## [4.23.1] - 2026-06-02
 
 MCP 04강(Notion) **대폭 보강** — 공식 문서 기반 정확·심화 (피드백 반영).

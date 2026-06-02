@@ -86,6 +86,24 @@ export const lesson04: Lesson = {
 > - 연결은 "다른 앱에 구글로 로그인"과 **같은 OAuth** — 어렵지 않아요. **무료로 시작** 가능(쓰는 AI 앱의 요금은 별개).
 > - 막히면, 쓰는 AI 앱의 **'커넥터/MCP' 공식 가이드**를 보거나 그 AI에게 "노션 MCP 연결법 알려줘"라고 물어보세요.
 
+### 🖥️ 실제 화면으로 보기 — 클로드 코드(Claude Code) 예시
+
+아래는 **클로드 코드**로 노션을 연결하는 실제 3단계 화면이에요. (앱마다 화면은 달라도 **흐름은 같아요**: 서버 추가 → 노션 로그인 동의 → 연결 완료)
+
+**① 서버 추가 명령** — 터미널에 \`claude mcp add --transport http notion https://mcp.notion.com/mcp\` 를 넣고 \`/mcp\` 로 인증을 시작합니다. (\`--scope\` 로 적용 범위 지정, \`/context\` 로 토큰 사용량 확인 가능)
+
+![클로드 코드에서 notion MCP 서버를 추가하는 명령어 화면](/lessons/mcp-notion/01-add-command.png)
+
+**② 노션 로그인 & 권한 동의** — 노션 화면이 뜨면 **워크스페이스를 고르고** 권한을 확인해요. "페이지·DB 권한 존중 / 사용자 대신 작업 / 워크스페이스 검색 / 사용자·이메일 확인" 같은 **허용 범위**가 보입니다. 리디렉션 주소(\`localhost:…/callback\`)를 신뢰하면 **[계속하기]**.
+
+![노션 MCP 연결 권한 동의 화면 — 워크스페이스 선택과 허용 범위 목록](/lessons/mcp-notion/02-oauth-consent.png)
+
+**③ 연결 완료** — 터미널에 \`Authentication successful. Connected to notion.\` 가 뜨면 끝! 이제 AI에게 "내 노션에서…"라고 말하면 됩니다.
+
+![연결 성공 메시지: Authentication successful. Connected to notion.](/lessons/mcp-notion/03-success.png)
+
+> 🃏 **읽는 법** 👀 ①은 *어떤 서버를*(주소·전송방식), ②는 *무엇을 허용할지*(권한 범위 = 앞서 배운 '읽기/쓰기'), ③은 *연결됐다는 확인*. 클로드 데스크톱·ChatGPT는 ①이 "설정에서 주소 붙여넣기"로 바뀔 뿐, ②③은 거의 똑같아요.
+
 연결 전에도, **연결 후 시킬 말**을 미리 연습해봐요(노션 없이도 됩니다). 👇`,
     },
     {
