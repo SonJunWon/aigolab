@@ -119,9 +119,13 @@ export function LessonPage() {
   // 자동 저장 — loadState가 ready일 때만 활성화.
   // 친화 미리보기 트랙은 보존할 사용자 코드가 없고, 저장본 병합이 비-코드 콘텐츠를
   // 비우는 엣지케이스가 있어 자동저장을 끈다(항상 원본 신선 로드).
+  // 또한 코드 셀이 0개인 레슨(친화 콘텐츠 — beginner 트랙에 슬롯된 경우 포함)은
+  // 보존할 사용자 코드 자체가 없으므로 자동저장을 끈다(불필요한 저장 방지).
+  const hasCodeCells = sourceCells.some((c) => c.type === "code");
   const lessonHash =
     lesson && cellsReady ? computeLessonHash(sourceCells) : undefined;
-  const autoSaveEnabled = loadState === "ready" && trk?.id !== "friendly-preview";
+  const autoSaveEnabled =
+    loadState === "ready" && trk?.id !== "friendly-preview" && hasCodeCells;
   useAutoSave(lesson?.id ?? null, autoSaveEnabled, lessonHash);
 
   // 학습 시간 추적 (로그인 사용자만)
