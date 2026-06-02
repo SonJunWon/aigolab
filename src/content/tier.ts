@@ -46,9 +46,7 @@ export const FREE_PROJECT_IDS: ReadonlySet<string> = new Set([
 export const FREE_AI_ENG_LESSON_IDS: ReadonlySet<string> = new Set([
   "ai-eng-01-webllm-intro",
   "ai-eng-02-gemini-prompting",
-  // 친화 버전 미리보기 (검토용 — 결제벽 없이 열람)
-  "ai-eng-fr-01-ai-in-browser",
-  "ai-eng-fr-02-how-to-ask",
+  // 친화 버전 미리보기(friendly-preview)는 전 강의 PRO 잠금 — 무료 목록에 두지 않는다.
 ]);
 
 /**
