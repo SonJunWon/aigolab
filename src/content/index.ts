@@ -47,6 +47,10 @@ import {
   LESSONS as AIENG_FRIENDLY,
   LESSON_SUMMARIES as AIENG_FRIENDLY_SUMMARIES,
 } from "./ai-engineering/friendly-preview";
+import {
+  LESSONS as AIENG_MCP,
+  LESSON_SUMMARIES as AIENG_MCP_SUMMARIES,
+} from "./ai-engineering/mcp-special";
 import { WORKSHOP_LESSONS } from "./ai-engineering/workshops";
 
 type Curriculum = {
@@ -101,6 +105,10 @@ const CURRICULA: Partial<Record<Language, Partial<Record<Track, Curriculum>>>> =
     intermediate1: {
       lessons: AIENG_INTERMEDIATE1,
       summaries: AIENG_INTERMEDIATE1_SUMMARIES,
+    },
+    "mcp-special": {
+      lessons: AIENG_MCP,
+      summaries: AIENG_MCP_SUMMARIES,
     },
     intermediate2: {
       lessons: AIENG_INTERMEDIATE2,

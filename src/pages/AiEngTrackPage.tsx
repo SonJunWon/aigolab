@@ -12,6 +12,7 @@ import { useProgressStore } from "../store/progressStore";
 import { LESSONS as BEGINNER_LESSONS } from "../content/ai-engineering/beginner";
 import { LESSONS as INTERMEDIATE1_LESSONS } from "../content/ai-engineering/intermediate1";
 import { LESSONS as INTERMEDIATE2_LESSONS } from "../content/ai-engineering/intermediate2";
+import { LESSONS as MCP_LESSONS } from "../content/ai-engineering/mcp-special";
 
 export function AiEngTrackPage() {
   const isCompleted = useProgressStore((s) => s.isCompleted);
@@ -26,6 +27,9 @@ export function AiEngTrackPage() {
   ).length;
   const inter2Done = INTERMEDIATE2_LESSONS.filter((l) =>
     isCompleted("ai-engineering", "intermediate2", l.id)
+  ).length;
+  const mcpDone = MCP_LESSONS.filter((l) =>
+    isCompleted("ai-engineering", "mcp-special", l.id)
   ).length;
 
   return (
@@ -124,22 +128,41 @@ export function AiEngTrackPage() {
             </div>
           </Link>
 
-          {/* MCP 특별강의 — 준비 중 */}
-          <div className="block p-6 sm:p-7 rounded-2xl border border-brand-subtle/50 bg-brand-panel/40 opacity-70">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="text-3xl grayscale">✦</div>
+          {/* ✦ MCP 특별강의 — 가교 특강 */}
+          <Link
+            to="/coding/learn/ai-engineering/mcp-special"
+            className="group block p-6 sm:p-7 rounded-2xl border border-sky-500/30 bg-gradient-to-br from-sky-500/8 to-brand-panel/80
+                       hover:border-sky-400/60 hover:shadow-lg hover:shadow-sky-500/10 transition-all"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="text-3xl">✦</div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold">MCP 특별강의</h2>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-subtle text-brand-textDim font-semibold">준비 중</span>
+                  <h2 className="text-lg font-semibold group-hover:text-sky-400 transition-colors">
+                    MCP 특별강의
+                  </h2>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-sky-500 text-white font-semibold">
+                    {MCP_LESSONS.length}강
+                  </span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500 text-white font-semibold">NEW</span>
                 </div>
                 <p className="text-xs text-brand-textDim">트윈을 노션·드라이브 등 외부와 표준 연결 (중급1↔2 가교)</p>
               </div>
+              <span className="text-brand-textDim group-hover:text-sky-400 group-hover:translate-x-1 transition-all">→</span>
             </div>
-            <p className="text-sm text-brand-textDim leading-relaxed">
-              Model Context Protocol — Resources · Tools · Prompts 로 도구·데이터를 표준 연결.
+            <p className="text-sm text-brand-textDim mb-3 leading-relaxed">
+              Model Context Protocol = AI용 USB-C. Resources·Tools·Prompts 로 도구·데이터를 표준 연결.
+              내 트윈을 노출하고, 외부 도구를 안전하게 소비한다.
             </p>
-          </div>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {["USB-C", "Resources", "Tools", "트윈 노출", "도구 소비", "가드"].map((t) => (
+                <span key={t} className="px-2 py-0.5 rounded-md text-[10px] bg-sky-500/10 text-sky-300">{t}</span>
+              ))}
+            </div>
+            <div className="text-xs text-brand-textDim">
+              📖 {MCP_LESSONS.length}강 · ⏱️ ~40분 · ✅ {mcpDone}강 완료 · 선수: 중급1 권장
+            </div>
+          </Link>
 
           {/* 중급2 — 에이전틱 */}
           <Link

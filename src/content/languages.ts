@@ -62,6 +62,12 @@ export const TRACKS: TrackInfo[] = [
     estimatedHours: 8,
   },
   {
+    id: "mcp-special",
+    name: "MCP 특별강의",
+    description: "AI용 USB-C(Model Context Protocol). 지식 트윈을 표준으로 외부 도구·데이터와 연결한다. 중급1↔중급2 가교 특강 3강.",
+    estimatedHours: 1,
+  },
+  {
     id: "intermediate2",
     name: "중급2 — 에이전틱",
     description: "지식 트윈에 손발을 단다. 오케스트레이션·메모리·실연동·HITL·평가·배포까지 프로덕션 에이전트.",
