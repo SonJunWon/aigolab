@@ -73,14 +73,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     // 세션 변경 실시간 구독 (로그인/로그아웃/토큰 갱신)
-    supabase.auth.onAuthStateChange((_event, session) => {
+    supabase.auth.onAuthStateChange((event, session) => {
       set({
         session,
         user: session?.user ?? null,
       });
       if (session?.user) {
         void useProfileStore.getState().loadForUser(session.user.id);
-      } else {
+      } else if (event === "SIGNED_OUT") {
+        // 실제 로그아웃 시에만 인메모리 스토어 초기화.
+        // onAuthStateChange 는 페이지 로드마다 INITIAL_SESSION 을 발생시키는데,
+        // 비로그인 방문자는 session=null 이라 예전엔 여기서 clear() 가 호출됐다.
+        // 그 clear() 가 LessonPage 의 loadCells() 와 레이스를 일으켜, 세션 조회가
+        // 캐시된 재방문(웜 로드)에서 노트북이 빈 화면이 되는 버그가 있었다
+        // (친화 미리보기 트랙 재방문 빈 화면). INITIAL_SESSION 의 null 은 유출할
+        // 인메모리 데이터가 없으므로 clear 하지 않는다.
         clearAllUserStores();
       }
     });
