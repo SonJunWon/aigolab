@@ -85,6 +85,15 @@ export const lesson01: Lesson = {
 > 🃏 **포인트**: "내가 만들 필요 없이, **이미 있는 서버를 꽂는다.**" 단, MCP 생태계는 빠르게 변하니 **서버명·인증방식은 항상 공식 문서로 재확인**하세요(입문에서 배운 '노후화' 교훈).`,
     },
     {
+      type: "ai-try",
+      source: JSON.stringify({
+        title: "🎬 사례 바로 실행 — 내 앱에 붙일 서버 고르기",
+        prompt:
+          "나는 '주간 업무 리포트를 자동 작성하는 AI 비서'를 만들 거야. 아래 MCP 서버 중 이 앱에 붙이면 좋을 3개를 고르고, 각각 '무엇에 쓸지'와 'Resource(읽기)/Tool(행동)' 을 적어줘.\n후보: Notion · Slack · GitHub · Google Drive · Gamma · Figma",
+        note: "AI가 예: 'GitHub(읽기·커밋 내역) → Notion 또는 Gamma(행동·리포트 발행) → Slack(행동·공유)'처럼 목적에 맞게 고르는지 확인! 이미 있는 서버를 꽂아 쓰는 게 MCP의 힘이에요.",
+      }),
+    },
+    {
       type: "markdown",
       source: `> 🎯 **(전부 잊어도 이것만)**
 > ## MCP = **AI용 USB-C.** 도구·데이터를 **표준 플러그**로 꽂는 규격.
