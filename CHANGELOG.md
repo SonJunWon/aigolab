@@ -13,6 +13,24 @@
 
 ---
 
+## [4.25.0] - 2026-06-03
+
+### Added
+
+- **MCP 적용편 4강 추가 (08 Telegram · 09 GitHub · 10 Gmail+Calendar · 11 Supabase)** — 04~07강과 같은 친화 패턴(🃏 카드·표·ai-try 3·퀴즈 5·~20분), 각 도구 **공식 문서 WebFetch 검증 후** 집필. MCP 특별강의가 11강(가교 3 + 적용편 8)으로 확장. 각 강의가 서로 다른 MCP 패턴을 가르치도록 설계.
+  - **08 텔레그램 (알림 봇)**: 앞 강의와 결정적 차이 = **공식 호스티드 MCP 없음 → 커뮤니티 서버**. Bot API(@BotFather 토큰, 안전·권장) vs MTProto/Telethon(개인계정, 약관 위반·밴 위험). 핵심 = 커뮤니티 서버 신뢰도 점검 체크리스트 + 토큰 환경변수 보안. 용도 = 중급2 모니터링 알림 채널.
+  - **09 깃허브 (코드·이슈·PR)**: 공식 `api.githubcopilot.com/mcp/`(HTTP·OAuth/PAT), 로컬 Docker. 핵심 = **툴셋(toolset) 스코핑**(20+ 묶음 중 `repos,issues,pull_requests`만) + `/readonly` 시작 + 머지는 사람(HITL) = 03강 3대 가드 실전판. 용도 = 중급1 코드 트윈 + 중급2 이슈→PR 에이전트.
+  - **10 지메일+캘린더 (메일·일정 비서)**: 공식 원격 2서버(`gmailmcp`·`calendarmcp.googleapis.com/mcp/v1`)·OAuth·일부 클라 유료 플랜. 핵심 = Gmail이 **`create_draft`(초안) 중심 → '보내기'는 사람**이라 HITL이 도구 설계에 내장. Calendar는 `suggest_time` 충돌 회피. 이메일 = 프롬프트 인젝션 표적. 용도 = 중급2 이메일/캘린더 비서.
+  - **11 수파베이스 (DB 자연어 조회) ★**: 공식 `mcp.supabase.com/mcp`(HTTP+DCR)/로컬 CLI. 핵심 = 공식 철칙 **"운영(production) DB 절대 연결 금지 — 개발·테스트 전용"** + `read_only=true`·`project_ref`·`features` 3중 스코핑. 실제 프롬프트 인젝션 데이터 유출 사고 인용. 서비스키·RLS 보안(이 프로젝트 보안 교훈 직결). 용도 = 중급2 데이터/모니터링.
+
+### Changed
+
+- MCP 특별강의 트랙 카드 표기 갱신(`~115분` → `~195분`, 강의 수는 `MCP_LESSONS.length`로 자동 반영).
+
+> 📷 08~11강의 실제 연결 스크린샷은 추후 보강 예정(현재는 텍스트 워크스루).
+
+---
+
 ## [4.24.0] - 2026-06-03
 
 ### Added
