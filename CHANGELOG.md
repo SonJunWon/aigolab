@@ -13,6 +13,23 @@
 
 ---
 
+## [4.24.0] - 2026-06-03
+
+### Added
+
+- **MCP 적용편 3강 추가 (05 Figma · 06 Gamma · 07 Slack)** — 04강 Notion과 같은 친화 패턴(🃏 카드·표·ai-try 3·퀴즈 5·~20분), 각 도구 **공식 MCP 문서 WebFetch 검증 후** 집필. MCP 특별강의가 7강(가교 3 + 적용편 4)으로 확장.
+  - **05 피그마 (디자인→코드)**: 원격 `mcp.figma.com/mcp`(HTTP·OAuth, 모든 시트/플랜) vs 데스크톱 서버(유료 Dev/Full 시트). 읽기 5도구(`get_code`=get_design_context·`get_variable_defs`·`get_screenshot`·`get_metadata`·`get_code_connect_map`) + 캔버스 쓰기(베타). 핵심: "파일 정리(오토레이아웃·컴포넌트·변수)가 코드 품질을 좌우" + Code Connect로 기존 컴포넌트 재사용. 베타 무료(추후 사용량 과금).
+  - **06 감마 (리포트→발표 슬라이드)**: 호스티드·OAuth 2.0 + **DCR(RFC 7591) 필수**. 7도구(`generate`·`generate_from_template`·`get_generation_status`·`get_gammas`·`read_gamma`·`get_themes`·`get_folders`). 특징 4: 비동기 폴링(generationId→상태확인)·편집 불가(재생성 사고)·크레딧 차감·DCR 연결 장벽.
+  - **07 슬랙 (사내 협업·발행)**: 공식 `mcp.slack.com/mcp`(JSON-RPC over Streamable HTTP)·OAuth 2.0(도구별 스코프). 마켓플레이스/내부 앱만 + **워크스페이스 관리자 승인** 필요. 검색·메시징(초안 draft)·채널 생성·캔버스·유저. 핵심: "쓰기=공개로 나감 → 초안+HITL·지정 채널·멘션 자제".
+
+### Changed
+
+- MCP 특별강의 트랙 카드 표기 갱신(`~40분` → `~115분`, 강의 수는 `MCP_LESSONS.length`로 자동 반영).
+
+> 📷 05·06·07강의 실제 연결 스크린샷은 추후 보강 예정(현재는 텍스트 워크스루).
+
+---
+
 ## [4.23.3] - 2026-06-03
 
 ### Added
