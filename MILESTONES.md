@@ -60,6 +60,7 @@
 
 | 버전 | 날짜 | 요약 |
 |------|------|------|
+| v4.27.0 | 2026-06-06 | MCP 적용편 3강 추가(15 Playwright·16 Obsidian·17 Filesystem) — MCP 특별강의 17강 |
 | v4.26.0 | 2026-06-06 | MCP 적용편 3강 추가(12 Vercel·13 Sentry·14 Stripe, 배포·모니터링·결제) — MCP 특별강의 14강 |
 | v4.25.0 | 2026-06-03 | MCP 적용편 4강 추가(08 Telegram·09 GitHub·10 Gmail+Calendar·11 Supabase) — MCP 특별강의 11강 |
 | v4.24.0 | 2026-06-03 | MCP 적용편 3강 추가(05 Figma·06 Gamma·07 Slack, 공식문서 검증) — MCP 특별강의 7강 |

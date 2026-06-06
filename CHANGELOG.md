@@ -13,6 +13,23 @@
 
 ---
 
+## [4.27.0] - 2026-06-06
+
+### Added
+
+- **MCP 적용편 3강 추가 (15 Playwright · 16 Obsidian · 17 Filesystem)** — 04~14강과 같은 친화 패턴(🃏 카드·표·ai-try 3·퀴즈 5·~20분), 각 도구 **공식 문서 WebFetch 검증 후** 집필. MCP 특별강의가 17강(가교 3 + 적용편 14)으로 확장. 카탈로그 17개 도구 중 14개 강의화.
+  - **15 플레이라이트 (브라우저 자동화·QA)**: 공식 MS `npx @playwright/mcp@latest`. 핵심 = **접근성 트리(accessibility tree) 스냅샷 기반**(스크린샷X, 토큰 적고 결정적). 도구 `browser_navigate`·`browser_click`·`browser_snapshot`·`browser_fill_form` 등 50+. 보안 = "보안 경계 아님"·`browser_run_code_unsafe`(RCE) 금지·스테이징 한정·파괴적 흐름 차단·`--allowed-hosts`. 2026 노트: MS가 코딩 에이전트엔 CLI 권장(토큰 효율). 용도 = 중급2 QA/테스트.
+  - **16 옵시디언 (세컨드 브레인 트윈) ★**: 두 아키텍처(Local REST API 플러그인 ↔ Filesystem). 공식 'Local REST API & MCP Server' 플러그인이 MCP 내장(`/mcp/`). 핵심 = 개인 노트 = 중급1 세컨드 브레인 트윈 + **백링크·그래프** 강점 + 커뮤니티 서버 신뢰도 점검(08강 교훈). 도구 `search`·`get_file_contents`·`patch_content`·백링크·데일리·고아 탐지. 안전 = API 키 환경변수·읽기 먼저·쓰기 백업·`delete` 신중·민감 볼트 분리. 용도 = 중급1 트윈.
+  - **17 파일시스템 (로컬 파일·MCP 첫 실습)**: MCP 공식 레퍼런스 `npx -y @modelcontextprotocol/server-filesystem <허용경로>`. 핵심 = **MCP를 만든 곳의 공식 레퍼런스(MCP 원형·첫 실습 최적) + '허용 디렉터리 경로 스코핑'이 모든 MCP 안전(09 툴셋·11 project_ref·15 allowed-hosts)의 기본형**. 도구 `read_text_file`·`search_files`·`directory_tree`·`edit_file`(dry-run)·`write_file` + Roots 프로토콜. 안전 = 연습 폴더만 허용·홈/시스템 제외·쓰기 별도 폴더·민감 파일 제외. 용도 = MCP 입문 실습 + 중급1 로컬 트윈.
+
+### Changed
+
+- MCP 특별강의 트랙 카드 표기 갱신(`~255분` → `~315분`, 강의 수는 `MCP_LESSONS.length`로 자동 반영).
+
+> 📷 15~17강의 실제 연결 스크린샷은 추후 보강 예정(현재는 텍스트 워크스루).
+
+---
+
 ## [4.26.0] - 2026-06-06
 
 ### Added
