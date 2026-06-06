@@ -13,6 +13,23 @@
 
 ---
 
+## [4.26.0] - 2026-06-06
+
+### Added
+
+- **MCP 적용편 3강 추가 (12 Vercel · 13 Sentry · 14 Stripe)** — 04~11강과 같은 친화 패턴(🃏 카드·표·ai-try 3·퀴즈 5·~20분), 각 도구 **공식 문서 WebFetch 검증 후** 집필. MCP 특별강의가 14강(가교 3 + 적용편 11)으로 확장. '배포→모니터링→결제' 운영 클러스터.
+  - **12 버셀 (배포·운영) ★**: 공식 `mcp.vercel.com`(OAuth·Streamable HTTP, Public Beta). 핵심 = **읽기(로그 진단: `get_deployment_build_logs`·`get_runtime_logs`)는 안전·유용, 배포(`deploy_to_vercel`)·도메인 구매(`buy_domain`💰)는 강력 → HITL**. 연결 = 계정 전체 권한 → 공식 엔드포인트 확인. 공식이 직접 든 프롬프트 인젝션 예시(로그 외부 유출). 용도 = 중급2 모니터링/Capstone 운영.
+  - **13 센트리 (에러 진단·근본원인) ★**: 공식 `mcp.sentry.dev`(OAuth, 토큰 디스크 미보관). 핵심 = 읽기 중심 안전 진단 + **Seer(`analyze_issue_with_seer`) AI 근본원인 분석**(차별점, 단 '가설' → 사람 검증). `search_events`/`search_issues`는 LLM 프로바이더 필요. **멀티-MCP 파이프라인: 센트리(진단)→09 깃허브(수정 PR)→12 버셀(배포)**, 진단은 AI·수정/배포는 사람. 용도 = 중급2 자가복구.
+  - **14 스트라이프 (결제·구독) ★**: 공식 `mcp.stripe.com`(OAuth/Restricted Key `rk_*`). 핵심 = **'돈이 움직인다' → 3중 안전선: 테스트(Sandbox) 모드 시작 · 제한 키 · 금전 행동 HITL**. 읽기(`list_subscriptions` 취소율 분석)는 안전, 쓰기(`create_refund`💰·`cancel_subscription`)는 보수적. 키 환경변수/볼트, 고객 메모 인젝션 방어. 이 프로젝트 구독 로드맵(Phase 3 결제 연동)과 직결. 용도 = 중급2 고객 액션.
+
+### Changed
+
+- MCP 특별강의 트랙 카드 표기 갱신(`~195분` → `~255분`, 강의 수는 `MCP_LESSONS.length`로 자동 반영).
+
+> 📷 12~14강의 실제 연결 스크린샷은 추후 보강 예정(현재는 텍스트 워크스루).
+
+---
+
 ## [4.25.0] - 2026-06-03
 
 ### Added

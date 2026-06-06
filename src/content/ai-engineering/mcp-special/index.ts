@@ -10,6 +10,9 @@ import { lesson08 } from "./08-telegram";
 import { lesson09 } from "./09-github";
 import { lesson10 } from "./10-gmail-calendar";
 import { lesson11 } from "./11-supabase";
+import { lesson12 } from "./12-vercel";
+import { lesson13 } from "./13-sentry";
+import { lesson14 } from "./14-stripe";
 
 /**
  * AI 엔지니어링 — MCP 특별강의 (가교 특강 3강 + 도구별 적용편).
@@ -17,10 +20,12 @@ import { lesson11 } from "./11-supabase";
  * 01~03: 개념·노출·소비 / 04~: 도구별 실전 적용편(직장인용 따라하기).
  *   04 노션(문서) · 05 피그마(디자인→코드) · 06 감마(리포트→발표) · 07 슬랙(협업·발행)
  *   · 08 텔레그램(알림·커뮤니티 MCP 고르는 법) · 09 깃허브(코드·PR·툴셋 스코핑)
- *   · 10 지메일+캘린더(메일·일정 비서·초안 중심 HITL) · 11 수파베이스(DB 조회·운영금지·읽기전용).
+ *   · 10 지메일+캘린더(메일·일정 비서·초안 중심 HITL) · 11 수파베이스(DB 조회·운영금지·읽기전용)
+ *   · 12 버셀(배포·로그 진단·배포는 사람 승인) · 13 센트리(에러 진단·Seer 근본원인)
+ *   · 14 스트라이프(결제·구독·금전은 테스트+제한키+HITL).
  * 친화 스타일(카드·비유·ai-try·퀴즈). 기획: AI앱개발/.../MCP-특별강의/.
  */
-export const LESSONS: Lesson[] = [lesson01, lesson02, lesson03, lesson04, lesson05, lesson06, lesson07, lesson08, lesson09, lesson10, lesson11];
+export const LESSONS: Lesson[] = [lesson01, lesson02, lesson03, lesson04, lesson05, lesson06, lesson07, lesson08, lesson09, lesson10, lesson11, lesson12, lesson13, lesson14];
 
 export const LESSON_SUMMARIES: LessonSummary[] = LESSONS.map((l) => ({
   id: l.id,
