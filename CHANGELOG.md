@@ -13,6 +13,23 @@
 
 ---
 
+## [4.28.0] - 2026-06-09
+
+### Added
+
+- **MCP 적용편 3강 추가 (18 Linear · 19 Google Drive · 20 Atlassian) — 카탈로그 17개 도구 100% 강의화 완료** 🎉. 04~17강과 같은 친화 패턴(🃏 카드·표·ai-try 3·퀴즈 5·~20분), 각 도구 **공식 문서 WebFetch 검증 후** 집필. MCP 특별강의가 **20강(가교 3 + 적용편 17)** 으로 완성.
+  - **18 리니어 (액션→이슈·PM 출력)**: 공식 `mcp.linear.app/mcp`(OAuth 2.1·DCR, 25+ 도구). 핵심 = '작업의 출력처' — 회의록·센트리 에러·코드 리뷰에서 나온 액션을 이슈로 자동 생성(09 깃허브와 달리 PM 중심: 프로젝트·사이클·이니셔티브·마일스톤). 안전 = 지정 팀 한정·'AI생성' 라벨·대량 생성 HITL. 멀티-MCP 파이프라인(센트리→리니어→깃허브). 용도 = 중급2 액션 출력.
+  - **19 구글 드라이브 (사내 문서 RAG 트윈) ★**: 공식 `drivemcp.googleapis.com/mcp/v1`(10강 Gmail/Calendar와 같은 Workspace 패밀리, OAuth, 플랜 필요). 8도구(`search_files`·`read_file_content`·`get_file_permissions`·`create_file` 등). 핵심 = 문서 RAG 트윈 소스(중급1)·읽기 중심 안전 + **권한 상속(내 권한=AI 권한)·간접 프롬프트 인젝션**. `drive.readonly`·특정 폴더·출처 표기·민감 제외. 용도 = 중급1 트윈.
+  - **20 아틀라시안 (Confluence 위키 + Jira 이슈)**: 공식 Rovo `mcp.atlassian.com/v1/mcp`(Streamable HTTP·OAuth 2.1, Cloudflare). **`/sse`는 2026-06-30 종료 → `/mcp` 전환 = 입문 '노후화 교훈'의 산 증거**(강의 테마). Jira·Confluence·Compass 검색/생성/수정/대량관리, 권한 프록시, 플랜별 레이트리밋, FedRAMP/HIPAA 미지원. 핵심 = **위키 트윈(04 노션·19 드라이브) + 이슈 출력(18 리니어) 두 패턴 결합 = 적용편 종합·마무리**. 용도 = 중급1 트윈 + 중급2 출력.
+
+### Changed
+
+- MCP 특별강의 트랙 카드 표기 갱신(`~315분` → `~375분`, 강의 수는 `MCP_LESSONS.length`로 자동 반영).
+
+> 📷 18~20강(및 05~17강)의 실제 연결 스크린샷은 추후 보강 예정(현재는 텍스트 워크스루).
+
+---
+
 ## [4.27.0] - 2026-06-06
 
 ### Added

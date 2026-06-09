@@ -160,7 +160,7 @@ export function AiEngTrackPage() {
               ))}
             </div>
             <div className="text-xs text-brand-textDim">
-              📖 {MCP_LESSONS.length}강 · ⏱️ ~315분 · ✅ {mcpDone}강 완료 · 선수: 중급1 권장
+              📖 {MCP_LESSONS.length}강 · ⏱️ ~375분 · ✅ {mcpDone}강 완료 · 선수: 중급1 권장
             </div>
           </Link>
 
