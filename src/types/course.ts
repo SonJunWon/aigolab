@@ -61,3 +61,26 @@ export interface CourseSummary {
   estimatedMinutes: number;
   order: number;
 }
+
+/**
+ * AI 강의 메뉴의 상위 묶음(코스 그룹).
+ * /courses 는 그룹 카드 목록, /courses/group/:groupId 는 그룹 내 강의 목록.
+ * - status "available": courseIds 의 강의들을 묶어 제공.
+ * - status "coming-soon": 메뉴에만 노출(준비 중), courseIds 비어 있음.
+ */
+export interface CourseGroup {
+  /** 그룹 슬러그 (예: "ai-overview", "deep-learning") */
+  id: string;
+  /** 메뉴 표시 순서 (0 = AI 살펴보기) */
+  order: number;
+  title: string;
+  subtitle: string;
+  icon: string;
+  /** 카드 그라데이션 (tailwind from-…/to-…) */
+  color: string;
+  status: "available" | "coming-soon";
+  /** 소속 강의 Course.id 목록 (available 그룹) */
+  courseIds: string[];
+  /** 카드에 표시할 키워드 태그 */
+  tags: string[];
+}

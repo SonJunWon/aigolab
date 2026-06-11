@@ -20,6 +20,7 @@ import { PlaygroundPage } from "./pages/PlaygroundPage";
 import { IdePage } from "./pages/IdePage";
 import { AuthPage } from "./pages/AuthPage";
 import { CoursesPage } from "./pages/CoursesPage";
+import { CourseGroupPage } from "./pages/CourseGroupPage";
 import { CourseDetailPage } from "./pages/CourseDetailPage";
 import { NavBar } from "./components/NavBar";
 import { Footer } from "./components/Footer";
@@ -144,6 +145,7 @@ function AppInner() {
         <Route path="/coding" element={<CodingHomePage />} />
         <Route path="/ai-dev" element={<AiDevPage />} />
         <Route path="/courses" element={<CoursesPage />} />
+        <Route path="/courses/group/:groupId" element={<CourseGroupPage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/notices" element={<NoticesPage />} />

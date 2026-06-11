@@ -37,3 +37,5 @@ export const COURSE_SUMMARIES: CourseSummary[] = COURSES.map((c) => ({
 export function getCourseById(id: string): Course | undefined {
   return COURSES.find((c) => c.id === id);
 }
+
+// 코스 그룹은 ./groups 에서 직접 import 하세요(여기서 재export 하면 groups↔index 순환 → TDZ).

@@ -13,6 +13,24 @@
 
 ---
 
+## [4.29.0] - 2026-06-11
+
+### Changed
+
+- **AI 강의 메뉴(`/courses`)를 6개 코스 그룹 2단계 구조로 확장.** 기존 평면 강의 목록 → 그룹 카드 메뉴로 재편.
+  - **코스 0 AI 살펴보기**(이용 가능): 기존 이론 강의 10강(AI란 무엇인가 → AI 에이전트)을 묶음. 그룹 카드 → `/courses/group/ai-overview` → 10강 목록(기존 카드·PRO 페이월 유지) → 강의 상세.
+  - **코스 1~5 준비 중**(메뉴 노출, 잠금): 1 딥러닝의 기초 · 2 지식 증류 · 3 강화학습 · 4 양자화 · 5 지식 증강. 아이콘·소개·키워드 태그 부여. 추후 `groups.ts`에서 `status: "available"` + `courseIds` 연결 시 자동 반영.
+
+### Added
+
+- `CourseGroup` 타입(`types/course.ts`), 그룹 정의 `content/courses/groups.ts`(`COURSE_GROUPS`·`getCourseGroup`), 공유 강의 카드 컴포넌트 `components/course/CourseCardList.tsx`, 그룹 상세 페이지 `pages/CourseGroupPage.tsx`, 라우트 `/courses/group/:groupId`.
+
+### Fixed
+
+- 코스 그룹 도입 중 발견한 `groups`↔`courses/index` 순환 import(런타임 TDZ; 빌드는 미검출)를 재export 제거·단방향 import로 해소.
+
+---
+
 ## [4.28.0] - 2026-06-09
 
 ### Added
