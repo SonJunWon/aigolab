@@ -13,6 +13,18 @@
 
 ---
 
+## [4.33.0] - 2026-06-11
+
+### Added
+
+- **코스 2 「지식 증류」 모듈 4·5·6 추가 (19~34강) — 전체 34강 완성** 🎉 (누적 34/34강 공개)
+  - **모듈 4 SFT 심화 (19~24강)**: 19 LoRA 하이퍼파라미터(rank·α/r·target·lr·epoch, 본질 랭크 토이) · 20 LoRA+(B=0 비대칭 초기화→B 학습률↑, 수렴 비교) · 21 DoRA(크기·방향 분해, 독립 제어) · 22 AdaLoRA(특이값 에너지 비례 랭크 배분 vs 균등) · 23 데이터 합성 자동화(Self/Evol-Instruct=증류, AI-try) · 24 어댑터 병합·교체·멀티 도메인 서빙.
+  - **모듈 5 데이터 구축 (25~30강)**: 25 데이터 품질=9할(LIMA, 정성 80개 > 잘못 라벨 3000개) · 26 수집·구축 전략(출처·라이선스·데이터 누수 탐지) · 27 LLM 생성+품질 게이트(AI-try) · 28 정제①(dedup·length·rule, pandas) · 29 정제②(독성·편향·다양성·도메인 균형) · 30 데이터 파이프라인 종합(수집→정제→ChatML/JSONL→train/val 검증).
+  - **모듈 6 최종 실습·평가 (31~34강)**: 31 TRL로 SFT 종합(외부 Colab #2, 내 데이터→훈련) · 32 Instruction Tuning(지시 따르기 정렬, AI-try) · 33 Continuous Learning(catastrophic forgetting→리허설·어댑터 완화, sklearn) · 34 LLM-as-a-Judge & 마무리(루브릭·편향·파인튜닝 vs RAG vs 프롬프트 + 코스 전체 정리·다음 코스 예고).
+  - numpy·sklearn·pandas 토이 코드 전부 로컬 사전 검증(Pyodide 실행). 실제 GPU 훈련(31강)은 정직 원칙대로 무료 Colab 안내. `npm run build` + `npx tsx` 런타임 점검(courseIds 34, 순환 import 없음) 통과.
+
+---
+
 ## [4.32.0] - 2026-06-11
 
 ### Added
