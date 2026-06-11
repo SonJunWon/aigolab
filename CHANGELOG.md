@@ -13,6 +13,21 @@
 
 ---
 
+## [4.30.0] - 2026-06-11
+
+### Added
+
+- **AI 강의 코스 2 「지식 증류」 모듈 1 공개 (8강)** — `knowledge-distillation` 그룹 `available` 전환. 전체 34강 계획(기획: `AI앱개발/AI 강의 코스/02-지식증류-커리큘럼.md`) 중 모듈 1(증류 & Scaling Law) 1차.
+  - 1 코스 지도 · 2 지식 증류란?(sLLM→LLM·DeepSeek-R1) · 3 소프트 라벨 & dark knowledge · 4 온도와 KL 손실 · 5 증류의 종류(화이트박스 vs 블랙박스/API) · 6 Scaling Law(거듭제곱 피팅) · 7 Chinchilla(20:1 계산기) · 8 2026 스케일링(훈련 vs 추론).
+  - 어려운 주제를 **쉬운 비유 + 브라우저 실습 + 현실 적용**으로. 본문에 **실행 가능한 Pyodide 코드셀**(sklearn 교사→소프트라벨→학생 증류, 온도 softening, 블랙박스 증류, Scaling 곡선 피팅, Chinchilla 계산기) — 전부 로컬 sklearn 1.9로 사전 검증. 매 강 퀴즈.
+  - 구조: `content/courses/knowledge-distillation/` 폴더 + 공유 카드/그룹 페이지(v4.29.0)와 연동.
+
+### Fixed
+
+- 코스 0 `ai-overview` 그룹이 `COURSES` 전체를 정렬해 담던 잠재 버그(지식 증류 강의 추가 시 섞여 들어감)를 원본 10강 명시 고정으로 해소. (groups↔index 순환 import도 제거)
+
+---
+
 ## [4.29.0] - 2026-06-11
 
 ### Changed

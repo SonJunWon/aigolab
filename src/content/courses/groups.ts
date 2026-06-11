@@ -1,5 +1,19 @@
 import type { CourseGroup } from "../../types/course";
-import { COURSES } from "./index";
+
+/** 코스 0(AI 살펴보기)에 속한 기존 이론 강의 10강(고정 목록).
+ *  ⚠️ COURSES 전체를 넣으면 이후 다른 그룹(예: 지식 증류) 강의까지 섞여 들어가므로 명시. */
+const AI_OVERVIEW_COURSE_IDS = [
+  "what-is-ai",
+  "ml-basics",
+  "data-and-ai",
+  "deep-learning",
+  "nlp-basics",
+  "generative-ai",
+  "prompt-engineering",
+  "computer-vision",
+  "ai-ethics",
+  "ai-agents",
+];
 
 /**
  * AI 강의 코스 그룹 정의 (메뉴 확장).
@@ -16,8 +30,7 @@ export const COURSE_GROUPS: CourseGroup[] = [
     icon: "🧭",
     color: "from-violet-500 to-fuchsia-500",
     status: "available",
-    // 현재 /courses 에 있던 이론 강의 전체 (order 순)
-    courseIds: [...COURSES].sort((a, b) => a.order - b.order).map((c) => c.id),
+    courseIds: AI_OVERVIEW_COURSE_IDS,
     tags: ["AI 기초", "머신러닝", "딥러닝", "생성형 AI", "프롬프트", "에이전트"],
   },
   {
@@ -38,9 +51,19 @@ export const COURSE_GROUPS: CourseGroup[] = [
     subtitle: "큰 모델(교사)의 지식을 작은 모델(학생)로 압축하기",
     icon: "💧",
     color: "from-emerald-500 to-teal-500",
-    status: "coming-soon",
-    courseIds: [],
-    tags: ["Teacher-Student", "소프트 라벨", "온도", "경량화"],
+    status: "available",
+    // 모듈 1(증류 & Scaling Law) 8강 공개. 모듈 2~6은 집필되는 대로 추가(전체 34강 계획).
+    courseIds: [
+      "kd-01-roadmap",
+      "kd-02-what-is-distillation",
+      "kd-03-soft-labels",
+      "kd-04-temperature-kl",
+      "kd-05-distillation-types",
+      "kd-06-scaling-law",
+      "kd-07-chinchilla",
+      "kd-08-2026-scaling",
+    ],
+    tags: ["Teacher-Student", "소프트 라벨", "온도", "Scaling Law", "MoE", "SFT"],
   },
   {
     id: "reinforcement-learning",

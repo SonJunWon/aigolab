@@ -9,8 +9,10 @@ import { course07 } from "./07-prompt-engineering";
 import { course08 } from "./08-computer-vision";
 import { course09 } from "./09-ai-ethics";
 import { course10 } from "./10-ai-agents";
+import { KD_COURSES } from "./knowledge-distillation";
 
 export const COURSES: Course[] = [
+  // 코스 0 「AI 살펴보기」 — 이론 10강
   course01,
   course02,
   course03,
@@ -21,6 +23,8 @@ export const COURSES: Course[] = [
   course08,
   course09,
   course10,
+  // 코스 2 「지식 증류」 — 집필 중
+  ...KD_COURSES,
 ];
 
 export const COURSE_SUMMARIES: CourseSummary[] = COURSES.map((c) => ({
