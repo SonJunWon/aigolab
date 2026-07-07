@@ -56,9 +56,8 @@ export function ProtectedRoute({ children }: Props) {
         <div className="space-y-3">
           <Link
             to="/auth"
-            className="block w-full py-3 rounded-xl text-center font-semibold text-sm text-white
-                       bg-gradient-to-r from-brand-accent to-cyan-500
-                       hover:brightness-110 transition-all shadow-lg shadow-brand-accent/20"
+            className="block w-full py-3 text-center font-semibold text-sm text-black
+                       bg-brand-primary hover:bg-brand-primaryDim transition-colors"
           >
             회원가입 / 로그인 →
           </Link>

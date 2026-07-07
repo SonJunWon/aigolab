@@ -6,83 +6,95 @@ import { getCourseById } from "../content/courses";
  * AI 강의 메뉴 — 코스 그룹 목록 (/courses).
  * 0. AI 살펴보기(이용 가능) + 1~5. 딥러닝·지식증류·강화학습·양자화·지식증강(준비 중).
  * 그룹 카드 클릭 → /courses/group/:groupId (그룹 내 강의 목록).
+ * 에디토리얼 다크 스타일 — 넘버링 행 + 헤어라인 리스트.
  */
 export function CoursesPage() {
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-12">
-        <header className="mb-6 sm:mb-10">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-1.5 sm:mb-2">📚 AI 강의</h1>
-          <p className="text-sm sm:text-base text-brand-textDim">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10 sm:py-16">
+        <header className="mb-10 sm:mb-14">
+          <div className="flex items-baseline justify-between pb-4 border-b border-brand-line mb-6">
+            <span className="mono-label">COURSES / 00–05</span>
+            <span className="mono-label hidden sm:inline">THEORY · QUIZ</span>
+          </div>
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-3">
+            AI 강의<span className="text-brand-primary">.</span>
+          </h1>
+          <p className="text-sm sm:text-base text-brand-textDim max-w-2xl">
             AI 이론을 코스별로 — 큰 그림부터 딥러닝·강화학습 같은 심화 주제까지.
           </p>
         </header>
 
-        <div className="space-y-4 sm:space-y-5">
+        <div className="space-y-4">
           {COURSE_GROUPS.map((group) => {
             const available = group.status === "available";
             const lessonCount = group.courseIds.filter((id) => getCourseById(id)).length;
+            const numLabel = String(group.order).padStart(3, "0") + ".";
 
             const inner = (
-              <>
-                <div className="flex items-center gap-3 sm:gap-4 mb-3">
-                  <div className={`shrink-0 grid place-items-center w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br ${group.color} text-2xl sm:text-3xl ${available ? "" : "grayscale opacity-60"}`}>
-                    {group.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-subtle text-brand-textDim font-medium">
-                        코스 {group.order}
-                      </span>
-                      {available ? (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-green/15 text-brand-green font-semibold">
-                          {lessonCount}강 · 이용 가능
-                        </span>
-                      ) : (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-semibold">
-                          준비 중
-                        </span>
-                      )}
-                    </div>
-                    <h3 className={`text-lg sm:text-xl font-semibold mt-1 transition-colors ${
-                      available ? "group-hover:text-brand-primary" : "text-brand-textDim"
-                    }`}>
+              <div className="grid sm:grid-cols-[90px_1fr_auto] gap-2 sm:gap-8">
+                <span
+                  className={`font-mono text-sm ${
+                    available ? "text-brand-primary" : "text-brand-textDim/60"
+                  }`}
+                >
+                  {numLabel}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-3 flex-wrap mb-2">
+                    <h3
+                      className={`text-xl sm:text-2xl font-bold transition-colors ${
+                        available
+                          ? "group-hover:text-brand-primary"
+                          : "text-brand-textDim"
+                      }`}
+                    >
                       {group.title}
                     </h3>
+                    {available ? (
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-brand-primary border border-brand-primary/40 px-2 py-0.5">
+                        {lessonCount}강 · 이용 가능
+                      </span>
+                    ) : (
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-brand-textDim border border-brand-subtle px-2 py-0.5">
+                        준비 중
+                      </span>
+                    )}
                   </div>
-                  <span className={`shrink-0 self-start text-xl transition-all ${
+                  <p className="text-sm text-brand-textDim leading-relaxed mb-3 max-w-2xl">
+                    {group.subtitle}
+                  </p>
+                  <div className="font-mono text-[10px] uppercase tracking-wider text-brand-textDim">
+                    {group.tags.join("  ·  ")}
+                  </div>
+                </div>
+                <span
+                  className={`hidden sm:block self-center text-xl ${
                     available
-                      ? "text-brand-textDim group-hover:text-brand-primary group-hover:translate-x-1"
-                      : "text-brand-textDim"
-                  }`}>
-                    {available ? "→" : "🔒"}
-                  </span>
-                </div>
-                <p className="text-sm text-brand-textDim leading-relaxed mb-3">
-                  {group.subtitle}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {group.tags.map((tag) => (
-                    <span key={tag} className="px-2 py-0.5 rounded-md text-[10px] bg-brand-primary/10 text-brand-primary/90">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </>
+                      ? "text-brand-primary group-hover:translate-x-1.5 transition-transform"
+                      : "text-brand-textDim/40"
+                  }`}
+                >
+                  {available ? "→" : "×"}
+                </span>
+              </div>
             );
 
-            const baseCls = `block p-5 sm:p-6 rounded-2xl border transition-all group ${
-              available
-                ? "border-brand-subtle bg-brand-panel hover:border-brand-primary/50 hover:shadow-lg hover:shadow-brand-primary/5"
-                : "border-dashed border-brand-subtle/70 bg-brand-panel/40 cursor-default"
-            }`;
-
             return available ? (
-              <Link key={group.id} to={`/courses/group/${group.id}`} className={baseCls}>
+              <Link
+                key={group.id}
+                to={`/courses/group/${group.id}`}
+                className="group block border border-brand-line p-5 sm:p-7
+                           hover:bg-brand-panel hover:border-brand-primary transition-colors"
+              >
                 {inner}
               </Link>
             ) : (
-              <div key={group.id} className={baseCls} aria-disabled="true">
+              <div
+                key={group.id}
+                className="block border border-dashed border-brand-line/40 p-5 sm:p-7 opacity-60"
+                aria-disabled="true"
+              >
                 {inner}
               </div>
             );
@@ -90,9 +102,11 @@ export function CoursesPage() {
         </div>
 
         {/* 안내 */}
-        <div className="mt-8 sm:mt-10 p-5 sm:p-6 rounded-xl border border-dashed border-brand-subtle text-center">
-          <p className="text-brand-textDim text-sm">
-            💡 <span className="text-brand-primary font-medium">‘AI 살펴보기’</span>로 큰 그림을 먼저 잡아보세요. 딥러닝·강화학습 등 심화 코스는 순차적으로 열립니다.
+        <div className="mt-10 sm:mt-14 flex items-baseline gap-4">
+          <span className="mono-label shrink-0">NOTE</span>
+          <p className="text-sm text-brand-textDim">
+            <span className="text-brand-primary font-medium">‘AI 살펴보기’</span>로 큰 그림을 먼저
+            잡아보세요. 딥러닝·강화학습 등 심화 코스는 순차적으로 열립니다.
           </p>
         </div>
       </div>

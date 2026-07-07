@@ -137,7 +137,7 @@ export function AdminPage() {
           </p>
           <Link
             to="/"
-            className="inline-block px-4 py-2 rounded-lg bg-brand-primary text-white text-sm"
+            className="inline-block px-4 py-2 rounded-lg bg-brand-primary text-black text-sm"
           >
             홈으로
           </Link>

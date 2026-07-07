@@ -196,7 +196,7 @@ export function HomePage() {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-start gap-4 p-5 rounded-xl border border-colab-subtle bg-colab-panel/60">
-            <div className="shrink-0 w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center text-2xl">
+            <div className="shrink-0 w-12 h-12 rounded-xl bg-brand-primary/10 flex items-center justify-center text-2xl">
               💻
             </div>
             <div>

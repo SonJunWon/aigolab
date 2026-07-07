@@ -6,18 +6,20 @@ export default {
     extend: {
       colors: {
         // ─── AIGoLab 브랜드 팔레트 (메인 홈, 네비, 강의) ───
+        // 에디토리얼 다크 무드: 거의 순수 블랙 + 네온 그린 시그니처
         brand: {
-          bg:        "#0c0a13", // 메인 배경 (깊은 다크)
-          panel:     "#16132a", // 카드/패널 배경
-          subtle:    "#2a2545", // 보더, 분리선
-          hover:     "#2a2545", // 호버
-          text:      "#e8eaed", // 본문
+          bg:        "#050505", // 메인 배경 (거의 검정)
+          panel:     "#121314", // 카드/패널 배경
+          subtle:    "#232527", // 보더, 헤어라인 분리선 (소프트 UI용)
+          line:      "#f4f6f6", // 구조 구획선 — 흰색 1px (DecideAI 그리드)
+          hover:     "#1a1c1e", // 호버
+          text:      "#ededed", // 본문
           textDim:   "#9ca3af", // 서브텍스트
-          primary:   "#7C3AED", // 바이올렛 (메인 브랜드)
-          primaryDim:"#6D28D9",
-          accent:    "#06B6D4", // 시안 (서브 액센트)
-          accentDim: "#0891B2",
-          green:     "#10B981", // 성공
+          primary:   "#73ffb9", // 네온 그린 (메인 브랜드)
+          primaryDim:"#4fdd9a",
+          accent:    "#ff6338", // 오렌지레드 (서브 액센트)
+          accentDim: "#e5522a",
+          green:     "#73ffb9", // 성공
           red:       "#EF4444", // 에러
           yellow:    "#F59E0B", // 경고
         },
@@ -37,8 +39,8 @@ export default {
         },
       },
       fontFamily: {
-        mono: ['"Roboto Mono"', '"SF Mono"', 'Monaco', 'Menlo', "monospace"],
-        sans: ['"Google Sans"', '"Roboto"', "system-ui", "sans-serif"],
+        mono: ['"JetBrains Mono"', '"Roboto Mono"', '"SF Mono"', 'Monaco', 'Menlo', "monospace"],
+        sans: ['"Pretendard Variable"', 'Pretendard', "system-ui", '"Segoe UI"', "sans-serif"],
       },
     },
   },

@@ -343,9 +343,8 @@ export function WorkshopDetailPage() {
         <div className="mb-10">
           <Link
             to={`/coding/learn/ai-engineering/beginner/${lesson.id}`}
-            className="block w-full py-4 rounded-xl text-center font-semibold text-base
-                       bg-gradient-to-r from-brand-accent to-cyan-500 text-white
-                       hover:brightness-110 transition-all shadow-lg shadow-brand-accent/20"
+            className="block w-full py-4 text-center font-semibold text-base
+                       bg-brand-primary text-black hover:bg-brand-primaryDim transition-colors"
           >
             {done ? "다시 학습하기" : "학습 시작하기"} →
           </Link>

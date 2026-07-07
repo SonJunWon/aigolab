@@ -157,7 +157,7 @@ export function WorkshopListPage() {
         </div>
 
         {/* ─── 히어로 ─── */}
-        <div className="mb-8 p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-brand-accent/10 via-brand-panel to-brand-panel border border-brand-subtle">
+        <div className="mb-8 p-6 sm:p-8 rounded-2xl bg-brand-panel border border-brand-subtle">
           <div className="flex items-start gap-4">
             <div className="text-4xl sm:text-5xl">🛠️</div>
             <div className="flex-1 min-w-0">
@@ -170,7 +170,7 @@ export function WorkshopListPage() {
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-2 bg-brand-subtle rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-brand-accent to-cyan-400 rounded-full transition-all duration-500"
+                    className="h-full bg-brand-primary rounded-full transition-all duration-500"
                     style={{ width: `${progressPct}%` }}
                   />
                 </div>

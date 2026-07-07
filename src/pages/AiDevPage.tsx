@@ -43,21 +43,18 @@ export function AiDevPage() {
       <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 sm:py-12">
 
         {/* ─── 히어로 ─── */}
-        <section className="text-center mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-accent/10 border border-brand-accent/20 text-xs text-brand-accent font-medium mb-4">
-            입문 14강 · 엔지니어링 입문12+중급8강 · 워크샵 42개
+        <section className="mb-12 sm:mb-16">
+          <div className="flex items-baseline justify-between pb-4 border-b border-brand-line mb-6">
+            <span className="mono-label">BUILD / 42 PROJECTS</span>
+            <span className="mono-label hidden sm:inline">입문 14강 · 엔지니어링 20강</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3">
-            <span className="text-4xl sm:text-5xl mr-2">🚀</span>
-            AI 앱 개발
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-3">
+            AI 앱 개발<span className="text-brand-primary">.</span>
           </h1>
-          <p className="text-base sm:text-lg text-brand-textDim mb-6 max-w-xl mx-auto">
+          <p className="text-sm sm:text-base text-brand-textDim max-w-2xl">
             AI 이론을 넘어 — 직접 만들고, 실행하고, 배포하는 공간.
-            <br className="hidden sm:block" />
             코딩 경험 없어도, 글을 쓸 수 있으면 앱을 만들 수 있어요.
           </p>
-
-          {/* CTA 제거 — 아래 트랙 카드가 직접 진입점 역할 */}
         </section>
 
         {/* ─── 세 트랙 ─── */}
@@ -112,7 +109,7 @@ export function AiDevPage() {
               {/* AI 엔지니어링 트랙 — 파트 선택 */}
               <Link
                 to="/ai-dev/track"
-                className="group p-6 sm:p-8 rounded-2xl border border-brand-subtle bg-gradient-to-br from-violet-500/8 to-brand-panel/80
+                className="group p-6 sm:p-8 rounded-2xl border border-brand-subtle bg-brand-panel/80
                            hover:border-brand-primary/60 hover:shadow-lg hover:shadow-brand-primary/10 transition-all"
               >
                 <div className="flex items-center gap-3 mb-4">
@@ -122,7 +119,7 @@ export function AiDevPage() {
                       <h2 className="text-lg sm:text-xl font-semibold group-hover:text-brand-primary transition-colors">
                         AI 엔지니어링 트랙
                       </h2>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-green text-white font-semibold">
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-green text-black font-semibold">
                         입문+중급
                       </span>
                     </div>
@@ -135,7 +132,7 @@ export function AiDevPage() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {["입문 12강", "중급1 8강", "RAG", "지식 트윈", "Agent"].map((tag) => (
-                    <span key={tag} className="px-2 py-0.5 rounded-md text-[10px] bg-violet-500/10 text-violet-300">
+                    <span key={tag} className="px-2 py-0.5 rounded-md text-[10px] bg-brand-primary/10 text-brand-primary">
                       {tag}
                     </span>
                   ))}
@@ -217,7 +214,7 @@ export function AiDevPage() {
           <div className="max-w-lg mx-auto space-y-3">
             {[
               { icon: "🌱", label: "AI 입문 준비", desc: "AI 기초 + 플랫폼 사용법 (14강)", color: "border-amber-500/30 bg-amber-500/5" },
-              { icon: "🤖", label: "AI 엔지니어링", desc: "입문 12강 + 중급1 지식·컨텍스트 8강", color: "border-violet-500/30 bg-violet-500/5" },
+              { icon: "🤖", label: "AI 엔지니어링", desc: "입문 12강 + 중급1 지식·컨텍스트 8강", color: "border-brand-primary/30 bg-brand-primary/5" },
               { icon: "🛠️", label: "바이브코딩 워크샵", desc: "실전 앱 42개 제작", color: "border-cyan-500/30 bg-cyan-500/5" },
             ].map((item, i, arr) => (
               <div key={i}>

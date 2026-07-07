@@ -218,7 +218,7 @@ export function ProfileEditModal({ userId, onClose }: Props) {
           <button
             onClick={handleSave}
             disabled={!canSave}
-            className="px-4 py-2 text-xs rounded-lg bg-brand-primary text-white font-medium hover:bg-brand-primaryDim disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 text-xs rounded-lg bg-brand-primary text-black font-medium hover:bg-brand-primaryDim disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             {saving ? "저장 중..." : "저장"}
           </button>

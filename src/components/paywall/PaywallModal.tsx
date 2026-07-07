@@ -100,7 +100,7 @@ export function PaywallModal({ open, onClose, context }: Props) {
           <Link
             to="/"
             onClick={onClose}
-            className="block w-full text-center py-3 rounded-xl bg-brand-primary text-white font-medium text-sm hover:bg-brand-primaryDim transition-colors"
+            className="block w-full text-center py-3 rounded-xl bg-brand-primary text-black font-medium text-sm hover:bg-brand-primaryDim transition-colors"
           >
             무료 콘텐츠 둘러보기
           </Link>

@@ -48,7 +48,7 @@ export function ProgressDashboardPage() {
         </div>
 
         {/* 히어로 */}
-        <div className="mb-8 p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-brand-accent/10 via-brand-panel to-brand-panel border border-brand-subtle">
+        <div className="mb-8 p-6 sm:p-8 rounded-2xl bg-brand-panel border border-brand-subtle">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">학습 진도</h1>
           <p className="text-sm text-brand-textDim mb-6">
             기초부터 SaaS 런칭까지, 8단계 학습 여정
@@ -58,7 +58,7 @@ export function ProgressDashboardPage() {
           <div className="flex items-center gap-4 mb-4">
             <div className="flex-1 h-3 bg-brand-subtle rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-brand-accent to-cyan-400 rounded-full transition-all duration-700"
+                className="h-full bg-brand-primary rounded-full transition-all duration-700"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
@@ -82,7 +82,7 @@ export function ProgressDashboardPage() {
             <Link
               to={`/ai-dev/workshop/${nextWorkshop.id}`}
               className="group flex items-center gap-4 p-5 rounded-xl border border-brand-accent/30
-                         bg-gradient-to-r from-brand-accent/8 to-brand-panel
+                         bg-brand-panel
                          hover:border-brand-accent/60 transition-all"
             >
               <div className="shrink-0 w-12 h-12 rounded-xl bg-brand-accent/15 flex items-center justify-center text-xl font-bold text-brand-accent">

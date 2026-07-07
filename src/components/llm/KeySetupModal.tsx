@@ -301,7 +301,7 @@ export function KeySetupModal({
               <button
                 onClick={goNext}
                 disabled={isBusy}
-                className="px-4 py-2 text-xs rounded-lg bg-brand-primary text-white font-medium hover:bg-brand-primaryDim disabled:opacity-40 transition-colors"
+                className="px-4 py-2 text-xs rounded-lg bg-brand-primary text-black font-medium hover:bg-brand-primaryDim disabled:opacity-40 transition-colors"
               >
                 다음 →
               </button>
@@ -309,7 +309,7 @@ export function KeySetupModal({
               <button
                 onClick={onClose}
                 disabled={isBusy}
-                className="px-4 py-2 text-xs rounded-lg bg-brand-primary text-white font-medium hover:bg-brand-primaryDim disabled:opacity-40 transition-colors"
+                className="px-4 py-2 text-xs rounded-lg bg-brand-primary text-black font-medium hover:bg-brand-primaryDim disabled:opacity-40 transition-colors"
               >
                 완료
               </button>
@@ -410,7 +410,7 @@ function ProviderStep({
           <button
             onClick={onSubmit}
             disabled={busy || !input.trim()}
-            className="px-3 py-1.5 text-xs rounded-lg bg-brand-primary text-white font-medium hover:bg-brand-primaryDim disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="px-3 py-1.5 text-xs rounded-lg bg-brand-primary text-black font-medium hover:bg-brand-primaryDim disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             {busy ? "검증 중..." : "저장 & 테스트"}
           </button>

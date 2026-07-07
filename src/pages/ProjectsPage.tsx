@@ -84,8 +84,14 @@ export function ProjectsPage() {
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-12">
-        <header className="mb-6 sm:mb-10">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-1.5 sm:mb-2">🧪 AI 프로젝트</h1>
+        <header className="mb-8 sm:mb-12">
+          <div className="flex items-baseline justify-between pb-4 border-b border-brand-line mb-6">
+            <span className="mono-label">PROJECTS / ML</span>
+            <span className="mono-label hidden sm:inline">IN-BROWSER</span>
+          </div>
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-3">
+            AI 프로젝트<span className="text-brand-primary">.</span>
+          </h1>
           <p className="text-sm sm:text-base text-brand-textDim">
             실제 데이터로 머신러닝 모델을 만들어보세요. 브라우저에서 바로 실행!
           </p>
@@ -223,7 +229,7 @@ export function ProjectsPage() {
                     ) : (
                       <Link
                         to={`/projects/${p.id}/work`}
-                        className="block w-full text-center py-3.5 rounded-xl bg-brand-primary text-white font-medium text-sm hover:bg-brand-primaryDim transition-colors shadow-lg shadow-brand-primary/20"
+                        className="block w-full text-center py-3.5 rounded-xl bg-brand-primary text-black font-medium text-sm hover:bg-brand-primaryDim transition-colors shadow-lg shadow-brand-primary/20"
                       >
                         🚀 프로젝트 시작하기
                       </Link>

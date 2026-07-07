@@ -288,11 +288,11 @@ export function ProjectWorkPage() {
       {/* 스크롤 하이라이트 스타일 (컴포넌트 한정 ok) */}
       <style>{`
         .project-step-highlight {
-          background: rgba(139, 92, 246, 0.18);
+          background: rgba(115, 255, 185, 0.15);
           transition: background 0.5s ease;
         }
         .project-step-marker {
-          background: #7c3aed;
+          background: #73ffb9;
           width: 3px !important;
           margin-left: 3px;
         }

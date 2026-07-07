@@ -23,34 +23,38 @@ export function CourseGroupPage() {
 
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-12">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10 sm:py-16">
         <Link
           to="/courses"
-          className="inline-flex items-center gap-1.5 text-sm text-brand-textDim hover:text-brand-primary transition-colors mb-5"
+          className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider
+                     text-brand-textDim hover:text-brand-primary transition-colors mb-8"
         >
-          ← AI 강의 코스
+          ← COURSES
         </Link>
 
-        <header className="mb-6 sm:mb-10">
-          <div className="flex items-center gap-3 sm:gap-4 mb-3">
-            <div className={`shrink-0 grid place-items-center w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br ${group.color} text-2xl sm:text-3xl`}>
-              {group.icon}
-            </div>
-            <div>
-              <div className="text-[10px] px-2 py-0.5 rounded-full bg-brand-subtle text-brand-textDim font-medium inline-block mb-1">
-                코스 {group.order} · {courses.length}강
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold leading-tight">{group.title}</h1>
-            </div>
+        <header className="mb-10 sm:mb-14">
+          <div className="flex items-baseline justify-between pb-4 border-b border-brand-line mb-6">
+            <span className="mono-label">
+              COURSE {String(group.order).padStart(2, "0")} / {courses.length} LESSONS
+            </span>
           </div>
-          <p className="text-sm sm:text-base text-brand-textDim">{group.subtitle}</p>
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-3">
+            {group.title}
+            <span className="text-brand-primary">.</span>
+          </h1>
+          <p className="text-sm sm:text-base text-brand-textDim max-w-2xl">{group.subtitle}</p>
         </header>
 
         <CourseCardList courses={courses} />
 
-        <div className="mt-8 sm:mt-10 p-5 sm:p-6 rounded-xl border border-dashed border-brand-subtle text-center">
-          <p className="text-brand-textDim text-sm">
-            💡 일부 강의엔 <span className="text-brand-primary font-medium">브라우저에서 바로 실행되는 Python 실습</span>이 포함돼 있어요. 🔒 표시 강의는 PRO 출시 후 이용 가능합니다.
+        <div className="mt-10 sm:mt-14 flex items-baseline gap-4">
+          <span className="mono-label shrink-0">NOTE</span>
+          <p className="text-sm text-brand-textDim">
+            일부 강의엔{" "}
+            <span className="text-brand-primary font-medium">
+              브라우저에서 바로 실행되는 Python 실습
+            </span>
+            이 포함돼 있어요. 잠금 표시 강의는 PRO 출시 후 이용 가능합니다.
           </p>
         </div>
       </div>

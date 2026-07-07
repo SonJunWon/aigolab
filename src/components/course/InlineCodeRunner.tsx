@@ -169,7 +169,7 @@ export function InlineCodeRunner({
           <button
             onClick={handleRun}
             disabled={disabled}
-            className="text-xs px-3 py-1.5 rounded-lg bg-brand-primary text-white font-medium
+            className="text-xs px-3 py-1.5 rounded-lg bg-brand-primary text-black font-medium
                        hover:bg-brand-primary/90 disabled:opacity-50 disabled:cursor-not-allowed
                        transition-colors flex items-center gap-1.5"
             title="실행 (Cmd/Ctrl+Enter)"

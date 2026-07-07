@@ -11,12 +11,12 @@ import { DefaultAvatar } from "./DefaultAvatar";
 const APP_VERSION: string = __APP_VERSION__;
 
 const NAV_ITEMS = [
-  { path: "/courses", label: "📚 AI 강의" },
-  { path: "/coding", label: "🐍 코딩 실습" },
-  { path: "/projects", label: "🧪 프로젝트" },
-  { path: "/ai-dev", label: "🚀 AI 앱 개발" },
-  { path: "/my/markdown", label: "📝 마크다운" },
-  { path: "/my", label: "👤 마이" },
+  { path: "/courses", label: "AI 강의" },
+  { path: "/coding", label: "코딩 실습" },
+  { path: "/projects", label: "프로젝트" },
+  { path: "/ai-dev", label: "AI 앱 개발" },
+  { path: "/my/markdown", label: "마크다운" },
+  { path: "/my", label: "마이" },
 ];
 
 export function NavBar() {
@@ -49,18 +49,16 @@ export function NavBar() {
     location.pathname === path || location.pathname.startsWith(path + "/");
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-brand-bg/95 backdrop-blur-md border-b border-brand-subtle">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-brand-bg/95 backdrop-blur-md border-b border-brand-line">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 flex items-center justify-between h-14">
         {/* 로고 */}
-        <Link to="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0 group">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center">
-            <span className="text-white text-xs font-bold">AI</span>
-          </div>
-          <span className="text-base font-semibold text-brand-text group-hover:text-brand-primary transition-colors">
+        <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
+          <span className="w-2 h-2 bg-brand-primary" aria-hidden="true" />
+          <span className="text-base font-bold tracking-tight text-brand-text group-hover:text-brand-primary transition-colors">
             AIGoLab
           </span>
-          <span className="hidden sm:inline text-[10px] text-brand-textDim/50">
-            v{APP_VERSION}
+          <span className="hidden sm:inline font-mono text-[10px] text-brand-textDim/50">
+            V{APP_VERSION}
           </span>
         </Link>
 
@@ -70,14 +68,17 @@ export function NavBar() {
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className={`relative px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer
+              className={`relative px-3 py-2 text-sm transition-colors cursor-pointer
                 ${
                   isActive(item.path)
-                    ? "text-brand-primary bg-brand-primary/10"
-                    : "text-brand-textDim hover:text-brand-text hover:bg-brand-hover/50"
+                    ? "text-brand-primary"
+                    : "text-brand-textDim hover:text-brand-text"
                 }`}
             >
               {item.label}
+              {isActive(item.path) && (
+                <span className="absolute left-3 right-3 -bottom-[1px] h-px bg-brand-primary" />
+              )}
             </button>
           ))}
           {showAdminLink && (
@@ -136,7 +137,7 @@ export function NavBar() {
           ) : (
             <button
               onClick={() => navigate("/auth")}
-              className="px-4 py-1.5 text-xs rounded-lg bg-brand-primary text-white font-medium
+              className="px-4 py-1.5 text-xs bg-brand-primary text-black font-semibold
                          hover:bg-brand-primaryDim transition-colors"
             >
               로그인
@@ -174,7 +175,7 @@ export function NavBar() {
 
       {/* 모바일 드롭다운 메뉴 */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-brand-subtle bg-brand-bg/95 backdrop-blur-md">
+        <div className="md:hidden border-t border-brand-line bg-brand-bg/95 backdrop-blur-md">
           <div className="px-4 py-3 flex flex-col gap-1">
             {NAV_ITEMS.map((item) => (
               <button
@@ -238,7 +239,7 @@ export function NavBar() {
             ) : (
               <button
                 onClick={() => navigate("/auth")}
-                className="px-4 py-2.5 text-sm rounded-lg bg-brand-primary text-white font-medium
+                className="px-4 py-2.5 text-sm bg-brand-primary text-black font-semibold
                            hover:bg-brand-primaryDim transition-colors"
               >
                 로그인

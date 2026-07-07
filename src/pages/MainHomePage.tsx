@@ -53,6 +53,66 @@ const SHOWCASE_APPS = [
   { icon: "🦄", name: "스타트업 런치", ws: "W40", desc: "아이디어 검증부터 랜딩페이지, 대기자 명단, 결제 연동까지 — AI로 SaaS를 런칭해요.", tags: ["Stripe", "Supabase"] },
 ];
 
+/* ─── 학습 코너 (넘버링 섹션) ─── */
+const LEARNING_SECTIONS = [
+  {
+    num: "001.",
+    label: "COURSES",
+    title: "AI 강의",
+    desc: "AI · 머신러닝 · 딥러닝 이론을 챕터별로 배우고 퀴즈로 점검해요.",
+    meta: "5개 강의 · 퀴즈",
+    to: "/courses",
+  },
+  {
+    num: "002.",
+    label: "CODING",
+    title: "코딩 실습",
+    desc: "Python · JavaScript · SQL. 노트북과 IDE 환경이 브라우저 안에서 열립니다.",
+    meta: "26챕터 · Playground · IDE",
+    to: "/coding",
+  },
+  {
+    num: "003.",
+    label: "PROJECTS",
+    title: "AI 프로젝트",
+    desc: "실제 데이터로 ML 모델을 만들어보는 미니 프로젝트.",
+    meta: "5개 프로젝트 · 입문–중급",
+    to: "/projects",
+  },
+];
+
+/* ─── 특징 (넘버링 리스트) ─── */
+const FEATURES = [
+  {
+    num: "001.",
+    title: "설치 없이, 브라우저에서 바로 시작",
+    desc: "Python, JavaScript가 브라우저 안에서 실행됩니다. 복잡한 환경설정 없이 링크를 열면 바로 코딩을 시작할 수 있어요. 노트북, 태블릿, 어디서든 접속 가능합니다.",
+    tags: ["Pyodide · Python 3.12", "WebLLM", "Monaco Editor"],
+  },
+  {
+    num: "002.",
+    title: "중학생도 따라할 수 있는 친절한 설계",
+    desc: "모든 설명은 쉬운 한국어로 작성되어 있고, 전문 용어에는 마우스를 올리면 뜻이 나옵니다. 막혔을 때 단계별 힌트를 열 수 있고, 에러 메시지도 한국어로 번역됩니다.",
+    tags: ["단계별 힌트", "용어 팝업", "에러 한국어 번역", "챕터별 퀴즈"],
+  },
+  {
+    num: "003.",
+    title: "100% 무료 API로 42개 앱 완성",
+    desc: "Google Gemini (하루 1,500회), Groq (하루 14,400회) 무료 API 키만 사용합니다. 유료 결제 없이 챗봇부터 SaaS까지 42개 실전 앱을 만들 수 있어요.",
+    tags: ["Gemini 무료", "Groq 무료", "Supabase 무료", "Vercel 무료"],
+  },
+  {
+    num: "004.",
+    title: "이론과 실전을 한 곳에서",
+    desc: "AI 엔지니어링 강의로 프롬프트, RAG, 에이전트 등 핵심 기법을 배우고, 바이브코딩 워크샵에서 실제 앱으로 조립합니다. 배움 → 만들기 → 배포까지 하나의 플랫폼에서 완결돼요.",
+    tags: ["체계적 커리큘럼", "42개 워크샵", "8단계 난이도"],
+  },
+];
+
+const ROADMAP = ["Python 기초", "AI 이론", "데이터 분석", "머신러닝", "AI 엔지니어링", "바이브코딩"];
+
+const TICKER_TEXT = "AIGoLab — AI를 시작하는 가장 쉬운 실험실 — ";
+
 export function MainHomePage() {
   const typed = useTypewriter([
     "AI 챗봇을 만들어보세요",
@@ -64,336 +124,252 @@ export function MainHomePage() {
 
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
 
-        {/* ─── Hero ─── */}
-        <section className="pt-16 sm:pt-24 pb-12 sm:pb-20 text-center">
-          <h1
-            className="text-5xl sm:text-7xl font-bold mb-4"
-            style={{
-              background: "linear-gradient(135deg, #7C3AED, #a78bfa, #06B6D4)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            AIGoLab
-          </h1>
-          <p className="text-xl sm:text-2xl text-brand-text font-medium mb-3">
-            AI를 시작하는 가장 쉬운 실험실
-          </p>
-          <p className="text-sm sm:text-base text-brand-textDim leading-relaxed max-w-2xl mx-auto mb-6">
-            AIGoLab은 누구나 AI를 배우고 직접 만들어볼 수 있는 실습형 학습 플랫폼입니다.
-            복잡한 설치 없이 브라우저에서 바로 코딩하고, AI 이론부터 실전 앱 개발까지
-            단계별로 안내합니다. 프로그래밍이 처음이어도, AI가 낯설어도 괜찮아요 —
-            쉬운 설명과 실습 중심 커리큘럼으로 누구나 자신만의 AI 앱을 완성할 수 있습니다.
-          </p>
+      {/* ─── Hero ─── */}
+      <section className="mx-auto max-w-6xl px-4 sm:px-6 pt-16 sm:pt-28 pb-14 sm:pb-24">
+        <div className="flex items-center justify-between pb-4 border-b border-brand-line mb-10 sm:mb-16 animate-rise">
+          <span className="mono-label">AIGOLAB / LAB:00</span>
+          <span className="mono-label hidden sm:inline">01. LEARN&nbsp;&nbsp;02. BUILD&nbsp;&nbsp;03. SHIP</span>
+        </div>
 
-          {/* 타이핑 애니메이션 */}
-          <div className="h-8 sm:h-10 flex items-center justify-center mb-8">
-            <span className="text-base sm:text-lg text-brand-accent font-medium">
-              {typed}
-              <span className="animate-pulse ml-0.5">|</span>
-            </span>
-          </div>
+        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold leading-[1.08] tracking-tight mb-6 sm:mb-8 animate-rise">
+          AI를 시작하는
+          <br />
+          가장 쉬운 실험실<span className="text-brand-primary">.</span>
+        </h1>
 
-          {/* CTA 배너 */}
+        <p className="max-w-2xl text-sm sm:text-base text-brand-textDim leading-relaxed mb-8 animate-rise">
+          AIGoLab은 누구나 AI를 배우고 직접 만들어볼 수 있는 실습형 학습 플랫폼입니다.
+          복잡한 설치 없이 브라우저에서 바로 코딩하고, AI 이론부터 실전 앱 개발까지
+          단계별로 안내합니다. 프로그래밍이 처음이어도, AI가 낯설어도 괜찮아요.
+        </p>
+
+        {/* 타이핑 애니메이션 */}
+        <div className="h-7 mb-10 font-mono text-sm sm:text-base text-brand-primary">
+          <span className="text-brand-textDim">&gt;&nbsp;</span>
+          {typed}
+          <span className="animate-pulse ml-0.5">_</span>
+        </div>
+
+        {/* CTA — 흰 라인 박스 2셀 */}
+        <div className="grid sm:grid-cols-2 border border-brand-line max-w-3xl">
           <Link
             to="/ai-dev"
-            className="group block max-w-xl mx-auto p-6 rounded-2xl
-                       bg-gradient-to-r from-brand-accent/15 via-cyan-500/10 to-violet-500/15
-                       border border-brand-accent/30 hover:border-brand-accent/60
-                       hover:shadow-xl hover:shadow-brand-accent/10 transition-all"
+            className="group flex items-center justify-between gap-6 px-6 py-5
+                       hover:bg-brand-panel transition-colors"
           >
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-2xl">🚀</span>
-                  <h3 className="text-lg font-bold text-brand-text group-hover:text-brand-accent transition-colors">
-                    AI 앱 개발
-                  </h3>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-brand-accent/20 text-brand-accent">
-                    42개 프로젝트
-                  </span>
-                </div>
-                <p className="text-sm text-brand-textDim">
-                  12강 이론 + 42개 실전 워크샵으로 AI 앱 개발자 되기
-                </p>
-              </div>
-              <span className="shrink-0 text-xl text-brand-accent group-hover:translate-x-1 transition-transform">
-                →
+            <span>
+              <span className="mono-label block mb-1">42 PROJECTS</span>
+              <span className="text-base font-semibold group-hover:text-brand-primary transition-colors">
+                AI 앱 개발 시작하기
               </span>
-            </div>
+            </span>
+            <span className="text-xl text-brand-primary group-hover:translate-x-1.5 transition-transform">→</span>
           </Link>
-        </section>
+          <Link
+            to="/courses"
+            className="group flex items-center justify-between gap-6 px-6 py-5
+                       border-t sm:border-t-0 sm:border-l border-brand-line
+                       hover:bg-brand-panel transition-colors"
+          >
+            <span>
+              <span className="mono-label block mb-1">COURSES</span>
+              <span className="text-base font-semibold group-hover:text-brand-primary transition-colors">
+                AI 강의 둘러보기
+              </span>
+            </span>
+            <span className="text-xl text-brand-primary group-hover:translate-x-1.5 transition-transform">→</span>
+          </Link>
+        </div>
+      </section>
 
-        {/* ─── 만들 수 있는 앱 캐러셀 ─── */}
-        <section className="pb-12 sm:pb-16 pt-10 sm:pt-12 -mx-4 sm:-mx-6 px-4 sm:px-6 bg-brand-panel/30 rounded-2xl">
-          <h2 className="text-sm font-medium text-brand-textDim uppercase tracking-wider mb-2 text-center">
-            하나씩 따라가다 보면, 어느새 이런 앱을 만들고 있을 거예요
-          </h2>
-          <p className="text-xs text-brand-textDim text-center mb-6">
-            좌우로 스크롤해서 더 많은 앱을 확인하세요
+      {/* ─── 브랜드 티커 ─── */}
+      <div className="border-y border-brand-line overflow-hidden py-3 select-none" aria-hidden="true">
+        <div className="animate-ticker flex whitespace-nowrap font-mono text-xs uppercase tracking-[0.25em] text-brand-textDim/70">
+          <span className="shrink-0">{TICKER_TEXT.repeat(6)}</span>
+          <span className="shrink-0">{TICKER_TEXT.repeat(6)}</span>
+        </div>
+      </div>
+
+      {/* ─── 학습 코너 — 라인 공유 3셀 그리드 ─── */}
+      <section className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-24">
+        <div className="flex items-baseline justify-between mb-10 sm:mb-14">
+          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight">학습 코너</h2>
+          <span className="mono-label">SECTIONS / 03</span>
+        </div>
+
+        <div className="grid md:grid-cols-3 border border-brand-line">
+          {LEARNING_SECTIONS.map((s, i) => (
+            <Link
+              key={s.to}
+              to={s.to}
+              className={`group flex flex-col p-6 sm:p-8 hover:bg-brand-panel transition-colors
+                          ${i > 0 ? "border-t md:border-t-0 md:border-l border-brand-line" : ""}`}
+            >
+              <div className="flex items-baseline justify-between mb-6">
+                <span className="mono-label text-brand-primary">{s.num}</span>
+                <span className="mono-label">{s.label}</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold mb-3 group-hover:text-brand-primary transition-colors">
+                {s.title}
+              </h3>
+              <p className="text-sm text-brand-textDim leading-relaxed mb-6 flex-1">{s.desc}</p>
+              <div className="flex items-center justify-between border-t border-brand-line pt-4">
+                <span className="font-mono text-[11px] text-brand-textDim">{s.meta}</span>
+                <span className="text-lg text-brand-primary group-hover:translate-x-1.5 transition-transform">
+                  →
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── 만들 수 있는 앱 캐러셀 ─── */}
+      <section className="py-14 sm:py-24 border-t border-brand-line">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 mb-8 sm:mb-10">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight leading-snug">
+              하나씩 따라가다 보면,
+              <br className="sm:hidden" /> 어느새 만들고 있을 앱들
+            </h2>
+            <span className="mono-label shrink-0 ml-4">SHOWCASE / W01–W40</span>
+          </div>
+          <p className="mt-3 font-mono text-[11px] text-brand-textDim">
+            ← 좌우로 스크롤 →
           </p>
-          <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory
-                          scrollbar-thin scrollbar-thumb-brand-subtle scrollbar-track-transparent">
-            {SHOWCASE_APPS.map((app, i) => (
+        </div>
+
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex gap-px overflow-x-auto snap-x snap-mandatory bg-brand-line
+                          border border-brand-line scrollbar-thin scrollbar-thumb-brand-subtle scrollbar-track-transparent">
+            {SHOWCASE_APPS.map((app) => (
               <div
-                key={i}
-                className="snap-start shrink-0 w-56 sm:w-72 p-4 sm:p-5 rounded-xl border border-brand-subtle/50
-                           bg-brand-panel/60 hover:border-brand-accent/40 transition-all"
+                key={app.ws}
+                className="snap-start shrink-0 w-60 sm:w-72 p-5 sm:p-6 bg-brand-bg"
               >
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-3xl">{app.icon}</span>
-                  <div>
-                    <div className="text-base font-semibold">{app.name}</div>
-                    <div className="text-[10px] text-brand-accent">{app.ws}</div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-mono text-[11px] text-brand-primary">{app.ws}</span>
+                  <span className="text-xl grayscale opacity-80">{app.icon}</span>
+                </div>
+                <div className="text-base font-semibold mb-2">{app.name}</div>
+                <p className="text-xs text-brand-textDim leading-relaxed mb-4">{app.desc}</p>
+                <div className="font-mono text-[10px] uppercase tracking-wider text-brand-textDim">
+                  {app.tags.join(" · ")}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 숫자 통계 — 라인 공유 4셀 ─── */}
+      <section className="border-t border-brand-line">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 grid grid-cols-2 sm:grid-cols-4">
+          {[
+            { num: "42", label: "워크샵", sub: "PROJECTS" },
+            { num: "12", label: "강 커리큘럼", sub: "AI ENGINEERING" },
+            { num: "8", label: "단계 로드맵", sub: "BASIC → SAAS" },
+            { num: "0", label: "원으로 시작", sub: "FREE API" },
+          ].map((s, i) => (
+            <div
+              key={i}
+              className={`py-8 sm:py-10 px-4 sm:px-6 ${i > 0 ? "border-l border-brand-line" : ""} ${
+                i >= 2 ? "border-t sm:border-t-0 border-brand-line" : ""
+              }`}
+            >
+              <div className="font-mono text-3xl sm:text-4xl font-bold text-brand-primary mb-1">{s.num}</div>
+              <div className="text-sm font-medium">{s.label}</div>
+              <div className="mono-label mt-1">{s.sub}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── 특징 — 넘버링 리스트 ─── */}
+      <section className="border-t border-brand-line">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-24">
+          <div className="flex items-baseline justify-between mb-10 sm:mb-14">
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight">왜 AIGoLab인가요</h2>
+            <span className="mono-label">WHY / 04</span>
+          </div>
+
+          <div>
+            {FEATURES.map((f) => (
+              <div
+                key={f.num}
+                className="grid sm:grid-cols-[100px_1fr] gap-2 sm:gap-8 py-8 sm:py-10 border-t border-brand-line"
+              >
+                <span className="font-mono text-sm text-brand-primary">{f.num}</span>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-bold mb-3">{f.title}</h3>
+                  <p className="text-sm text-brand-textDim leading-relaxed mb-4 max-w-3xl">{f.desc}</p>
+                  <div className="font-mono text-[10px] uppercase tracking-wider text-brand-textDim">
+                    {f.tags.join("  ·  ")}
                   </div>
                 </div>
-                <p className="text-xs text-brand-textDim leading-relaxed mb-3">
-                  {app.desc}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {app.tags.map((tag) => (
-                    <span key={tag} className="px-2 py-0.5 rounded-md text-[9px] bg-brand-accent/10 text-brand-accent/70">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
               </div>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* ─── 학습 코너 ─── */}
-        <section className="pb-12 sm:pb-16">
-          <h2 className="text-sm font-medium text-brand-textDim uppercase tracking-wider mb-6 text-center">
-            학습 코너
-          </h2>
-          <div className="grid md:grid-cols-3 gap-5">
-            <Link
-              to="/courses"
-              className="group p-6 rounded-xl border border-brand-subtle bg-brand-panel/80
-                         hover:border-brand-primary/40 hover:shadow-lg hover:shadow-brand-primary/5 transition-all"
-            >
-              <div className="text-3xl mb-3">📚</div>
-              <h3 className="text-lg font-semibold mb-1 group-hover:text-brand-primary transition-colors">AI 강의</h3>
-              <p className="text-sm text-brand-textDim mb-3">
-                AI/머신러닝/딥러닝 이론을 챕터별로 배우고 퀴즈로 점검해요.
-              </p>
-              <div className="flex items-center gap-4 text-xs text-brand-textDim">
-                <span>📖 5개 강의</span>
-                <span>🎯 퀴즈</span>
-              </div>
-            </Link>
-
-            <Link
-              to="/coding"
-              className="group p-6 rounded-xl border border-brand-subtle bg-brand-panel/80
-                         hover:border-brand-primary/60 hover:shadow-lg hover:shadow-brand-primary/5 transition-all"
-            >
-              <div className="text-3xl mb-3">🐍</div>
-              <h3 className="text-lg font-semibold mb-1 group-hover:text-brand-primary transition-colors">
-                코딩 실습
-              </h3>
-              <p className="text-sm text-brand-textDim mb-3">
-                Python · JavaScript · SQL. 노트북 + IDE 환경.
-              </p>
-              <div className="flex items-center gap-4 text-xs text-brand-textDim">
-                <span>📖 26챕터</span>
-                <span>🧪 Playground</span>
-                <span>💻 IDE</span>
-              </div>
-            </Link>
-
-            <Link
-              to="/projects"
-              className="group p-6 rounded-xl border border-brand-subtle bg-brand-panel/80
-                         hover:border-brand-accent/40 hover:shadow-lg hover:shadow-brand-accent/5 transition-all"
-            >
-              <div className="text-3xl mb-3">🧪</div>
-              <h3 className="text-lg font-semibold mb-1 group-hover:text-brand-accent transition-colors">AI 프로젝트</h3>
-              <p className="text-sm text-brand-textDim mb-3">
-                실제 데이터로 ML 모델을 만들어보는 미니 프로젝트.
-              </p>
-              <div className="flex items-center gap-4 text-xs text-brand-textDim">
-                <span>🧪 5개 프로젝트</span>
-                <span>📊 입문 · 중급</span>
-              </div>
-            </Link>
+      {/* ─── 학습 로드맵 ─── */}
+      <section className="border-t border-brand-line">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-20">
+          <div className="flex items-baseline justify-between mb-8 sm:mb-10">
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight">추천 학습 로드맵</h2>
+            <span className="mono-label">ROADMAP / 06</span>
           </div>
-        </section>
-
-        {/* ─── 숫자 통계 ─── */}
-        <section className="pb-12 sm:pb-16 pt-10 sm:pt-12 -mx-4 sm:-mx-6 px-4 sm:px-6 bg-brand-panel/20 rounded-2xl">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto">
-            {[
-              { num: "42", label: "워크샵", sub: "실전 프로젝트" },
-              { num: "12", label: "강", sub: "AI 엔지니어링" },
-              { num: "8", label: "단계", sub: "기초→SaaS" },
-              { num: "무료", label: "API", sub: "Gemini·Groq" },
-            ].map((s, i) => (
-              <div key={i} className="text-center p-4 rounded-xl bg-brand-panel/40 border border-brand-subtle/50">
-                <div className="text-2xl sm:text-3xl font-bold text-brand-accent">{s.num}</div>
-                <div className="text-xs text-brand-text font-medium">{s.label}</div>
-                <div className="text-[10px] text-brand-textDim">{s.sub}</div>
+          <div className="flex items-center gap-x-4 gap-y-3 flex-wrap">
+            {ROADMAP.map((label, i) => (
+              <div key={label} className="flex items-center gap-4">
+                <div className="text-sm text-brand-text">
+                  <span className="font-mono text-[10px] text-brand-primary mr-2">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  {label}
+                </div>
+                {i < ROADMAP.length - 1 && <span className="text-brand-textDim/40 font-mono">→</span>}
               </div>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-
-        {/* ─── 특징 — 세로 풀 레이아웃 ─── */}
-        <section className="pb-12 sm:pb-16 pt-10 sm:pt-12 -mx-4 sm:-mx-6 px-4 sm:px-6 bg-brand-panel/30 rounded-2xl">
-          <h2 className="text-sm font-medium text-brand-textDim uppercase tracking-wider mb-2 text-center">
-            왜 AIGoLab 인가요
-          </h2>
-          <p className="text-xs text-brand-textDim text-center mb-8">
-            AI 학습의 진입 장벽을 낮추기 위해 설계되었어요
-          </p>
-
-          <div className="space-y-5 max-w-3xl mx-auto">
-            {/* 1. 설치 없이 */}
-            <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 p-5 sm:p-6 rounded-2xl border border-brand-subtle bg-brand-panel/60">
-              <div className="shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 flex items-center justify-center text-2xl">
-                🌐
-              </div>
-              <div className="flex-1">
-                <h3 className="text-base font-semibold mb-1.5">설치 없이, 브라우저에서 바로 시작</h3>
-                <p className="text-sm text-brand-textDim leading-relaxed mb-3">
-                  Python, JavaScript가 브라우저 안에서 실행됩니다.
-                  복잡한 환경설정 없이 링크를 열면 바로 코딩을 시작할 수 있어요.
-                  노트북, 태블릿, 어디서든 접속 가능합니다.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-2.5 py-1 rounded-md text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Pyodide (Python 3.12)</span>
-                  <span className="px-2.5 py-1 rounded-md text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">WebLLM</span>
-                  <span className="px-2.5 py-1 rounded-md text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Monaco Editor</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 2. 입문자 친화 */}
-            <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 p-5 sm:p-6 rounded-2xl border border-brand-subtle bg-brand-panel/60">
-              <div className="shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 flex items-center justify-center text-2xl">
-                🎯
-              </div>
-              <div className="flex-1">
-                <h3 className="text-base font-semibold mb-1.5">중학생도 따라할 수 있는 친절한 설계</h3>
-                <p className="text-sm text-brand-textDim leading-relaxed mb-3">
-                  모든 설명은 쉬운 한국어로 작성되어 있고, 전문 용어에는 마우스를 올리면 뜻이 나옵니다.
-                  막혔을 때 단계별 힌트를 열 수 있고, 에러 메시지도 한국어로 번역됩니다.
-                  각 챕터 끝에는 퀴즈로 이해도를 점검해요.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-2.5 py-1 rounded-md text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20">단계별 힌트</span>
-                  <span className="px-2.5 py-1 rounded-md text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20">용어 팝업</span>
-                  <span className="px-2.5 py-1 rounded-md text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20">에러 한국어 번역</span>
-                  <span className="px-2.5 py-1 rounded-md text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20">챕터별 퀴즈</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 3. 무료 API */}
-            <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 p-5 sm:p-6 rounded-2xl border border-brand-subtle bg-brand-panel/60">
-              <div className="shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center text-2xl">
-                🆓
-              </div>
-              <div className="flex-1">
-                <h3 className="text-base font-semibold mb-1.5">100% 무료 API로 42개 앱 완성</h3>
-                <p className="text-sm text-brand-textDim leading-relaxed mb-3">
-                  Google Gemini (하루 1,500회), Groq (하루 14,400회) 무료 API 키만 사용합니다.
-                  유료 결제 없이 챗봇부터 SaaS까지 42개 실전 앱을 만들 수 있어요.
-                  Supabase, Vercel 무료 플랜으로 실제 배포까지 가능합니다.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-2.5 py-1 rounded-md text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20">Gemini 무료</span>
-                  <span className="px-2.5 py-1 rounded-md text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20">Groq 무료</span>
-                  <span className="px-2.5 py-1 rounded-md text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20">Supabase 무료</span>
-                  <span className="px-2.5 py-1 rounded-md text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20">Vercel 무료</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 4. 이론 + 실전 */}
-            <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 p-5 sm:p-6 rounded-2xl border border-brand-subtle bg-brand-panel/60">
-              <div className="shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-violet-500/20 to-violet-600/10 flex items-center justify-center text-2xl">
-                🔄
-              </div>
-              <div className="flex-1">
-                <h3 className="text-base font-semibold mb-1.5">이론과 실전을 한 곳에서</h3>
-                <p className="text-sm text-brand-textDim leading-relaxed mb-3">
-                  AI 엔지니어링 12강으로 프롬프트, RAG, 에이전트 등 핵심 기법을 배우고,
-                  바이브코딩 워크샵에서 배운 기법을 실제 앱으로 조립합니다.
-                  배움 → 만들기 → 배포까지 하나의 플랫폼에서 완결돼요.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-2.5 py-1 rounded-md text-[10px] bg-violet-500/10 text-violet-400 border border-violet-500/20">12강 커리큘럼</span>
-                  <span className="px-2.5 py-1 rounded-md text-[10px] bg-violet-500/10 text-violet-400 border border-violet-500/20">42개 워크샵</span>
-                  <span className="px-2.5 py-1 rounded-md text-[10px] bg-violet-500/10 text-violet-400 border border-violet-500/20">8단계 난이도</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ─── 학습 로드맵 ─── */}
-        <section className="pb-16 sm:pb-20">
-          <h2 className="text-sm font-medium text-brand-textDim uppercase tracking-wider mb-6 text-center">
-            추천 학습 로드맵
-          </h2>
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            {[
-              { label: "Python 기초", icon: "🐍" },
-              { label: "AI 이론", icon: "🧠" },
-              { label: "데이터 분석", icon: "📊" },
-              { label: "머신러닝", icon: "🤖" },
-              { label: "AI 엔지니어링", icon: "🦙" },
-              { label: "바이브코딩", icon: "🛠️" },
-            ].map((step, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="px-4 py-2 rounded-lg text-sm flex items-center gap-2
-                                bg-brand-primary/10 text-brand-text border border-brand-primary/20">
-                  <span>{step.icon}</span>
-                  {step.label}
-                </div>
-                {i < 5 && <span className="text-brand-textDim/40">→</span>}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ─── 고객 지원 ─── */}
-        <section className="pb-16 sm:pb-20">
-          <div className="grid sm:grid-cols-2 gap-4 max-w-xl mx-auto">
+      {/* ─── 고객 지원 — 라인 공유 2셀 ─── */}
+      <section className="border-t border-brand-line">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+          <div className="grid sm:grid-cols-2 border border-brand-line">
             <Link
               to="/notices"
-              className="group flex items-center gap-3 p-4 rounded-xl border border-brand-subtle
-                         bg-brand-panel/40 hover:border-brand-accent/30 transition-all"
+              className="group flex items-center justify-between gap-4 p-5 sm:p-6
+                         hover:bg-brand-panel transition-colors"
             >
-              <span className="text-xl">📢</span>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium group-hover:text-brand-accent transition-colors">공지사항</div>
-                <div className="text-[11px] text-brand-textDim">서비스 소식과 업데이트</div>
+              <div>
+                <span className="mono-label block mb-1">NOTICE</span>
+                <span className="text-sm font-medium group-hover:text-brand-primary transition-colors">공지사항</span>
+                <span className="text-xs text-brand-textDim ml-3">서비스 소식과 업데이트</span>
               </div>
-              <span className="text-brand-textDim group-hover:text-brand-accent text-sm">→</span>
+              <span className="text-brand-primary group-hover:translate-x-1.5 transition-transform">→</span>
             </Link>
             <Link
               to="/faq"
-              className="group flex items-center gap-3 p-4 rounded-xl border border-brand-subtle
-                         bg-brand-panel/40 hover:border-brand-accent/30 transition-all"
+              className="group flex items-center justify-between gap-4 p-5 sm:p-6
+                         border-t sm:border-t-0 sm:border-l border-brand-line
+                         hover:bg-brand-panel transition-colors"
             >
-              <span className="text-xl">❓</span>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium group-hover:text-brand-accent transition-colors">자주 묻는 질문</div>
-                <div className="text-[11px] text-brand-textDim">이용 방법, PRO, 오류 해결</div>
+              <div>
+                <span className="mono-label block mb-1">FAQ</span>
+                <span className="text-sm font-medium group-hover:text-brand-primary transition-colors">자주 묻는 질문</span>
+                <span className="text-xs text-brand-textDim ml-3">이용 방법, PRO, 오류 해결</span>
               </div>
-              <span className="text-brand-textDim group-hover:text-brand-accent text-sm">→</span>
+              <span className="text-brand-primary group-hover:translate-x-1.5 transition-transform">→</span>
             </Link>
           </div>
-        </section>
+        </div>
+      </section>
 
-      </div>
     </div>
   );
 }

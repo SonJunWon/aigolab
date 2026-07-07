@@ -55,17 +55,8 @@ export function AuthPage() {
         {/* 로고 */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-block">
-            <h1
-              className="text-3xl font-bold"
-              style={{
-                background:
-                  "linear-gradient(to right, #7C3AED, #a78bfa, #06B6D4)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              AIGoLab
+            <h1 className="text-3xl font-bold tracking-tight text-brand-text">
+              AIGoLab<span className="text-brand-primary">.</span>
             </h1>
           </Link>
           <p className="text-sm text-brand-textDim mt-1">
@@ -154,7 +145,7 @@ export function AuthPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 rounded-lg bg-brand-primary text-white text-sm font-medium
+            className="w-full py-2.5 rounded-lg bg-brand-primary text-black text-sm font-medium
                        hover:bg-brand-primaryDim disabled:opacity-50 disabled:cursor-not-allowed
                        transition-colors"
           >

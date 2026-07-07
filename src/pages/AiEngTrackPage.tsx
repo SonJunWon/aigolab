@@ -13,6 +13,7 @@ import { LESSONS as BEGINNER_LESSONS } from "../content/ai-engineering/beginner"
 import { LESSONS as INTERMEDIATE1_LESSONS } from "../content/ai-engineering/intermediate1";
 import { LESSONS as INTERMEDIATE2_LESSONS } from "../content/ai-engineering/intermediate2";
 import { LESSONS as MCP_LESSONS } from "../content/ai-engineering/mcp-special";
+import { LESSONS as ADVANCED1_LESSONS } from "../content/ai-engineering/advanced1";
 
 export function AiEngTrackPage() {
   const isCompleted = useProgressStore((s) => s.isCompleted);
@@ -30,6 +31,9 @@ export function AiEngTrackPage() {
   ).length;
   const mcpDone = MCP_LESSONS.filter((l) =>
     isCompleted("ai-engineering", "mcp-special", l.id)
+  ).length;
+  const adv1Done = ADVANCED1_LESSONS.filter((l) =>
+    isCompleted("ai-engineering", "advanced1", l.id)
   ).length;
 
   return (
@@ -61,7 +65,7 @@ export function AiEngTrackPage() {
           {/* 입문자 */}
           <Link
             to="/coding/learn/ai-engineering/beginner"
-            className="group block p-6 sm:p-7 rounded-2xl border border-brand-subtle bg-gradient-to-br from-violet-500/8 to-brand-panel/80
+            className="group block p-6 sm:p-7 rounded-2xl border border-brand-subtle bg-brand-panel/80
                        hover:border-brand-primary/60 hover:shadow-lg hover:shadow-brand-primary/10 transition-all"
           >
             <div className="flex items-center gap-3 mb-3">
@@ -71,7 +75,7 @@ export function AiEngTrackPage() {
                   <h2 className="text-lg font-semibold group-hover:text-brand-primary transition-colors">
                     입문자 파트
                   </h2>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-green text-white font-semibold">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-green text-black font-semibold">
                     {BEGINNER_LESSONS.length}강
                   </span>
                 </div>
@@ -84,7 +88,7 @@ export function AiEngTrackPage() {
             </p>
             <div className="flex flex-wrap gap-2 mb-3">
               {["WebLLM", "Gemini", "Groq", "RAG", "Agent"].map((t) => (
-                <span key={t} className="px-2 py-0.5 rounded-md text-[10px] bg-violet-500/10 text-violet-300">{t}</span>
+                <span key={t} className="px-2 py-0.5 rounded-md text-[10px] bg-brand-primary/10 text-brand-primary">{t}</span>
               ))}
             </div>
             <div className="text-xs text-brand-textDim">
@@ -199,12 +203,48 @@ export function AiEngTrackPage() {
               📖 {INTERMEDIATE2_LESSONS.length}강 · ⏱️ ~9시간 · ✅ {inter2Done}강 완료 · 선수: 중급1 권장
             </div>
           </Link>
+          {/* 고급1 — 하네스 엔지니어링 */}
+          <Link
+            to="/coding/learn/ai-engineering/advanced1"
+            className="group block p-6 sm:p-7 rounded-2xl border border-rose-500/30 bg-gradient-to-br from-rose-500/8 to-brand-panel/80
+                       hover:border-rose-400/60 hover:shadow-lg hover:shadow-rose-500/10 transition-all"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="text-3xl">🐎</div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold group-hover:text-rose-400 transition-colors">
+                    고급1 — 하네스 엔지니어링
+                  </h2>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-500 text-white font-semibold">
+                    {ADVANCED1_LESSONS.length}강
+                  </span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500 text-white font-semibold">NEW</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-green text-black font-semibold">무료</span>
+                </div>
+                <p className="text-xs text-brand-textDim">AI 에이전트 엔지니어링 ① — 같은 뇌, 다른 몸</p>
+              </div>
+              <span className="text-brand-textDim group-hover:text-rose-400 group-hover:translate-x-1 transition-all">→</span>
+            </div>
+            <p className="text-sm text-brand-textDim mb-3 leading-relaxed">
+              에이전트 = 모델(뇌) + 하네스(몸). 루프·도구·컨텍스트·기억·가드레일 5대 기관으로 에이전트를 해부한다.
+              시리즈 A '하네스 이야기'(코드 0줄, 누구나) 공개 — B(다루기)·C(만들기)로 이어지는 3중 시리즈.
+            </p>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {["하네스", "루프", "도구", "컨텍스트", "가드레일", "실패학"].map((t) => (
+                <span key={t} className="px-2 py-0.5 rounded-md text-[10px] bg-rose-500/10 text-rose-300">{t}</span>
+              ))}
+            </div>
+            <div className="text-xs text-brand-textDim">
+              📖 {ADVANCED1_LESSONS.length}강 · ⏱️ ~110분 · ✅ {adv1Done}강 완료 · 선수 지식 없음 (누구나)
+            </div>
+          </Link>
         </section>
 
         {/* 학습 흐름 */}
         <section className="mt-10 text-center">
           <p className="text-xs text-brand-textDim">
-            입문자(기본기) → 중급1(지식 트윈) → MCP(연결) → 중급2(행동) → 바이브코딩 워크샵(앱 실전)
+            입문자(기본기) → 중급1(지식 트윈) → MCP(연결) → 중급2(행동) → 고급1(하네스) → 바이브코딩 워크샵(앱 실전)
           </p>
         </section>
       </div>

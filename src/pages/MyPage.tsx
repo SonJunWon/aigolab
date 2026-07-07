@@ -264,7 +264,7 @@ export function MyPage() {
               <p className="text-brand-textDim">아직 학습 기록이 없어요.</p>
               <Link
                 to="/coding"
-                className="inline-block mt-3 px-4 py-2 text-sm rounded-lg bg-brand-primary text-white
+                className="inline-block mt-3 px-4 py-2 text-sm rounded-lg bg-brand-primary text-black
                            hover:bg-brand-primaryDim transition-colors"
               >
                 학습 시작하기
@@ -424,12 +424,12 @@ function downloadCertificate(email: string, track: TrackProgress) {
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0c0a13"/>
-      <stop offset="100%" stop-color="#16132a"/>
+      <stop offset="0%" stop-color="#050505"/>
+      <stop offset="100%" stop-color="#121314"/>
     </linearGradient>
     <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#7C3AED"/>
-      <stop offset="100%" stop-color="#06B6D4"/>
+      <stop offset="0%" stop-color="#73ffb9"/>
+      <stop offset="100%" stop-color="#4fdd9a"/>
     </linearGradient>
   </defs>
   <rect width="800" height="600" fill="url(#bg)" rx="16"/>
@@ -437,15 +437,15 @@ function downloadCertificate(email: string, track: TrackProgress) {
   <text x="400" y="100" text-anchor="middle" font-family="system-ui" font-size="18" fill="#9ca3af">CERTIFICATE OF COMPLETION</text>
   <text x="400" y="160" text-anchor="middle" font-family="system-ui" font-size="42" font-weight="bold" fill="url(#accent)">AIGoLab</text>
   <text x="400" y="200" text-anchor="middle" font-family="system-ui" font-size="14" fill="#9ca3af">AI를 시작하는 가장 쉬운 실험실</text>
-  <line x1="200" y1="240" x2="600" y2="240" stroke="#2a2545" stroke-width="1"/>
+  <line x1="200" y1="240" x2="600" y2="240" stroke="#232527" stroke-width="1"/>
   <text x="400" y="290" text-anchor="middle" font-family="system-ui" font-size="16" fill="#e8eaed">이 수료증은</text>
   <text x="400" y="330" text-anchor="middle" font-family="system-ui" font-size="28" font-weight="bold" fill="#e8eaed">${escapeXml(email)}</text>
   <text x="400" y="375" text-anchor="middle" font-family="system-ui" font-size="16" fill="#e8eaed">님이 아래 과정을 성공적으로 완료하였음을 증명합니다.</text>
-  <text x="400" y="430" text-anchor="middle" font-family="system-ui" font-size="24" font-weight="bold" fill="#7C3AED">${escapeXml(track.icon)} ${escapeXml(track.langName)} ${escapeXml(track.trackName)} 과정</text>
+  <text x="400" y="430" text-anchor="middle" font-family="system-ui" font-size="24" font-weight="bold" fill="#73ffb9">${escapeXml(track.icon)} ${escapeXml(track.langName)} ${escapeXml(track.trackName)} 과정</text>
   <text x="400" y="465" text-anchor="middle" font-family="system-ui" font-size="14" fill="#9ca3af">${track.totalCount}챕터 전체 완료</text>
-  <line x1="200" y1="500" x2="600" y2="500" stroke="#2a2545" stroke-width="1"/>
+  <line x1="200" y1="500" x2="600" y2="500" stroke="#232527" stroke-width="1"/>
   <text x="400" y="540" text-anchor="middle" font-family="system-ui" font-size="14" fill="#9ca3af">${escapeXml(date)}</text>
-  <text x="400" y="565" text-anchor="middle" font-family="system-ui" font-size="12" fill="#4a4560">aigolab.co.kr</text>
+  <text x="400" y="565" text-anchor="middle" font-family="system-ui" font-size="12" fill="#6b7280">aigolab.co.kr</text>
 </svg>`;
 
   const blob = new Blob([svg], { type: "image/svg+xml" });
