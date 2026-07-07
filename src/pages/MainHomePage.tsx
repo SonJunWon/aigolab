@@ -138,7 +138,7 @@ export function MainHomePage() {
           가장 쉬운 실험실<span className="text-brand-primary">.</span>
         </h1>
 
-        <p className="max-w-2xl text-sm sm:text-base text-brand-textDim leading-relaxed mb-8 animate-rise">
+        <p className="max-w-2xl text-base sm:text-lg text-brand-textDim leading-relaxed mb-8 animate-rise">
           AIGoLab은 누구나 AI를 배우고 직접 만들어볼 수 있는 실습형 학습 플랫폼입니다.
           복잡한 설치 없이 브라우저에서 바로 코딩하고, AI 이론부터 실전 앱 개발까지
           단계별로 안내합니다. 프로그래밍이 처음이어도, AI가 낯설어도 괜찮아요.
@@ -213,7 +213,7 @@ export function MainHomePage() {
               <h3 className="text-xl sm:text-2xl font-bold mb-3 group-hover:text-brand-primary transition-colors">
                 {s.title}
               </h3>
-              <p className="text-sm text-brand-textDim leading-relaxed mb-6 flex-1">{s.desc}</p>
+              <p className="text-base text-brand-textDim leading-relaxed mb-6 flex-1">{s.desc}</p>
               <div className="flex items-center justify-between border-t border-brand-line pt-4">
                 <span className="font-mono text-[11px] text-brand-textDim">{s.meta}</span>
                 <span className="text-lg text-brand-primary group-hover:translate-x-1.5 transition-transform">
@@ -253,7 +253,7 @@ export function MainHomePage() {
                   <span className="text-xl grayscale opacity-80">{app.icon}</span>
                 </div>
                 <div className="text-base font-semibold mb-2">{app.name}</div>
-                <p className="text-xs text-brand-textDim leading-relaxed mb-4">{app.desc}</p>
+                <p className="text-sm text-brand-textDim leading-relaxed mb-4">{app.desc}</p>
                 <div className="font-mono text-[10px] uppercase tracking-wider text-brand-textDim">
                   {app.tags.join(" · ")}
                 </div>
@@ -303,7 +303,7 @@ export function MainHomePage() {
                 <span className="font-mono text-sm text-brand-primary">{f.num}</span>
                 <div>
                   <h3 className="text-lg sm:text-xl font-bold mb-3">{f.title}</h3>
-                  <p className="text-sm text-brand-textDim leading-relaxed mb-4 max-w-3xl">{f.desc}</p>
+                  <p className="text-base text-brand-textDim leading-relaxed mb-4 max-w-3xl">{f.desc}</p>
                   <div className="font-mono text-[10px] uppercase tracking-wider text-brand-textDim">
                     {f.tags.join("  ·  ")}
                   </div>
@@ -348,8 +348,8 @@ export function MainHomePage() {
             >
               <div>
                 <span className="mono-label block mb-1">NOTICE</span>
-                <span className="text-sm font-medium group-hover:text-brand-primary transition-colors">공지사항</span>
-                <span className="text-xs text-brand-textDim ml-3">서비스 소식과 업데이트</span>
+                <span className="text-base font-medium group-hover:text-brand-primary transition-colors">공지사항</span>
+                <span className="text-sm text-brand-textDim ml-3">서비스 소식과 업데이트</span>
               </div>
               <span className="text-brand-primary group-hover:translate-x-1.5 transition-transform">→</span>
             </Link>
@@ -361,8 +361,8 @@ export function MainHomePage() {
             >
               <div>
                 <span className="mono-label block mb-1">FAQ</span>
-                <span className="text-sm font-medium group-hover:text-brand-primary transition-colors">자주 묻는 질문</span>
-                <span className="text-xs text-brand-textDim ml-3">이용 방법, PRO, 오류 해결</span>
+                <span className="text-base font-medium group-hover:text-brand-primary transition-colors">자주 묻는 질문</span>
+                <span className="text-sm text-brand-textDim ml-3">이용 방법, PRO, 오류 해결</span>
               </div>
               <span className="text-brand-primary group-hover:translate-x-1.5 transition-transform">→</span>
             </Link>

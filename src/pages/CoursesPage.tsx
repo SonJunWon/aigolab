@@ -20,7 +20,7 @@ export function CoursesPage() {
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-3">
             AI 강의<span className="text-brand-primary">.</span>
           </h1>
-          <p className="text-sm sm:text-base text-brand-textDim max-w-2xl">
+          <p className="text-base sm:text-lg text-brand-textDim max-w-2xl">
             AI 이론을 코스별로 — 큰 그림부터 딥러닝·강화학습 같은 심화 주제까지.
           </p>
         </header>
@@ -61,7 +61,7 @@ export function CoursesPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-brand-textDim leading-relaxed mb-3 max-w-2xl">
+                  <p className="text-base text-brand-textDim leading-relaxed mb-3 max-w-2xl">
                     {group.subtitle}
                   </p>
                   <div className="font-mono text-[10px] uppercase tracking-wider text-brand-textDim">
@@ -104,7 +104,7 @@ export function CoursesPage() {
         {/* 안내 */}
         <div className="mt-10 sm:mt-14 flex items-baseline gap-4">
           <span className="mono-label shrink-0">NOTE</span>
-          <p className="text-sm text-brand-textDim">
+          <p className="text-base text-brand-textDim">
             <span className="text-brand-primary font-medium">‘AI 살펴보기’</span>로 큰 그림을 먼저
             잡아보세요. 딥러닝·강화학습 등 심화 코스는 순차적으로 열립니다.
           </p>

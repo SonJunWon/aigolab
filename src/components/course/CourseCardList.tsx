@@ -57,7 +57,7 @@ export function CourseCardList({ courses }: { courses: CourseSummary[] }) {
                   {course.title}
                 </h3>
                 {course.subtitle && (
-                  <p className="text-xs sm:text-sm text-brand-textDim mt-1 leading-snug">
+                  <p className="text-sm sm:text-base text-brand-textDim mt-1 leading-snug">
                     {course.subtitle}
                   </p>
                 )}

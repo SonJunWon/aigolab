@@ -159,7 +159,7 @@ export function NoticesPage() {
             >
               ← 목록으로
             </button>
-            <article className="p-6 rounded-xl border border-brand-subtle bg-brand-panel/60">
+            <article className="p-6 border border-brand-line bg-brand-panel/40">
               <div className="flex items-center gap-2 mb-3">
                 {openNotice.pinned && <span className="text-xs">📌</span>}
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${CATEGORY_META[openNotice.category].cls}`}>
@@ -182,7 +182,7 @@ export function NoticesPage() {
                 <button
                   key={notice.id}
                   onClick={() => setSelectedNotice(notice.id)}
-                  className="w-full text-left p-4 sm:p-5 rounded-xl border border-brand-subtle bg-brand-panel/40
+                  className="w-full text-left p-4 sm:p-5 border border-brand-line bg-brand-panel/40
                              hover:bg-brand-panel/80 hover:border-brand-accent/30 transition-all group"
                 >
                   <div className="flex items-center gap-2 mb-1.5">

@@ -65,7 +65,7 @@ export function AiEngTrackPage() {
           {/* 입문자 */}
           <Link
             to="/coding/learn/ai-engineering/beginner"
-            className="group block p-6 sm:p-7 rounded-2xl border border-brand-subtle bg-brand-panel/80
+            className="group block p-6 sm:p-7 border border-brand-line bg-brand-panel/40
                        hover:border-brand-primary/60 hover:shadow-lg hover:shadow-brand-primary/10 transition-all"
           >
             <div className="flex items-center gap-3 mb-3">
@@ -99,7 +99,7 @@ export function AiEngTrackPage() {
           {/* 중급1 — 지식과 컨텍스트 */}
           <Link
             to="/coding/learn/ai-engineering/intermediate1"
-            className="group block p-6 sm:p-7 rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/8 to-brand-panel/80
+            className="group block p-6 sm:p-7 border border-emerald-500/50 bg-brand-panel/40
                        hover:border-emerald-400/60 hover:shadow-lg hover:shadow-emerald-500/10 transition-all"
           >
             <div className="flex items-center gap-3 mb-3">
@@ -135,7 +135,7 @@ export function AiEngTrackPage() {
           {/* ✦ MCP 특별강의 — 가교 특강 */}
           <Link
             to="/coding/learn/ai-engineering/mcp-special"
-            className="group block p-6 sm:p-7 rounded-2xl border border-sky-500/30 bg-gradient-to-br from-sky-500/8 to-brand-panel/80
+            className="group block p-6 sm:p-7 border border-sky-500/50 bg-brand-panel/40
                        hover:border-sky-400/60 hover:shadow-lg hover:shadow-sky-500/10 transition-all"
           >
             <div className="flex items-center gap-3 mb-3">
@@ -171,7 +171,7 @@ export function AiEngTrackPage() {
           {/* 중급2 — 에이전틱 */}
           <Link
             to="/coding/learn/ai-engineering/intermediate2"
-            className="group block p-6 sm:p-7 rounded-2xl border border-orange-500/30 bg-gradient-to-br from-orange-500/8 to-brand-panel/80
+            className="group block p-6 sm:p-7 border border-orange-500/50 bg-brand-panel/40
                        hover:border-orange-400/60 hover:shadow-lg hover:shadow-orange-500/10 transition-all"
           >
             <div className="flex items-center gap-3 mb-3">
@@ -206,7 +206,7 @@ export function AiEngTrackPage() {
           {/* 고급1 — 하네스 엔지니어링 */}
           <Link
             to="/coding/learn/ai-engineering/advanced1"
-            className="group block p-6 sm:p-7 rounded-2xl border border-rose-500/30 bg-gradient-to-br from-rose-500/8 to-brand-panel/80
+            className="group block p-6 sm:p-7 border border-rose-500/50 bg-brand-panel/40
                        hover:border-rose-400/60 hover:shadow-lg hover:shadow-rose-500/10 transition-all"
           >
             <div className="flex items-center gap-3 mb-3">

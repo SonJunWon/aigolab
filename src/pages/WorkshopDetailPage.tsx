@@ -155,7 +155,7 @@ export function WorkshopDetailPage() {
         </div>
 
         {/* ─── 히어로 카드 ─── */}
-        <div className="rounded-2xl border border-brand-subtle overflow-hidden mb-8">
+        <div className="border border-brand-line overflow-hidden mb-8">
           {/* 상단 배너 */}
           <div className={`px-6 sm:px-8 pt-6 sm:pt-8 pb-4 ${phase.bg}`}>
             <div className="flex items-center gap-2 mb-3">
@@ -202,7 +202,7 @@ export function WorkshopDetailPage() {
         {info.asciiMockup && (
           <div className="mb-8">
             <h2 className="text-lg font-semibold mb-3">완성 모습</h2>
-            <div className="p-4 sm:p-6 rounded-xl bg-brand-panel border border-brand-subtle overflow-x-auto">
+            <div className="p-4 sm:p-6 bg-brand-panel border border-brand-line overflow-x-auto">
               <pre className="text-xs sm:text-sm text-brand-textDim font-mono whitespace-pre leading-relaxed">
                 {info.asciiMockup}
               </pre>
@@ -214,7 +214,7 @@ export function WorkshopDetailPage() {
         <div className="mb-8">
           <h2 className="text-lg font-semibold mb-3">이런 걸 배워요</h2>
           <div className="grid sm:grid-cols-2 gap-3">
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-brand-panel/60 border border-brand-subtle/50">
+            <div className="flex items-start gap-3 p-4 bg-brand-panel/60 border border-brand-line">
               <span className="text-lg shrink-0">🧠</span>
               <div>
                 <div className="text-sm font-medium mb-0.5">Part A — 핵심 개념 실습</div>
@@ -223,7 +223,7 @@ export function WorkshopDetailPage() {
                 </div>
               </div>
             </div>
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-brand-panel/60 border border-brand-subtle/50">
+            <div className="flex items-start gap-3 p-4 bg-brand-panel/60 border border-brand-line">
               <span className="text-lg shrink-0">🛠️</span>
               <div>
                 <div className="text-sm font-medium mb-0.5">Part B — MD 레시피로 앱 완성</div>
@@ -292,7 +292,7 @@ export function WorkshopDetailPage() {
                   <Link
                     key={p.id}
                     to={`/ai-dev/workshop/${p.id}`}
-                    className="flex items-center gap-3 p-3 rounded-lg border border-brand-subtle/50 bg-brand-panel/40
+                    className="flex items-center gap-3 p-3 border border-brand-line bg-brand-panel/40
                                hover:border-brand-accent/40 transition-all group"
                   >
                     <span className={`text-sm ${prDone ? "text-emerald-400" : "text-brand-textDim"}`}>
@@ -322,7 +322,7 @@ export function WorkshopDetailPage() {
                   <Link
                     key={r.id}
                     to={`/ai-dev/workshop/${r.id}`}
-                    className="p-3 rounded-lg border border-brand-subtle/50 bg-brand-panel/40
+                    className="p-3 border border-brand-line bg-brand-panel/40
                                hover:border-brand-accent/40 transition-all group"
                   >
                     <div className="flex items-center gap-2 mb-1">
@@ -355,7 +355,7 @@ export function WorkshopDetailPage() {
           {prev ? (
             <Link
               to={`/ai-dev/workshop/${prev.id}`}
-              className="flex-1 p-4 rounded-xl border border-brand-subtle bg-brand-panel/40
+              className="flex-1 p-4 border border-brand-line bg-brand-panel/40
                          hover:border-brand-accent/40 transition-all group"
             >
               <div className="text-[10px] text-brand-textDim mb-1">← 이전</div>
@@ -367,7 +367,7 @@ export function WorkshopDetailPage() {
           {next ? (
             <Link
               to={`/ai-dev/workshop/${next.id}`}
-              className="flex-1 p-4 rounded-xl border border-brand-subtle bg-brand-panel/40
+              className="flex-1 p-4 border border-brand-line bg-brand-panel/40
                          hover:border-brand-accent/40 transition-all group text-right"
             >
               <div className="text-[10px] text-brand-textDim mb-1">다음 →</div>

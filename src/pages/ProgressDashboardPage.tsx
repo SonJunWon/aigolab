@@ -48,7 +48,7 @@ export function ProgressDashboardPage() {
         </div>
 
         {/* 히어로 */}
-        <div className="mb-8 p-6 sm:p-8 rounded-2xl bg-brand-panel border border-brand-subtle">
+        <div className="mb-8 p-6 sm:p-8 bg-brand-panel border border-brand-line">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">학습 진도</h1>
           <p className="text-sm text-brand-textDim mb-6">
             기초부터 SaaS 런칭까지, 8단계 학습 여정
@@ -81,7 +81,7 @@ export function ProgressDashboardPage() {
             </h2>
             <Link
               to={`/ai-dev/workshop/${nextWorkshop.id}`}
-              className="group flex items-center gap-4 p-5 rounded-xl border border-brand-accent/30
+              className="group flex items-center gap-4 p-5 border border-brand-line
                          bg-brand-panel
                          hover:border-brand-accent/60 transition-all"
             >
@@ -115,7 +115,7 @@ export function ProgressDashboardPage() {
             const allDone = done === total;
 
             return (
-              <div key={phase.id} className={`rounded-xl border ${phase.border} ${phase.bg} p-4 sm:p-5`}>
+              <div key={phase.id} className={`border ${phase.border} ${phase.bg} p-4 sm:p-5`}>
                 {/* Phase 헤더 */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">

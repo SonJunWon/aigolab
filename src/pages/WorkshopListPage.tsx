@@ -157,7 +157,7 @@ export function WorkshopListPage() {
         </div>
 
         {/* ─── 히어로 ─── */}
-        <div className="mb-8 p-6 sm:p-8 rounded-2xl bg-brand-panel border border-brand-subtle">
+        <div className="mb-8 p-6 sm:p-8 bg-brand-panel border border-brand-line">
           <div className="flex items-start gap-4">
             <div className="text-4xl sm:text-5xl">🛠️</div>
             <div className="flex-1 min-w-0">
@@ -216,7 +216,7 @@ export function WorkshopListPage() {
             const isCollapsed = collapsed[phase.id] ?? false;
 
             return (
-              <div key={phase.id} className="rounded-xl border border-brand-subtle overflow-hidden">
+              <div key={phase.id} className="border border-brand-line overflow-hidden">
                 {/* Phase 헤더 */}
                 <button
                   onClick={() => togglePhase(phase.id)}
@@ -335,7 +335,7 @@ export function WorkshopListPage() {
         </div>
 
         {/* ─── 하단 안내 ─── */}
-        <div className="mt-8 p-6 rounded-xl border border-dashed border-brand-subtle text-center">
+        <div className="mt-8 p-6 border border-dashed border-brand-line/40 text-center">
           <p className="text-sm text-brand-textDim">
             총 {totalLessons}개 워크샵 — 기초부터 SaaS 런칭까지 단계별로 도전해보세요
           </p>

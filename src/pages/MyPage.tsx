@@ -197,7 +197,7 @@ export function MyPage() {
         <section className="mb-10">
           <Link
             to="/my/api-keys"
-            className="group flex items-center gap-4 p-5 rounded-xl border border-brand-subtle bg-brand-panel
+            className="group flex items-center gap-4 p-5 border border-brand-line bg-brand-panel/40
                        hover:border-brand-accent/40 hover:shadow-lg transition-all"
           >
             <span className="text-2xl">🔑</span>
@@ -213,7 +213,7 @@ export function MyPage() {
         <section className="mb-10">
           <Link
             to="/my/markdown"
-            className="group flex items-center gap-4 p-5 rounded-xl border border-brand-subtle bg-brand-panel
+            className="group flex items-center gap-4 p-5 border border-brand-line bg-brand-panel/40
                        hover:border-brand-accent/40 hover:shadow-lg transition-all"
           >
             <span className="text-2xl">📝</span>
@@ -226,7 +226,7 @@ export function MyPage() {
         </section>
 
         {/* 활동 히트맵 */}
-        <section className="mb-10 p-5 rounded-xl border border-brand-subtle bg-brand-panel">
+        <section className="mb-10 p-5 border border-brand-line bg-brand-panel/40">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-medium text-brand-textDim uppercase tracking-wider">
               최근 13주 활동
@@ -260,7 +260,7 @@ export function MyPage() {
           {loading ? (
             <p className="text-brand-textDim text-sm">로딩 중...</p>
           ) : tracks.length === 0 ? (
-            <div className="p-8 rounded-xl border border-dashed border-brand-subtle text-center">
+            <div className="p-8 border border-dashed border-brand-line/40 text-center">
               <p className="text-brand-textDim">아직 학습 기록이 없어요.</p>
               <Link
                 to="/coding"
@@ -275,7 +275,7 @@ export function MyPage() {
               {tracks.map((t) => (
                 <div
                   key={`${t.language}:${t.track}`}
-                  className="p-5 rounded-xl border border-brand-subtle bg-brand-panel"
+                  className="p-5 border border-brand-line bg-brand-panel/40"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -332,7 +332,7 @@ export function MyPage() {
             수료증
           </h2>
           {completeTracks.length === 0 ? (
-            <div className="p-8 rounded-xl border border-dashed border-brand-subtle text-center">
+            <div className="p-8 border border-dashed border-brand-line/40 text-center">
               <p className="text-brand-textDim">
                 트랙을 완료하면 수료증이 발급됩니다.
               </p>
@@ -385,7 +385,7 @@ function StatCard({
   accent?: string;
 }) {
   return (
-    <div className="p-4 rounded-xl border border-brand-subtle bg-brand-panel text-center">
+    <div className="p-4 border border-brand-line bg-brand-panel/40 text-center">
       <div className="text-2xl font-bold text-brand-text">
         {accent && <span className="mr-1">{accent}</span>}
         {value}

@@ -92,7 +92,7 @@ export function ProjectsPage() {
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-3">
             AI 프로젝트<span className="text-brand-primary">.</span>
           </h1>
-          <p className="text-sm sm:text-base text-brand-textDim">
+          <p className="text-base sm:text-lg text-brand-textDim">
             실제 데이터로 머신러닝 모델을 만들어보세요. 브라우저에서 바로 실행!
           </p>
         </header>
@@ -128,7 +128,7 @@ export function ProjectsPage() {
 
         <div className="space-y-3">
           {visibleProjects.length === 0 && (
-            <div className="text-center py-12 text-brand-textDim text-sm border border-dashed border-brand-subtle rounded-xl">
+            <div className="text-center py-12 text-brand-textDim text-sm border border-dashed border-brand-line/40">
               이 카테고리에는 아직 프로젝트가 없어요.
             </div>
           )}
@@ -140,7 +140,7 @@ export function ProjectsPage() {
             return (
               <div
                 key={p.id}
-                className={`rounded-xl border overflow-hidden transition-all ${
+                className={`border overflow-hidden transition-all ${
                   isOpen
                     ? "border-brand-primary/50 bg-brand-panel shadow-lg shadow-brand-primary/5"
                     : isPro
@@ -267,7 +267,7 @@ export function ProjectsPage() {
         </div>
 
         {/* 하단 안내 */}
-        <div className="mt-10 p-5 rounded-xl border border-dashed border-brand-subtle text-center">
+        <div className="mt-10 p-5 border border-dashed border-brand-line/40 text-center">
           <p className="text-brand-textDim text-sm">
             💡 프로젝트 시작 시 <strong className="text-brand-text">IDE</strong>가 열리고{" "}
             <strong className="text-brand-text">우측 가이드 패널</strong>에서 단계별로 따라갈 수 있어요.

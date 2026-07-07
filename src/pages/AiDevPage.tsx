@@ -51,7 +51,7 @@ export function AiDevPage() {
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-3">
             AI 앱 개발<span className="text-brand-primary">.</span>
           </h1>
-          <p className="text-sm sm:text-base text-brand-textDim max-w-2xl">
+          <p className="text-base sm:text-lg text-brand-textDim max-w-2xl">
             AI 이론을 넘어 — 직접 만들고, 실행하고, 배포하는 공간.
             코딩 경험 없어도, 글을 쓸 수 있으면 앱을 만들 수 있어요.
           </p>
@@ -63,7 +63,7 @@ export function AiDevPage() {
             {/* AI 입문 준비 과정 — 전체 폭 강조 */}
             <Link
               to="/coding/learn/ai-engineering/intro"
-              className="group block p-6 sm:p-8 rounded-2xl border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/8 to-brand-panel/80
+              className="group block p-6 sm:p-8 border border-amber-400/60 bg-brand-panel/40
                          hover:border-amber-400/60 hover:shadow-lg hover:shadow-amber-500/10 transition-all"
             >
               <div className="flex items-center gap-2 mb-3">
@@ -109,7 +109,7 @@ export function AiDevPage() {
               {/* AI 엔지니어링 트랙 — 파트 선택 */}
               <Link
                 to="/ai-dev/track"
-                className="group p-6 sm:p-8 rounded-2xl border border-brand-subtle bg-brand-panel/80
+                className="group p-6 sm:p-8 border border-brand-line bg-brand-panel/40
                            hover:border-brand-primary/60 hover:shadow-lg hover:shadow-brand-primary/10 transition-all"
               >
                 <div className="flex items-center gap-3 mb-4">
@@ -145,7 +145,7 @@ export function AiDevPage() {
               {/* 바이브코딩 워크샵 */}
               <Link
                 to="/ai-dev/workshop"
-                className="group p-6 sm:p-8 rounded-2xl border border-brand-subtle bg-gradient-to-br from-cyan-500/8 to-brand-panel/80
+                className="group p-6 sm:p-8 border border-brand-line bg-brand-panel/40
                            hover:border-brand-accent/60 hover:shadow-lg hover:shadow-brand-accent/10 transition-all"
               >
                 <div className="flex items-center gap-3 mb-4">
@@ -195,7 +195,7 @@ export function AiDevPage() {
             {APP_GALLERY.map((app) => (
               <div
                 key={app.ws}
-                className="text-center p-3 rounded-xl border border-brand-subtle/40 bg-brand-panel/30
+                className="text-center p-3 border border-brand-line bg-transparent
                            hover:border-brand-accent/30 transition-all"
               >
                 <div className="text-2xl mb-1">{app.icon}</div>
@@ -218,7 +218,7 @@ export function AiDevPage() {
               { icon: "🛠️", label: "바이브코딩 워크샵", desc: "실전 앱 42개 제작", color: "border-cyan-500/30 bg-cyan-500/5" },
             ].map((item, i, arr) => (
               <div key={i}>
-                <div className={`flex items-center gap-4 p-4 rounded-xl border ${item.color}`}>
+                <div className={`flex items-center gap-4 p-4 border ${item.color}`}>
                   <span className="text-2xl">{item.icon}</span>
                   <div>
                     <div className="text-sm font-medium">{item.label}</div>
@@ -243,7 +243,7 @@ export function AiDevPage() {
         <section className="mb-12 sm:mb-16">
           <Link
             to="/ai-dev/progress"
-            className="group block p-5 sm:p-6 rounded-xl border border-brand-subtle bg-brand-panel/60
+            className="group block p-5 sm:p-6 border border-brand-line bg-brand-panel/40
                        hover:border-brand-accent/40 hover:shadow-lg transition-all"
           >
             <div className="flex items-center justify-between">

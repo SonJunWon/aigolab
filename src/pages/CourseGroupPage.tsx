@@ -42,14 +42,14 @@ export function CourseGroupPage() {
             {group.title}
             <span className="text-brand-primary">.</span>
           </h1>
-          <p className="text-sm sm:text-base text-brand-textDim max-w-2xl">{group.subtitle}</p>
+          <p className="text-base sm:text-lg text-brand-textDim max-w-2xl">{group.subtitle}</p>
         </header>
 
         <CourseCardList courses={courses} />
 
         <div className="mt-10 sm:mt-14 flex items-baseline gap-4">
           <span className="mono-label shrink-0">NOTE</span>
-          <p className="text-sm text-brand-textDim">
+          <p className="text-base text-brand-textDim">
             일부 강의엔{" "}
             <span className="text-brand-primary font-medium">
               브라우저에서 바로 실행되는 Python 실습

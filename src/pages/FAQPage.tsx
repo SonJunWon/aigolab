@@ -289,7 +289,7 @@ export function FAQPage() {
                     return (
                       <div
                         key={key}
-                        className="rounded-xl border border-brand-subtle overflow-hidden"
+                        className="border border-brand-line overflow-hidden"
                       >
                         <button
                           onClick={() => toggleItem(key)}
