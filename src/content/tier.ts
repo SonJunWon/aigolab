@@ -47,6 +47,13 @@ export const FREE_AI_ENG_LESSON_IDS: ReadonlySet<string> = new Set([
   "ai-eng-01-webllm-intro",
   "ai-eng-02-gemini-prompting",
   // 친화 버전 미리보기(friendly-preview)는 전 강의 PRO 잠금 — 무료 목록에 두지 않는다.
+  // 고급1 시리즈 A "하네스 이야기" 6강은 전면 무료 (트랙 유입용) — B·C 시리즈는 PRO.
+  "ai-eng-a1-a01-what-is-harness",
+  "ai-eng-a1-a02-the-loop",
+  "ai-eng-a1-a03-tools",
+  "ai-eng-a1-a04-desk-and-notebook",
+  "ai-eng-a1-a05-seatbelt",
+  "ai-eng-a1-a06-failure-clinic",
 ]);
 
 /**
