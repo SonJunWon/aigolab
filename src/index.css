@@ -36,10 +36,14 @@
     background-color: #ffffff !important;
   }
 
-  /* 카드/패널 배경 → 옅은 회색 */
-  [data-theme="light"] [class*="bg-brand-panel"],
-  [data-theme="light"] [class*="bg-colab-panel"] {
+  /* 카드/패널 배경 → 옅은 회색 (hover 전용 변형은 제외하고 :hover 시에만) */
+  [data-theme="light"] [class*="bg-brand-panel"]:not([class*="hover:bg-brand-panel"]),
+  [data-theme="light"] [class*="bg-colab-panel"]:not([class*="hover:bg-colab-panel"]) {
     background-color: #f3f4f6 !important;
+  }
+  [data-theme="light"] [class*="hover:bg-brand-panel"]:hover,
+  [data-theme="light"] [class*="hover:bg-colab-panel"]:hover {
+    background-color: #e5e7eb !important;
   }
 
   /* 보더·구분선·hover 배경 → 중간 회색 */
@@ -78,6 +82,9 @@
   [data-theme="light"] [class*="border-brand-line"] {
     border-color: #111827 !important;
   }
+  [data-theme="light"] [class*="border-brand-line/40"] {
+    border-color: rgba(17, 24, 39, 0.4) !important;
+  }
   [data-theme="light"] [class*="bg-brand-line"] {
     background-color: #111827 !important;
   }
@@ -95,8 +102,8 @@
 
   /* ─── 라이트 모드: accent/primary 관련 ─── */
 
-  /* accent 배경 (투명도 포함) → 라이트 톤 (오렌지레드) */
-  [data-theme="light"] [class*="bg-brand-accent"] {
+  /* accent 배경 (투명도 포함) → 라이트 톤 (오렌지레드) — hover 전용 변형 제외 */
+  [data-theme="light"] [class*="bg-brand-accent"]:not([class*="hover:bg-brand-accent"]) {
     --tw-bg-opacity: 1;
     background-color: rgba(229, 82, 42, var(--tw-bg-opacity)) !important;
   }
@@ -106,20 +113,34 @@
     background-color: rgba(229, 82, 42, 0.08) !important;
   }
 
-  /* accent 텍스트 → 라이트에서 더 진하게 */
-  [data-theme="light"] [class*="text-brand-accent"] {
+  /* accent 텍스트 → 라이트에서 더 진하게 (hover 전용 변형은 :hover 시에만) */
+  [data-theme="light"] [class*="text-brand-accent"]:not([class*="hover:text-brand-accent"]) {
+    color: #e5522a !important;
+  }
+  [data-theme="light"] [class*="hover:text-brand-accent"]:hover {
     color: #e5522a !important;
   }
 
-  /* accent 보더 → 라이트 톤 */
-  [data-theme="light"] [class*="border-brand-accent"] {
+  /* accent 보더 → 라이트 톤 (hover 전용 변형은 :hover 시에만 — 상시 주황 보더 방지) */
+  [data-theme="light"] [class*="border-brand-accent"]:not([class*="hover:border-brand-accent"]) {
     border-color: rgba(229, 82, 42, 0.3) !important;
+  }
+  [data-theme="light"] [class*="hover:border-brand-accent"]:hover {
+    border-color: rgba(229, 82, 42, 0.5) !important;
   }
 
   /* primary 텍스트 → 라이트에선 네온 그린이 안 보이므로 진한 그린 */
   [data-theme="light"] [class*="text-brand-primary"]:not([class*="text-brand-primaryDim"]) {
     color: #059669 !important;
   }
+  /* primary 보더 → 라이트에선 진한 그린 (hover 전용 변형은 :hover 시에만) */
+  [data-theme="light"] [class*="border-brand-primary"]:not([class*="hover:border-brand-primary"]) {
+    border-color: rgba(5, 150, 105, 0.45) !important;
+  }
+  [data-theme="light"] [class*="hover:border-brand-primary"]:hover {
+    border-color: #059669 !important;
+  }
+
   /* primary 솔리드 배경(CTA 버튼 등) → 라이트에서도 읽히는 진한 그린 */
   [data-theme="light"] [class*="bg-brand-primary"]:not([class*="bg-brand-primary/"]) {
     background-color: #10b981 !important;
