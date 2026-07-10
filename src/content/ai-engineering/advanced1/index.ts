@@ -13,6 +13,16 @@ import { lessonB05 } from "./handling/05-reins";
 import { lessonB06 } from "./handling/06-automation";
 import { lessonB07 } from "./handling/07-everyday-evals";
 import { lessonB08 } from "./handling/08-capstone-blueprint";
+import { lessonC01 } from "./building/01-minimal-harness";
+import { lessonC02 } from "./building/02-tool-design";
+import { lessonC03 } from "./building/03-prompt-architecture";
+import { lessonC04 } from "./building/04-context-engineering";
+import { lessonC05 } from "./building/05-file-memory";
+import { lessonC06 } from "./building/06-brakes";
+import { lessonC07 } from "./building/07-subagents";
+import { lessonC08 } from "./building/08-living-runtime";
+import { lessonC09 } from "./building/09-eval-harness";
+import { lessonC10 } from "./building/10-capstone-mini-claude-code";
 
 /**
  * AI 엔지니어링 — 고급1 "AI 에이전트 엔지니어링 ① 하네스 엔지니어링".
@@ -20,8 +30,8 @@ import { lessonB08 } from "./handling/08-capstone-blueprint";
  * 척추 개념: "같은 뇌, 다른 몸" — 에이전트 = 모델(뇌) + 하네스(몸).
  * 5대 기관(루프·도구·컨텍스트·기억·가드레일) 지도를 3개 깊이로 확대해 가는 3중 시리즈:
  *   시리즈 A "하네스 이야기"  (story/,    A1~A6, 누구나·코드 0줄·무료)   ← v4.34.0 배포
- *   시리즈 B "하네스 다루기"  (handling/, B1~B8, AI 활용 비개발자·PRO)   ← 완성 (설정·조련 실습)
- *   시리즈 C "하네스 만들기"  (building/, C1~C10, 개발자·PRO)            ← 집필 예정
+ *   시리즈 B "하네스 다루기"  (handling/, B1~B8, AI 활용 비개발자·PRO)   ← v4.37.0 배포
+ *   시리즈 C "하네스 만들기"  (building/, C1~C10, 개발자·PRO)            ← 완성 (chat() 원시 호출로 루프부터 평가까지 직접 구현, C10 미니 하네스 조립)
  *
  * order 대역: A=1~6, B=11~18, C=21~30 (시리즈 간 여유 슬롯).
  * 기획: AI앱개발/AI 엔지니어링 트랙/AI엔지니어링-고급1/01-고급1-하네스엔지니어링-커리큘럼.md
@@ -41,6 +51,16 @@ export const LESSONS: Lesson[] = [
   lessonB06,
   lessonB07,
   lessonB08,
+  lessonC01,
+  lessonC02,
+  lessonC03,
+  lessonC04,
+  lessonC05,
+  lessonC06,
+  lessonC07,
+  lessonC08,
+  lessonC09,
+  lessonC10,
 ];
 
 export const LESSON_SUMMARIES: LessonSummary[] = LESSONS.map((l) => ({

@@ -77,7 +77,13 @@ export const TRACKS: TrackInfo[] = [
     id: "advanced1",
     name: "고급1 — 하네스 엔지니어링",
     description: "AI 에이전트 엔지니어링 ①. 에이전트 = 모델(뇌) + 하네스(몸). 5대 기관(루프·도구·컨텍스트·기억·가드레일)을 이야기→다루기→만들기 3중 시리즈로.",
-    estimatedHours: 6,
+    estimatedHours: 13,
+  },
+  {
+    id: "advanced2",
+    name: "고급2 — 멀티에이전트 시스템",
+    description: "AI 에이전트 엔지니어링 ②. 말 한 마리는 짐을 끌고, 마차단은 도시를 옮긴다 — 분업·역할·지휘·전달·신뢰 5대 축으로 에이전트 팀을 설계한다.",
+    estimatedHours: 2,
   },
   {
     id: "friendly-preview",

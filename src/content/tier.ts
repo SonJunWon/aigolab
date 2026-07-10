@@ -54,6 +54,13 @@ export const FREE_AI_ENG_LESSON_IDS: ReadonlySet<string> = new Set([
   "ai-eng-a1-a04-desk-and-notebook",
   "ai-eng-a1-a05-seatbelt",
   "ai-eng-a1-a06-failure-clinic",
+  // 고급2 시리즈 A "팀의 탄생" 6강도 전면 무료 (트랙 유입용) — B·C 시리즈는 PRO.
+  "ai-eng-a2-a01-limit-of-one",
+  "ai-eng-a2-a02-division-of-labor",
+  "ai-eng-a2-a03-orchestration-zoo",
+  "ai-eng-a2-a04-handoff-contract",
+  "ai-eng-a2-a05-trust-and-verify",
+  "ai-eng-a2-a06-failure-clinic",
 ]);
 
 /**
