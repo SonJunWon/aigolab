@@ -220,7 +220,7 @@ export function AiEngTrackPage() {
                     {ADVANCED1_LESSONS.length}강
                   </span>
                   <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500 text-white font-semibold">NEW</span>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-green text-black font-semibold">무료</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-green text-black font-semibold">A 무료</span>
                 </div>
                 <p className="text-xs text-brand-textDim">AI 에이전트 엔지니어링 ① — 같은 뇌, 다른 몸</p>
               </div>
@@ -228,15 +228,15 @@ export function AiEngTrackPage() {
             </div>
             <p className="text-sm text-brand-textDim mb-3 leading-relaxed">
               에이전트 = 모델(뇌) + 하네스(몸). 루프·도구·컨텍스트·기억·가드레일 5대 기관으로 에이전트를 해부한다.
-              시리즈 A '하네스 이야기'(코드 0줄, 누구나) 공개 — B(다루기)·C(만들기)로 이어지는 3중 시리즈.
+              시리즈 A '이야기'(6강, 코드 0줄, 무료) + B '다루기'(8강, 설정으로 조련, PRO) — C '만들기'(개발자)로 이어지는 3중 시리즈.
             </p>
             <div className="flex flex-wrap gap-2 mb-3">
-              {["하네스", "루프", "도구", "컨텍스트", "가드레일", "실패학"].map((t) => (
+              {["하네스", "5대 기관", "지침 파일", "도구 큐레이션", "권한 설계", "골든 케이스"].map((t) => (
                 <span key={t} className="px-2 py-0.5 rounded-md text-[10px] bg-rose-500/10 text-rose-300">{t}</span>
               ))}
             </div>
             <div className="text-xs text-brand-textDim">
-              📖 {ADVANCED1_LESSONS.length}강 · ⏱️ ~110분 · ✅ {adv1Done}강 완료 · 선수 지식 없음 (누구나)
+              📖 {ADVANCED1_LESSONS.length}강 · ⏱️ ~5.5시간 · ✅ {adv1Done}강 완료 · A는 선수 지식 없음(누구나) · B는 A 수강 권장
             </div>
           </Link>
         </section>
