@@ -268,7 +268,7 @@ export function AiEngTrackPage() {
             </div>
             <p className="text-sm text-brand-textDim mb-3 leading-relaxed">
               멀티에이전트 = 조직 설계. 분업·역할·지휘·전달·신뢰 5대 축으로 에이전트 팀을 짓는다.
-              시리즈 A '팀의 탄생'(6강, 코드 0줄, 무료) + B '팀 지휘하기'(8강, 위임·병렬·검증 운용, PRO) 공개 — C '팀 만들기'(실전: 자동 코드리뷰 회사)로 완성되는 3중 시리즈.
+              3중 시리즈 완성 — A '팀의 탄생'(6강, 코드 0줄, 무료) · B '팀 지휘하기'(8강, 위임·병렬·검증 운용) · C '팀 만들기'(10강, 실전 아크: 자동 코드리뷰 회사→리서치 뉴스룸).
             </p>
             <div className="flex flex-wrap gap-2 mb-3">
               {["조직 설계", "5대 축", "지휘 패턴", "산출물 계약", "적대적 검증", "실패학"].map((t) => (
@@ -276,7 +276,7 @@ export function AiEngTrackPage() {
               ))}
             </div>
             <div className="text-xs text-brand-textDim">
-              📖 {ADVANCED2_LESSONS.length}강 · ⏱️ ~5.5시간 · ✅ {adv2Done}강 완료 · A는 누구나 · B는 A 수강 권장
+              📖 {ADVANCED2_LESSONS.length}강 · ⏱️ ~12시간 · ✅ {adv2Done}강 완료 · A는 누구나 · B는 A 권장 · C는 개발자(고급1 C 권장)
             </div>
           </Link>
         </section>

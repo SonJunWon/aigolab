@@ -83,7 +83,7 @@ export const TRACKS: TrackInfo[] = [
     id: "advanced2",
     name: "고급2 — 멀티에이전트 시스템",
     description: "AI 에이전트 엔지니어링 ②. 말 한 마리는 짐을 끌고, 마차단은 도시를 옮긴다 — 분업·역할·지휘·전달·신뢰 5대 축으로 에이전트 팀을 설계한다.",
-    estimatedHours: 6,
+    estimatedHours: 12,
   },
   {
     id: "friendly-preview",
