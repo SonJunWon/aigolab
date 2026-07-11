@@ -7,7 +7,7 @@
  */
 
 import { chat } from "../llm";
-import type { LectureSummary } from "./types";
+import type { LectureNote, LectureSummary } from "./types";
 
 /** 이 길이(자)를 넘으면 맵-리듀스 경로 */
 const DIRECT_LIMIT = 14_000;
@@ -69,6 +69,55 @@ const SYSTEM = `너는 강의 노트 정리 전문가다. 전사(음성→텍스
 function fmtTime(sec: number): string {
   const m = Math.floor(sec / 60);
   return `${m}:${String(sec % 60).padStart(2, "0")}`;
+}
+
+/**
+ * 통합 정리본 (M2) — 강의의 세션 정리본들을 재종합.
+ * 전사 원문이 아니라 각 세션의 정리본을 입력으로 쓴다(맵-리듀스 2단째 — 토큰 절약).
+ * outline.time 에는 타임스탬프 대신 회차 라벨을 쓴다.
+ */
+export async function summarizeLectureOverview(
+  lectureTitle: string,
+  speaker: string,
+  sessions: LectureNote[],
+): Promise<LectureSummary> {
+  const parts = sessions.map((n, i) => {
+    const label = n.sessionLabel || `${i + 1}회차`;
+    const s = n.summary;
+    if (!s) return `[${label}] (정리본 없음 — 전사만 존재. 제목: ${n.title})`;
+    return [
+      `[${label}] ${s.title}`,
+      `요약: ${s.oneLiner}`,
+      s.keyConcepts.length ? `개념: ${s.keyConcepts.map((c) => `${c.name}(${c.explanation})`).join(" / ")}` : "",
+      s.outline.length ? `흐름: ${s.outline.map((o) => o.heading).join(" → ")}` : "",
+      s.actionItems.length ? `액션: ${s.actionItems.join(" / ")}` : "",
+      s.terms.length ? `용어: ${s.terms.map((t) => t.term).join(", ")}` : "",
+    ].filter(Boolean).join("\n");
+  });
+
+  const res = await chat({
+    task: "reasoning",
+    messages: [
+      {
+        role: "system",
+        content: `너는 여러 회차로 진행된 강의 전체를 종합하는 정리 전문가다. 한국어로.
+- 회차별 정리본만 근거로 하고 지어내지 않는다.
+- outline 은 회차 흐름 — time 필드에 회차 라벨(예: "1회차")을 쓴다.
+- keyConcepts 는 회차를 관통하는 핵심 개념 위주로 통합·중복 제거한다.
+- myBookmarks 는 빈 배열로.`,
+      },
+      {
+        role: "user",
+        content: `강의: ${lectureTitle}${speaker ? ` (강연자: ${speaker})` : ""}\n총 ${sessions.length}개 세션.\n\n${parts.join("\n\n───\n\n")}`,
+      },
+    ],
+    responseSchema: SUMMARY_SCHEMA,
+  });
+  const json = res.json as LectureSummary | undefined;
+  if (!json || typeof json.title !== "string") {
+    throw new Error("통합 정리 생성 실패 — 다시 시도해주세요.");
+  }
+  return json;
 }
 
 /**

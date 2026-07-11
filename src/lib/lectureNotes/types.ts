@@ -39,6 +39,8 @@ export interface Lecture {
   tags: string[];
   /** 통합 정리본 — 세션 정리본들의 재종합 (M2). null = 미생성 */
   overview: LectureSummary | null;
+  /** 통합 정리본 생성 시각 — 이후 세션 변경 감지(오래됨 배지)용 */
+  overviewAt?: string;
   createdAt: string;
   updatedAt: string;
 }

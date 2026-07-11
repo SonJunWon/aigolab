@@ -26,8 +26,14 @@ import {
   newLecture,
   removeLecture,
   assignNoteToLecture,
+  listMaterials,
+  putMaterial,
+  deleteMaterial,
+  summarizeLectureOverview,
+  MATERIAL_FILE_LIMIT,
   type Lecture,
   type LectureNote,
+  type Material,
 } from "../../lib/lectureNotes";
 import { useLectureRecordingStore } from "../../store/lectureRecordingStore";
 
@@ -46,6 +52,12 @@ function fmtDur(sec: number): string {
 function fmtClock(sec: number): string {
   const m = Math.floor(sec / 60);
   return `${m}:${String(sec % 60).padStart(2, "0")}`;
+}
+
+function fmtSize(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+  if (bytes >= 1024) return `${Math.round(bytes / 1024)}KB`;
+  return `${bytes}B`;
 }
 
 export function AdminLectureNotes() {
@@ -470,6 +482,83 @@ function ListView(props: {
   );
 }
 
+// ─────────────────────────────── 정리본 공용 렌더러 ───────────────────────────────
+function SummaryBlock(props: { s: NonNullable<LectureNote["summary"]>; timeHeader: string }) {
+  const { s } = props;
+  return (
+    <div className="mt-5 space-y-5 text-sm">
+      <p className="text-brand-text font-medium">💡 {s.oneLiner}</p>
+
+      {s.keyConcepts.length > 0 && (
+        <section>
+          <h4 className="text-xs font-semibold text-brand-textDim mb-2">핵심 개념</h4>
+          <div className="grid sm:grid-cols-2 gap-2">
+            {s.keyConcepts.map((c, i) => (
+              <div key={i} className="p-3 border border-brand-subtle bg-brand-panel/40">
+                <div className="font-semibold text-brand-text">{c.name}</div>
+                <div className="mt-1 text-xs text-brand-textDim leading-relaxed">{c.explanation}</div>
+                {c.example && <div className="mt-1 text-xs text-brand-textDim">예: {c.example}</div>}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {s.outline.length > 0 && (
+        <section>
+          <h4 className="text-xs font-semibold text-brand-textDim mb-2">{props.timeHeader}</h4>
+          <ul className="space-y-1.5">
+            {s.outline.map((o, i) => (
+              <li key={i} className="flex gap-2">
+                <code className="text-xs text-brand-primary shrink-0 pt-0.5">{o.time}</code>
+                <span className="text-brand-text"><strong>{o.heading}</strong> <span className="text-brand-textDim">— {o.summary}</span></span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {s.myBookmarks.length > 0 && (
+        <section>
+          <h4 className="text-xs font-semibold text-brand-textDim mb-2">🔖 내 북마크</h4>
+          <ul className="list-disc pl-5 space-y-1 text-brand-text">
+            {s.myBookmarks.map((b, i) => <li key={i}>{b}</li>)}
+          </ul>
+        </section>
+      )}
+
+      {s.terms.length > 0 && (
+        <section>
+          <h4 className="text-xs font-semibold text-brand-textDim mb-2">용어</h4>
+          <ul className="space-y-1">
+            {s.terms.map((t, i) => (
+              <li key={i} className="text-brand-text"><strong>{t.term}</strong> <span className="text-brand-textDim">— {t.definition}</span></li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {s.actionItems.length > 0 && (
+        <section>
+          <h4 className="text-xs font-semibold text-brand-textDim mb-2">액션 아이템</h4>
+          <ul className="list-disc pl-5 space-y-1 text-brand-text">
+            {s.actionItems.map((a, i) => <li key={i}>{a}</li>)}
+          </ul>
+        </section>
+      )}
+
+      {s.quotes.length > 0 && (
+        <section>
+          <h4 className="text-xs font-semibold text-brand-textDim mb-2">인용</h4>
+          {s.quotes.map((q, i) => (
+            <blockquote key={i} className="pl-3 border-l-2 border-brand-subtle text-brand-textDim italic">{q}</blockquote>
+          ))}
+        </section>
+      )}
+    </div>
+  );
+}
+
 // ─────────────────────────────── 강의 상세 (신설) ───────────────────────────────
 function LectureDetailView(props: {
   id: string;
@@ -487,6 +576,67 @@ function LectureDetailView(props: {
   const [speaker, setSpeaker] = useState(lecture?.speaker ?? "");
   const [description, setDescription] = useState(lecture?.description ?? "");
   const [tagsRaw, setTagsRaw] = useState((lecture?.tags ?? []).join(", "));
+  // ── M2: 자료 + 통합 정리 ──
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [matForm, setMatForm] = useState<"link" | "memo" | null>(null);
+  const [matName, setMatName] = useState("");
+  const [matBody, setMatBody] = useState(""); // link=url / memo=본문
+  const [matError, setMatError] = useState<string | null>(null);
+  const [ovBusy, setOvBusy] = useState(false);
+  const [showOverview, setShowOverview] = useState(false);
+
+  useEffect(() => {
+    void listMaterials(props.id).then(setMaterials);
+  }, [props.id]);
+
+  const addFile = async (file: File) => {
+    setMatError(null);
+    if (file.size > MATERIAL_FILE_LIMIT) {
+      setMatError(`파일이 너무 큽니다 (${fmtSize(file.size)}) — 파일당 ${fmtSize(MATERIAL_FILE_LIMIT)} 까지.`);
+      return;
+    }
+    const m: Material = {
+      id: `mat-${Date.now()}`,
+      lectureId: props.id,
+      kind: "file",
+      name: file.name,
+      mime: file.type || "application/octet-stream",
+      size: file.size,
+      blob: file,
+      addedAt: new Date().toISOString(),
+    };
+    await putMaterial(m);
+    setMaterials(await listMaterials(props.id));
+  };
+
+  const addLinkOrMemo = async () => {
+    if (!matForm || !matName.trim()) return;
+    const m: Material = {
+      id: `mat-${Date.now()}`,
+      lectureId: props.id,
+      kind: matForm,
+      name: matName.trim(),
+      url: matForm === "link" ? matBody.trim() : undefined,
+      memo: matForm === "memo" ? matBody.trim() : undefined,
+      addedAt: new Date().toISOString(),
+    };
+    await putMaterial(m);
+    setMaterials(await listMaterials(props.id));
+    setMatForm(null); setMatName(""); setMatBody("");
+  };
+
+  const openFile = (m: Material) => {
+    if (!m.blob) return;
+    const url = URL.createObjectURL(m.blob);
+    window.open(url, "_blank");
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  };
+
+  const removeMaterial = async (m: Material) => {
+    if (!confirm(`자료 '${m.name}' 을(를) 삭제할까요?`)) return;
+    await deleteMaterial(m.id);
+    setMaterials(await listMaterials(props.id));
+  };
 
   if (!lecture) {
     return (
@@ -498,6 +648,27 @@ function LectureDetailView(props: {
   const sessions = props.notes
     .filter((n) => n.lectureId === lecture.id)
     .sort((a, b) => a.recordedAt.localeCompare(b.recordedAt));
+
+  const totalMatSize = materials.reduce((n, m) => n + (m.size ?? 0), 0);
+  // 통합 정리 이후 세션이 추가/수정됐으면 오래됨
+  const overviewStale =
+    !!lecture.overviewAt &&
+    sessions.some((n) => (n.updatedAt ?? n.recordedAt) > lecture.overviewAt!);
+
+  const generateOverview = async () => {
+    if (sessions.length === 0) return;
+    setOvBusy(true);
+    try {
+      const overview = await summarizeLectureOverview(lecture.title, lecture.speaker, sessions);
+      await saveLecture({ ...lecture, overview, overviewAt: new Date().toISOString() });
+      setShowOverview(true);
+      props.onChanged();
+    } catch (e) {
+      alert(`통합 정리 실패: ${e instanceof Error ? e.message : "unknown"}`);
+    } finally {
+      setOvBusy(false);
+    }
+  };
 
   const saveHeader = async () => {
     if (!title.trim()) return;
@@ -593,6 +764,96 @@ function LectureDetailView(props: {
                   {n.summary ? ` · ${n.summary.oneLiner.slice(0, 60)}` : ""}
                 </div>
               </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* ── M2: 🧾 통합 정리 ── */}
+      <div className="mt-8 flex items-center gap-2 mb-2">
+        <h4 className="text-xs font-semibold text-brand-textDim">🧾 통합 정리</h4>
+        {lecture.overview && overviewStale && (
+          <span className="text-[9px] px-1.5 py-0.5 bg-amber-500 text-black font-semibold">세션이 바뀌어 오래됨</span>
+        )}
+        <div className="flex-1" />
+        {lecture.overview && (
+          <button onClick={() => setShowOverview((v) => !v)} className="px-2 py-0.5 text-[10px] border border-brand-subtle text-brand-textDim hover:text-brand-text">
+            {showOverview ? "접기" : "펼치기"}
+          </button>
+        )}
+        <button
+          onClick={() => void generateOverview()}
+          disabled={ovBusy || sessions.length === 0}
+          className="px-3 py-1.5 text-xs font-semibold bg-brand-primary text-black disabled:opacity-40"
+        >
+          {ovBusy ? "종합 중…" : lecture.overview ? "다시 생성" : "통합 정리 생성"}
+        </button>
+      </div>
+      {sessions.length === 0 ? (
+        <p className="text-[11px] text-brand-textDim">세션이 생기면 전체를 종합한 정리본을 만들 수 있습니다.</p>
+      ) : !lecture.overview ? (
+        <p className="text-[11px] text-brand-textDim">세션 {sessions.length}개의 정리본을 하나로 종합합니다 (회차 흐름·통합 개념·용어·액션).</p>
+      ) : showOverview ? (
+        <div className="p-4 border border-brand-subtle bg-brand-panel/40">
+          <SummaryBlock s={lecture.overview} timeHeader="회차 흐름" />
+        </div>
+      ) : (
+        <p className="text-xs text-brand-textDim">💡 {lecture.overview.oneLiner}</p>
+      )}
+
+      {/* ── M2: 📎 자료 ── */}
+      <div className="mt-8 flex items-center gap-2 mb-2">
+        <h4 className="text-xs font-semibold text-brand-textDim">📎 자료 ({materials.length})</h4>
+        {totalMatSize > 0 && <span className="text-[10px] text-brand-textDim">합계 {fmtSize(totalMatSize)}</span>}
+        <div className="flex-1" />
+        <label className="px-2 py-1 text-[10px] border border-brand-subtle text-brand-textDim hover:text-brand-text cursor-pointer">
+          📄 파일 추가
+          <input
+            type="file"
+            className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) void addFile(f); e.target.value = ""; }}
+          />
+        </label>
+        <button onClick={() => { setMatForm(matForm === "link" ? null : "link"); setMatName(""); setMatBody(""); }}
+          className="px-2 py-1 text-[10px] border border-brand-subtle text-brand-textDim hover:text-brand-text">🔗 링크</button>
+        <button onClick={() => { setMatForm(matForm === "memo" ? null : "memo"); setMatName(""); setMatBody(""); }}
+          className="px-2 py-1 text-[10px] border border-brand-subtle text-brand-textDim hover:text-brand-text">📝 메모</button>
+      </div>
+      {matError && <p className="mb-2 text-xs text-red-400">⚠️ {matError}</p>}
+      {matForm && (
+        <div className="mb-3 p-3 border border-brand-primary/40 bg-brand-panel/60 flex flex-wrap items-center gap-2 text-xs">
+          <input value={matName} onChange={(e) => setMatName(e.target.value)}
+            placeholder={matForm === "link" ? "표시명 (예: 강의 슬라이드)" : "메모 제목"}
+            className="px-2 py-1 bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim" />
+          <input value={matBody} onChange={(e) => setMatBody(e.target.value)}
+            placeholder={matForm === "link" ? "https://…" : "메모 내용"}
+            className="flex-1 min-w-[200px] px-2 py-1 bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim" />
+          <button onClick={() => void addLinkOrMemo()} disabled={!matName.trim() || (matForm === "link" && !matBody.trim())}
+            className="px-3 py-1 font-semibold bg-brand-primary text-black disabled:opacity-40">추가</button>
+        </div>
+      )}
+      {materials.length === 0 ? (
+        <p className="text-[11px] text-brand-textDim">슬라이드 PDF·참고 링크·공지 메모 등을 함께 보관하세요. (파일당 {fmtSize(MATERIAL_FILE_LIMIT)} 까지 · 개인 학습 보관용)</p>
+      ) : (
+        <ul className="space-y-1.5">
+          {materials.map((m) => (
+            <li key={m.id} className="flex items-center gap-2 p-2.5 border border-brand-subtle bg-brand-panel/40 text-xs">
+              <span className="shrink-0">{m.kind === "file" ? "📄" : m.kind === "link" ? "🔗" : "📝"}</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-brand-text truncate">{m.name}</div>
+                <div className="text-[10px] text-brand-textDim truncate">
+                  {m.kind === "file" && `${m.mime} · ${fmtSize(m.size ?? 0)}`}
+                  {m.kind === "link" && m.url}
+                  {m.kind === "memo" && m.memo}
+                </div>
+              </div>
+              {m.kind === "file" && (
+                <button onClick={() => openFile(m)} className="px-2 py-1 border border-brand-subtle text-brand-textDim hover:text-brand-text">열기</button>
+              )}
+              {m.kind === "link" && (
+                <a href={m.url} target="_blank" rel="noreferrer" className="px-2 py-1 border border-brand-subtle text-brand-textDim hover:text-brand-text">열기</a>
+              )}
+              <button onClick={() => void removeMaterial(m)} className="px-2 py-1 border border-red-500/40 text-red-400 hover:bg-red-500/10">삭제</button>
             </li>
           ))}
         </ul>
@@ -961,76 +1222,7 @@ function DetailView(props: {
           </button>
         </div>
       ) : (
-        <div className="mt-5 space-y-5 text-sm">
-          <p className="text-brand-text font-medium">💡 {s.oneLiner}</p>
-
-          {s.keyConcepts.length > 0 && (
-            <section>
-              <h4 className="text-xs font-semibold text-brand-textDim mb-2">핵심 개념</h4>
-              <div className="grid sm:grid-cols-2 gap-2">
-                {s.keyConcepts.map((c, i) => (
-                  <div key={i} className="p-3 border border-brand-subtle bg-brand-panel/40">
-                    <div className="font-semibold text-brand-text">{c.name}</div>
-                    <div className="mt-1 text-xs text-brand-textDim leading-relaxed">{c.explanation}</div>
-                    {c.example && <div className="mt-1 text-xs text-brand-textDim">예: {c.example}</div>}
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {s.outline.length > 0 && (
-            <section>
-              <h4 className="text-xs font-semibold text-brand-textDim mb-2">타임라인</h4>
-              <ul className="space-y-1.5">
-                {s.outline.map((o, i) => (
-                  <li key={i} className="flex gap-2">
-                    <code className="text-xs text-brand-primary shrink-0 pt-0.5">{o.time}</code>
-                    <span className="text-brand-text"><strong>{o.heading}</strong> <span className="text-brand-textDim">— {o.summary}</span></span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {s.myBookmarks.length > 0 && (
-            <section>
-              <h4 className="text-xs font-semibold text-brand-textDim mb-2">🔖 내 북마크</h4>
-              <ul className="list-disc pl-5 space-y-1 text-brand-text">
-                {s.myBookmarks.map((b, i) => <li key={i}>{b}</li>)}
-              </ul>
-            </section>
-          )}
-
-          {s.terms.length > 0 && (
-            <section>
-              <h4 className="text-xs font-semibold text-brand-textDim mb-2">용어</h4>
-              <ul className="space-y-1">
-                {s.terms.map((t, i) => (
-                  <li key={i} className="text-brand-text"><strong>{t.term}</strong> <span className="text-brand-textDim">— {t.definition}</span></li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {s.actionItems.length > 0 && (
-            <section>
-              <h4 className="text-xs font-semibold text-brand-textDim mb-2">액션 아이템</h4>
-              <ul className="list-disc pl-5 space-y-1 text-brand-text">
-                {s.actionItems.map((a, i) => <li key={i}>{a}</li>)}
-              </ul>
-            </section>
-          )}
-
-          {s.quotes.length > 0 && (
-            <section>
-              <h4 className="text-xs font-semibold text-brand-textDim mb-2">인용</h4>
-              {s.quotes.map((q, i) => (
-                <blockquote key={i} className="pl-3 border-l-2 border-brand-subtle text-brand-textDim italic">{q}</blockquote>
-              ))}
-            </section>
-          )}
-        </div>
+        <SummaryBlock s={s} timeHeader="타임라인" />
       )}
 
       <div className="mt-6">
