@@ -33,6 +33,7 @@ import { AdminNoticesEditor } from "../components/admin/AdminNoticesEditor";
 import { AdminFAQEditor } from "../components/admin/AdminFAQEditor";
 import { AdminInquiryManager } from "../components/admin/AdminInquiryManager";
 import { AdminLectureNotes } from "../components/admin/AdminLectureNotes";
+import { isLectureRecordingActive, useLectureRecordingStore } from "../store/lectureRecordingStore";
 
 type AdminTab = "entitlements" | "notices" | "faq" | "inquiries" | "lectures";
 
@@ -48,7 +49,11 @@ export function AdminPage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<AdminTab>("entitlements");
+  // 진행 중인 녹음이 있으면 강의 정리 탭으로 바로 진입 (페이지를 떠났다 돌아와도 녹음 화면 복원)
+  const [activeTab, setActiveTab] = useState<AdminTab>(() =>
+    isLectureRecordingActive() ? "lectures" : "entitlements",
+  );
+  const recActive = useLectureRecordingStore((s) => s.status !== "idle");
 
   // 데이터 로드
   const reload = useCallback(async () => {
@@ -181,7 +186,7 @@ export function AdminPage() {
             { id: "notices" as AdminTab, label: "📢 공지사항", },
             { id: "faq" as AdminTab, label: "❓ FAQ", },
             { id: "inquiries" as AdminTab, label: "💬 문의 관리", },
-            { id: "lectures" as AdminTab, label: "🎙️ 강의 정리", },
+            { id: "lectures" as AdminTab, label: recActive ? "🎙️ 강의 정리 🔴" : "🎙️ 강의 정리", },
           ]).map((tab) => (
             <button
               key={tab.id}

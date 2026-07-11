@@ -1,31 +1,25 @@
 /**
- * 관리자 — 🎙️ 강의 정리 (Phase 1 MVP + 라이브 노트).
+ * 관리자 — 🎙️ 강의 정리 (Phase 2 + 전역 녹음 세션).
  *
  * 목록 / 녹음 / 상세 3화면.
- * 녹음 화면은 "라이브 노트": 5분 청크가 저장될 때마다 즉시 STT → 구간 요약(불릿)을
- * 실시간으로 누적 표시. 종료 시에는 이미 변환된 전사를 재사용해 최종 정리만 수행.
- * 오디오 원본은 정리 성공 시 기본 폐기('원본 보관' 체크 시 유지).
+ * 녹음 상태·라이브 파이프라인은 lectureRecordingStore(전역 싱글턴)에 있어
+ * 탭 전환·페이지 이동으로 이 컴포넌트가 언마운트돼도 녹음이 계속되고,
+ * 돌아오면 녹음 화면이 자동 복원된다 (SPA 내 이동 한정 — 새로고침은 브라우저 한계).
  * 기획: AI앱개발/관리자-강의정리/01-강의정리-프로그램-기획.md
  */
 
 import { useEffect, useRef, useState } from "react";
 import {
-  startRecording,
-  transcribeSession,
-  transcribeChunkBlob,
   summarizeTranscript,
-  quickChunkSummary,
   saveNote,
   removeNote,
   syncNotes,
   cloudEnabled,
   listNotes,
-  deleteSessionChunks,
   noteToMarkdown,
-  type RecorderHandle,
-  type RecordingChunk,
   type LectureNote,
 } from "../../lib/lectureNotes";
+import { useLectureRecordingStore } from "../../store/lectureRecordingStore";
 
 type View = { name: "list" } | { name: "record" } | { name: "detail"; id: string };
 
@@ -46,12 +40,19 @@ export function AdminLectureNotes() {
   const [query, setQuery] = useState("");
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [cloudOk, setCloudOk] = useState<boolean | null>(null); // null = 동기화 중
+  const recStatus = useLectureRecordingStore((s) => s.status);
 
   const refresh = () => { void listNotes().then(setNotes); };
   useEffect(() => {
     refresh(); // 로컬 먼저 즉시 표시
     void syncNotes().then((r) => { setCloudOk(r.cloud); if (r.pulled > 0) refresh(); });
   }, []);
+
+  // 진행 중인 녹음/종료 파이프라인이 있으면 녹음 화면으로 자동 복원
+  useEffect(() => {
+    if (recStatus !== "idle") setView({ name: "record" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recStatus]);
 
   let filtered = query.trim()
     ? notes.filter((n) =>
@@ -177,197 +178,88 @@ function ListView(props: {
   );
 }
 
-// ─────────────────────────────── 녹음 (라이브 노트) ───────────────────────────────
-
-/** 라이브 처리 중인 청크 1건의 상태 */
-interface LiveChunk {
-  seq: number;
-  startSec: number;
-  status: "stt" | "summarizing" | "done" | "error";
-  transcript?: string;
-  bullets?: string[];
-  error?: string;
-}
-
-type FinishStage =
-  | { stage: "idle" }
-  | { stage: "waiting-chunks" }
-  | { stage: "transcribing"; done: number; total: number } // 폴백 경로(라이브 전멸 시)
-  | { stage: "summarizing" }
-  | { stage: "saving" }
-  | { stage: "error"; message: string };
-
+// ─────────────────────────────── 녹음 (전역 세션의 뷰) ───────────────────────────────
 function RecordView(props: { onDone: (noteId: string) => void; onCancel: () => void }) {
-  const [title, setTitle] = useState("");
-  const [source, setSource] = useState("");
-  const [keepAudio, setKeepAudio] = useState(false);
-  const [rec, setRec] = useState<RecorderHandle | null>(null);
-  const [elapsed, setElapsed] = useState(0);
-  const [markCount, setMarkCount] = useState(0);
-  const [live, setLive] = useState<LiveChunk[]>([]);
-  const [stage, setStage] = useState<FinishStage>({ stage: "idle" });
-
-  const recRef = useRef<RecorderHandle | null>(null);
-  const liveRef = useRef<LiveChunk[]>([]);        // finish()에서 최신 상태 접근용
-  const queueRef = useRef<Promise<void>>(Promise.resolve()); // 청크 직렬 처리 큐
+  const store = useLectureRecordingStore();
+  const { status, handle, title, source, keepAudio, live, markCount, finishStage, finishedNoteId } = store;
+  const [elapsed, setElapsed] = useState(() => handle?.elapsedSec() ?? 0);
+  const [startError, setStartError] = useState<string | null>(null);
   const listEndRef = useRef<HTMLDivElement>(null);
 
-  const patchLive = (seq: number, patch: Partial<LiveChunk>) => {
-    liveRef.current = liveRef.current.map((c) => (c.seq === seq ? { ...c, ...patch } : c));
-    setLive(liveRef.current);
-  };
-
   useEffect(() => {
-    if (!rec) return;
-    const t = setInterval(() => setElapsed(rec.elapsedSec()), 1000);
+    if (!handle) return;
+    setElapsed(handle.elapsedSec());
+    const t = setInterval(() => setElapsed(handle.elapsedSec()), 1000);
     return () => clearInterval(t);
-  }, [rec]);
+  }, [handle]);
 
   // 새 구간 노트가 붙으면 목록 하단으로 스크롤
-  useEffect(() => { listEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [live]);
+  useEffect(() => { listEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [live.length]);
 
-  // 녹음 중 이탈 방지 (기획 7. 브라우저 제약)
+  // 종료 파이프라인 완료 → 상세로 이동 (다른 페이지에 있다 돌아온 경우도 여기서 회수)
   useEffect(() => {
-    if (!rec) return;
-    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [rec]);
-
-  /** 청크 도착 → 직렬 큐에서 STT → 구간 요약 → 라이브 목록 갱신 */
-  const handleChunk = (chunk: RecordingChunk) => {
-    liveRef.current = [...liveRef.current, { seq: chunk.seq, startSec: chunk.startSec, status: "stt" }];
-    setLive(liveRef.current);
-    queueRef.current = queueRef.current.then(async () => {
-      try {
-        const transcript = await transcribeChunkBlob(chunk.blob);
-        patchLive(chunk.seq, { status: "summarizing", transcript });
-        try {
-          const bullets = await quickChunkSummary(transcript);
-          patchLive(chunk.seq, { status: "done", bullets });
-        } catch {
-          // 구간 요약 실패는 치명적이지 않음 — 전사만으로 done 처리
-          patchLive(chunk.seq, { status: "done", bullets: undefined });
-        }
-      } catch (e) {
-        patchLive(chunk.seq, { status: "error", error: e instanceof Error ? e.message : "STT 실패" });
-      }
-    });
-  };
+    if (finishedNoteId) {
+      const id = finishedNoteId;
+      store.reset();
+      props.onDone(id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finishedNoteId]);
 
   const begin = async () => {
+    setStartError(null);
     try {
-      liveRef.current = [];
-      setLive([]);
-      const handle = await startRecording({ onChunk: handleChunk });
-      recRef.current = handle;
-      setRec(handle);
+      await store.start();
     } catch (e) {
-      setStage({ stage: "error", message: e instanceof Error ? e.message : "마이크 접근 실패" });
+      setStartError(e instanceof Error ? e.message : "마이크 접근 실패");
     }
   };
 
-  const finish = async () => {
-    const handle = recRef.current;
-    if (!handle) return;
-    setRec(null);
-    try {
-      const { durationSec, bookmarks } = await handle.stop(); // 마지막 청크 onChunk까지 발화됨
-      setStage({ stage: "waiting-chunks" });
-      await queueRef.current; // 라이브 큐 드레인 — 남은 청크 STT/요약 완료 대기
-
-      // 전사 조립 — 라이브 결과 재사용 (실패 구간은 DB에서 1회 재시도)
-      const chunksState = [...liveRef.current].sort((a, b) => a.seq - b.seq);
-      let transcript: string;
-      const allFailed = chunksState.length > 0 && chunksState.every((c) => c.status === "error");
-      if (allFailed || chunksState.length === 0) {
-        // 라이브 경로 전멸(예: 녹음 중 키 없음) → 기존 일괄 변환 폴백
-        setStage({ stage: "transcribing", done: 0, total: 1 });
-        transcript = await transcribeSession(handle.sessionId, (done, total) =>
-          setStage({ stage: "transcribing", done, total }),
-        );
-      } else {
-        transcript = chunksState
-          .map((c) =>
-            c.transcript
-              ? `[${fmtClock(c.startSec)}] ${c.transcript}`
-              : `[${fmtClock(c.startSec)}] (이 구간 변환 실패: ${c.error ?? "unknown"})`,
-          )
-          .join("\n\n");
-      }
-
-      // 정리 실패해도 전사는 살린다 — 실패를 결과로 (고급1 C2 원칙)
-      setStage({ stage: "summarizing" });
-      let summary: LectureNote["summary"] = null;
-      try {
-        summary = await summarizeTranscript(transcript, bookmarks);
-      } catch { /* summary=null 로 저장, 상세에서 재시도 */ }
-
-      setStage({ stage: "saving" });
-      const note: LectureNote = {
-        id: handle.sessionId,
-        title: title.trim() || summary?.title || `강의 노트 ${new Date().toLocaleDateString("ko-KR")}`,
-        source: source.trim(),
-        recordedAt: new Date().toISOString(),
-        durationSec,
-        transcript,
-        summary,
-        bookmarks,
-        tags: [],
-        keepAudio,
-      };
-      await saveNote(note); // IDB + 클라우드 (클라우드 실패해도 로컬 저장은 완료)
-      if (!keepAudio) await deleteSessionChunks(handle.sessionId); // 원본 기본 폐기
-      props.onDone(note.id);
-    } catch (e) {
-      setStage({ stage: "error", message: e instanceof Error ? e.message : "파이프라인 실패" });
-    }
-  };
-
-  // ── 종료 후 파이프라인 진행 화면 ──
-  if (stage.stage !== "idle" && stage.stage !== "error") {
+  // ── 종료 파이프라인 진행 화면 ──
+  if (status === "finishing") {
     const doneChunks = live.filter((c) => c.status === "done" || c.status === "error").length;
     return (
       <div className="py-16 text-center">
         <div className="text-3xl mb-4">⚙️</div>
         <p className="text-sm text-brand-text">
-          {stage.stage === "waiting-chunks" && `남은 구간 변환 마무리 중… (${doneChunks}/${live.length})`}
-          {stage.stage === "transcribing" && `음성 변환 중… (${stage.done}/${stage.total} 구간)`}
-          {stage.stage === "summarizing" && "전체 정리본 작성 중… (강의 길이에 따라 1~2분)"}
-          {stage.stage === "saving" && "저장 중…"}
+          {finishStage.stage === "waiting-chunks" && `남은 구간 변환 마무리 중… (${doneChunks}/${live.length})`}
+          {finishStage.stage === "transcribing" && `음성 변환 중… (${finishStage.done}/${finishStage.total} 구간)`}
+          {finishStage.stage === "summarizing" && "전체 정리본 작성 중… (강의 길이에 따라 1~2분)"}
+          {finishStage.stage === "saving" && "저장 중…"}
         </p>
         <p className="mt-4 text-xs text-brand-textDim">
-          구간 변환은 녹음 중에 이미 끝나 있어 마무리가 빠릅니다. 이 탭을 닫지 마세요.
+          구간 변환은 녹음 중에 이미 끝나 있어 마무리가 빠릅니다. 다른 페이지로 이동해도 처리는 계속됩니다.
         </p>
       </div>
     );
   }
 
   // ── 시작 전 화면 ──
-  if (!rec) {
+  if (status === "idle") {
+    const errMsg = startError ?? (finishStage.stage === "error" ? finishStage.message : null);
     return (
       <div className="max-w-xl">
-        {stage.stage === "error" && (
+        {errMsg && (
           <div className="mb-4 p-3 text-xs text-red-400 border border-red-500/40 bg-red-500/10">
-            ⚠️ {stage.message}
-            <div className="mt-1 text-brand-textDim">녹음 청크는 보존되어 있습니다. Groq 키 설정을 확인한 뒤 다시 시도하세요.</div>
+            ⚠️ {errMsg}
+            <div className="mt-1 text-brand-textDim">녹음 청크는 보존되어 있습니다. Groq/Gemini 키 설정을 확인한 뒤 다시 시도하세요.</div>
           </div>
         )}
         <div className="space-y-3 mb-5">
           <input
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => store.setMeta({ title: e.target.value })}
             placeholder="강의 제목 (비우면 AI가 자동 작성)"
             className="w-full px-3 py-2 text-sm bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim focus:outline-none focus:border-brand-primary"
           />
           <input
             value={source}
-            onChange={(e) => setSource(e.target.value)}
+            onChange={(e) => store.setMeta({ source: e.target.value })}
             placeholder="출처 — 강의명·플랫폼·강사 (선택)"
             className="w-full px-3 py-2 text-sm bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim focus:outline-none focus:border-brand-primary"
           />
           <label className="flex items-center gap-2 text-xs text-brand-textDim">
-            <input type="checkbox" checked={keepAudio} onChange={(e) => setKeepAudio(e.target.checked)} />
+            <input type="checkbox" checked={keepAudio} onChange={(e) => store.setMeta({ keepAudio: e.target.checked })} />
             오디오 원본 보관 (기본: 정리 후 폐기 — 저작권·용량)
           </label>
         </div>
@@ -381,7 +273,7 @@ function RecordView(props: { onDone: (noteId: string) => void; onCancel: () => v
         </div>
         <p className="mt-4 text-xs text-brand-textDim">
           💡 5분마다 구간이 자동 저장·변환되어 아래에 <strong>실시간 구간 노트</strong>로 쌓입니다.
-          브라우저가 꺼져도 저장된 구간까지 보존됩니다. 변환은 내 Groq 키(무료 한도)로 처리됩니다.
+          녹음 중 다른 페이지로 이동해도 녹음은 계속됩니다 (탭을 닫거나 새로고침만 피하세요).
         </p>
       </div>
     );
@@ -397,16 +289,16 @@ function RecordView(props: { onDone: (noteId: string) => void; onCancel: () => v
         <div className="flex-1">
           <div className="text-xl font-mono text-brand-text">{fmtDur(elapsed)}</div>
           <div className="text-xs text-brand-textDim">
-            {title.trim() || "제목 미정 — 종료 후 AI가 작성"} · 다음 구간 정리까지 {fmtClock(nextChunkIn)}
+            {title.trim() || "제목 미정 — 종료 후 AI가 작성"} · 다음 구간 정리까지 {fmtClock(nextChunkIn)} · 페이지를 이동해도 녹음은 계속됩니다
           </div>
         </div>
         <button
-          onClick={() => { rec.bookmark(); setMarkCount((c) => c + 1); }}
+          onClick={() => store.bookmark()}
           className="px-4 py-2 text-sm border border-amber-500/60 text-amber-400 hover:bg-amber-500/10"
         >
           🔖 북마크 {markCount > 0 ? `(${markCount})` : ""}
         </button>
-        <button onClick={() => void finish()} className="px-5 py-2 text-sm font-semibold bg-brand-primary text-black hover:opacity-90">
+        <button onClick={() => void store.finish()} className="px-5 py-2 text-sm font-semibold bg-brand-primary text-black hover:opacity-90">
           ■ 종료하고 최종 정리
         </button>
       </div>
