@@ -5,6 +5,7 @@
  * 녹음 상태·라이브 파이프라인은 lectureRecordingStore(전역 싱글턴)에 있어
  * 탭 전환·페이지 이동으로 이 컴포넌트가 언마운트돼도 녹음이 계속되고,
  * 돌아오면 녹음 화면이 자동 복원된다 (SPA 내 이동 한정 — 새로고침은 브라우저 한계).
+ * 새로고침·크래시로 끊긴 세션은 목록 상단 OrphanRecoverySection 에서 청크로부터 복구.
  * 기획: AI앱개발/관리자-강의정리/01-강의정리-프로그램-기획.md
  */
 
@@ -16,6 +17,9 @@ import {
   syncNotes,
   cloudEnabled,
   listNotes,
+  listOrphanSessions,
+  transcribeSession,
+  deleteSessionChunks,
   noteToMarkdown,
   type LectureNote,
 } from "../../lib/lectureNotes";
@@ -64,6 +68,12 @@ export function AdminLectureNotes() {
   return (
     <div>
       {view.name === "list" && (
+        <OrphanRecoverySection
+          notes={notes}
+          onRecovered={(id) => { refresh(); setView({ name: "detail", id }); }}
+        />
+      )}
+      {view.name === "list" && (
         <ListView
           notes={filtered}
           allNotes={notes}
@@ -88,6 +98,138 @@ export function AdminLectureNotes() {
           onBack={() => { refresh(); setView({ name: "list" }); }}
         />
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────── 미완 세션 복구 ───────────────────────────────
+// 새로고침·HMR 리로드·크래시로 finish 없이 끊긴 녹음의 청크는 IndexedDB에 남아 있다.
+// 그 세션(= 활성 녹음도 아니고 노트로 저장되지도 않은 청크 묶음)을 찾아
+// 기존 파이프라인(transcribeSession → summarizeTranscript → saveNote)으로 노트로 살린다.
+
+type OrphanSession = { sessionId: string; chunks: number; totalSec: number };
+
+type RecoveryStage =
+  | { stage: "transcribing"; done: number; total: number }
+  | { stage: "summarizing" }
+  | { stage: "saving" };
+
+function OrphanRecoverySection(props: {
+  notes: LectureNote[];
+  onRecovered: (noteId: string) => void;
+}) {
+  const activeSessionId = useLectureRecordingStore((s) => s.handle?.sessionId ?? null);
+  const [orphans, setOrphans] = useState<OrphanSession[]>([]);
+  const [busy, setBusy] = useState<Record<string, RecoveryStage>>({});
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void listOrphanSessions().then((all) => {
+      if (!alive) return;
+      const noteIds = new Set(props.notes.map((n) => n.id));
+      setOrphans(all.filter((o) => o.sessionId !== activeSessionId && !noteIds.has(o.sessionId)));
+    });
+    return () => { alive = false; };
+  }, [props.notes, activeSessionId]);
+
+  const setStage = (sessionId: string, stage: RecoveryStage) =>
+    setBusy((b) => ({ ...b, [sessionId]: stage }));
+  const clearStage = (sessionId: string) =>
+    setBusy((b) => { const { [sessionId]: _drop, ...rest } = b; return rest; });
+
+  const recover = async (o: OrphanSession) => {
+    setError(null);
+    setStage(o.sessionId, { stage: "transcribing", done: 0, total: o.chunks });
+    try {
+      const transcript = await transcribeSession(o.sessionId, (done, total) =>
+        setStage(o.sessionId, { stage: "transcribing", done, total }),
+      );
+
+      // 정리 실패는 비치명 — 전사만으로 저장하고 상세에서 재시도
+      setStage(o.sessionId, { stage: "summarizing" });
+      let summary: LectureNote["summary"] = null;
+      try {
+        summary = await summarizeTranscript(transcript, []); // 북마크는 메모리에만 있었어서 유실
+      } catch { /* summary=null */ }
+
+      setStage(o.sessionId, { stage: "saving" });
+      const ts = Number(o.sessionId.replace(/^rec-/, "")); // sessionId = `rec-${Date.now()}`
+      const recordedAt = Number.isFinite(ts) && ts > 0 ? new Date(ts).toISOString() : new Date().toISOString();
+      const note: LectureNote = {
+        id: o.sessionId, // 청크와 같은 id — 노트 삭제 시 남은 오디오도 함께 폐기됨
+        title: summary?.title || `복구된 강의 ${recordedAt.slice(0, 10)}`,
+        source: "",
+        recordedAt,
+        durationSec: o.totalSec,
+        transcript,
+        summary,
+        bookmarks: [],
+        tags: [],
+        keepAudio: true, // 복구본 검수 전까지 원본 보존 (노트 삭제로 함께 정리 가능)
+      };
+      await saveNote(note);
+      clearStage(o.sessionId);
+      props.onRecovered(note.id);
+    } catch (e) {
+      clearStage(o.sessionId);
+      setError(e instanceof Error ? e.message : "복구 실패");
+    }
+  };
+
+  const discard = async (o: OrphanSession) => {
+    if (!confirm(`중단된 녹음(${fmtDur(o.totalSec)}, 구간 ${o.chunks}개)을 폐기할까요? (복구 불가)`)) return;
+    await deleteSessionChunks(o.sessionId);
+    setOrphans((list) => list.filter((x) => x.sessionId !== o.sessionId));
+  };
+
+  if (orphans.length === 0) return null;
+
+  return (
+    <div className="mb-5 p-4 border border-amber-500/40 bg-amber-500/10">
+      <div className="text-sm font-semibold text-brand-text mb-1">⚠️ 중단된 녹음 세션 발견</div>
+      <p className="text-xs text-brand-textDim mb-3">
+        새로고침·크래시 등으로 종료 처리 없이 끊긴 녹음입니다. 이미 저장된 5분 구간까지는 복구할 수 있습니다.
+      </p>
+      {error && <p className="mb-2 text-xs text-red-400">⚠️ {error} — 키 설정 확인 후 다시 시도하세요. 청크는 보존됩니다.</p>}
+      <ul className="space-y-2">
+        {orphans.map((o) => {
+          const stage = busy[o.sessionId];
+          const ts = Number(o.sessionId.replace(/^rec-/, ""));
+          const when = Number.isFinite(ts) && ts > 0
+            ? new Date(ts).toLocaleString("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })
+            : "시각 미상";
+          return (
+            <li key={o.sessionId} className="flex items-center gap-3 text-xs text-brand-text">
+              <span className="flex-1">
+                🎙️ {when} 시작 · 구간 {o.chunks}개 · 약 {fmtDur(o.totalSec)}
+              </span>
+              {stage ? (
+                <span className="text-brand-textDim animate-pulse">
+                  {stage.stage === "transcribing" && `음성 변환 중… (${stage.done}/${stage.total})`}
+                  {stage.stage === "summarizing" && "AI 정리 중…"}
+                  {stage.stage === "saving" && "저장 중…"}
+                </span>
+              ) : (
+                <>
+                  <button
+                    onClick={() => void recover(o)}
+                    className="px-3 py-1 font-semibold bg-brand-primary text-black hover:opacity-90"
+                  >
+                    ♻️ 노트로 복구
+                  </button>
+                  <button
+                    onClick={() => void discard(o)}
+                    className="px-3 py-1 border border-red-500/40 text-red-400 hover:bg-red-500/10"
+                  >
+                    폐기
+                  </button>
+                </>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
