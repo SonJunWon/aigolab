@@ -54,6 +54,13 @@ function fmtClock(sec: number): string {
   return `${m}:${String(sec % 60).padStart(2, "0")}`;
 }
 
+/** epoch ms → datetime-local 입력값 (로컬 타임존 "YYYY-MM-DDTHH:mm") */
+function fmtLocalDT(t: number): string {
+  const d = new Date(t);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 function fmtSize(bytes: number): string {
   if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
   if (bytes >= 1024) return `${Math.round(bytes / 1024)}KB`;
@@ -870,14 +877,24 @@ function RecordView(props: {
   onLectureCreated: () => void;
 }) {
   const store = useLectureRecordingStore();
-  const { status, handle, title, source, keepAudio, lectureId, sessionLabel, live, markCount, finishStage, finishedNoteId } = store;
+  const { status, handle, title, source, keepAudio, lectureId, sessionLabel, live, markCount, finishStage, finishedNoteId, scheduledAt, scheduleError } = store;
   const [elapsed, setElapsed] = useState(() => handle?.elapsedSec() ?? 0);
   const [startError, setStartError] = useState<string | null>(null);
   const [newLec, setNewLec] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newSpeaker, setNewSpeaker] = useState("");
+  const [schedInput, setSchedInput] = useState(() => fmtLocalDT(Date.now() + 10 * 60_000));
+  const [nowTick, setNowTick] = useState(() => Date.now());
   const listEndRef = useRef<HTMLDivElement>(null);
   const currentLecture = props.lectures.find((l) => l.id === lectureId) ?? null;
+
+  // 예약 카운트다운 — 예약이 있을 때만 1초 틱
+  useEffect(() => {
+    if (!scheduledAt) return;
+    setNowTick(Date.now());
+    const t = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [scheduledAt]);
 
   const createLectureInline = async () => {
     if (!newTitle.trim()) return;
@@ -916,6 +933,17 @@ function RecordView(props: {
     }
   };
 
+  const scheduleBegin = async () => {
+    setStartError(null);
+    const at = new Date(schedInput).getTime();
+    if (!Number.isFinite(at)) { setStartError("예약 시각을 선택하세요."); return; }
+    try {
+      await store.schedule(at);
+    } catch (e) {
+      setStartError(e instanceof Error ? e.message : "예약 실패 — 마이크 권한을 확인하세요.");
+    }
+  };
+
   // ── 종료 파이프라인 진행 화면 ──
   if (status === "finishing") {
     const doneChunks = live.filter((c) => c.status === "done" || c.status === "error").length;
@@ -937,13 +965,16 @@ function RecordView(props: {
 
   // ── 시작 전 화면 ──
   if (status === "idle") {
-    const errMsg = startError ?? (finishStage.stage === "error" ? finishStage.message : null);
+    const errMsg = startError ?? scheduleError ?? (finishStage.stage === "error" ? finishStage.message : null);
+    const remainSec = scheduledAt ? Math.max(0, Math.round((scheduledAt - nowTick) / 1000)) : 0;
     return (
       <div className="max-w-xl">
         {errMsg && (
           <div className="mb-4 p-3 text-xs text-red-400 border border-red-500/40 bg-red-500/10">
             ⚠️ {errMsg}
-            <div className="mt-1 text-brand-textDim">녹음 청크는 보존되어 있습니다. Groq/Gemini 키 설정을 확인한 뒤 다시 시도하세요.</div>
+            {finishStage.stage === "error" && (
+              <div className="mt-1 text-brand-textDim">녹음 청크는 보존되어 있습니다. Groq/Gemini 키 설정을 확인한 뒤 다시 시도하세요.</div>
+            )}
           </div>
         )}
         <div className="space-y-3 mb-5">
@@ -1008,6 +1039,25 @@ function RecordView(props: {
             오디오 원본 보관 (기본: 정리 후 폐기 — 저작권·용량)
           </label>
         </div>
+        {scheduledAt ? (
+          <div className="flex items-center gap-3 p-4 border border-brand-primary/50 bg-brand-primary/10 mb-1">
+            <span className="text-2xl">⏰</span>
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-brand-text">
+                {new Date(scheduledAt).toLocaleString("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })} 자동 녹음 시작
+              </div>
+              <div className="text-xs text-brand-textDim">
+                남은 시간 {fmtDur(remainSec)} · 위 강의/제목 설정으로 시작됩니다 · 지금 바로 시작하려면 ● 버튼
+              </div>
+            </div>
+            <button
+              onClick={() => store.cancelSchedule()}
+              className="px-3 py-1.5 text-xs border border-red-500/40 text-red-400 hover:bg-red-500/10"
+            >
+              예약 취소
+            </button>
+          </div>
+        ) : null}
         <div className="flex gap-2">
           <button onClick={() => void begin()} className="px-5 py-2.5 text-sm font-semibold bg-red-500 text-white hover:opacity-90">
             ● 녹음 시작 (마이크)
@@ -1016,9 +1066,34 @@ function RecordView(props: {
             취소
           </button>
         </div>
+        {!scheduledAt && (
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-xs text-brand-textDim shrink-0">또는 예약:</span>
+            <input
+              type="datetime-local"
+              value={schedInput}
+              min={fmtLocalDT(Date.now())}
+              onChange={(e) => setSchedInput(e.target.value)}
+              className="px-3 py-2 text-sm bg-brand-panel border border-brand-subtle text-brand-text focus:outline-none focus:border-brand-primary [color-scheme:light_dark]"
+            />
+            <button
+              onClick={() => void scheduleBegin()}
+              disabled={!schedInput}
+              className="px-4 py-2 text-sm font-semibold border border-brand-primary text-brand-primary hover:bg-brand-primary/10 disabled:opacity-40"
+            >
+              ⏰ 예약 녹음
+            </button>
+          </div>
+        )}
         <p className="mt-4 text-xs text-brand-textDim">
           💡 5분마다 구간이 자동 저장·변환되어 아래에 <strong>실시간 구간 노트</strong>로 쌓입니다.
           녹음 중 다른 페이지로 이동해도 녹음은 계속됩니다 (탭을 닫거나 새로고침만 피하세요).
+          {scheduledAt ? (
+            <>
+              <br />⏰ 예약 실행 조건: 이 브라우저 탭이 열려 있고 기기가 깨어 있어야 합니다.
+              다른 페이지로 이동해도 실행되며, 새로고침했다면 관리자 페이지를 다시 열어두세요(예약 자동 복원).
+            </>
+          ) : null}
         </p>
       </div>
     );
