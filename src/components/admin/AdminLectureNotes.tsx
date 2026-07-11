@@ -591,6 +591,10 @@ function LectureDetailView(props: {
   const [matError, setMatError] = useState<string | null>(null);
   const [ovBusy, setOvBusy] = useState(false);
   const [showOverview, setShowOverview] = useState(false);
+  // ── 세션 추가(미분류에서 담기)/빼기 ──
+  const [addOpen, setAddOpen] = useState(false);
+  const [addSelected, setAddSelected] = useState<Set<string>>(new Set());
+  const [addBusy, setAddBusy] = useState(false);
 
   useEffect(() => {
     void listMaterials(props.id).then(setMaterials);
@@ -655,6 +659,30 @@ function LectureDetailView(props: {
   const sessions = props.notes
     .filter((n) => n.lectureId === lecture.id)
     .sort((a, b) => a.recordedAt.localeCompare(b.recordedAt));
+
+  const unassignedNotes = props.notes
+    .filter((n) => !n.lectureId)
+    .sort((a, b) => b.recordedAt.localeCompare(a.recordedAt));
+
+  const addSelectedToLecture = async () => {
+    if (addSelected.size === 0) return;
+    setAddBusy(true);
+    try {
+      const targets = props.notes.filter((n) => addSelected.has(n.id));
+      for (const n of targets) await assignNoteToLecture(n, lecture.id);
+      setAddOpen(false);
+      setAddSelected(new Set());
+      props.onChanged();
+    } finally {
+      setAddBusy(false);
+    }
+  };
+
+  /** 세션을 강의에서 빼서 미분류로 — 비파괴·가역이라 확인창 없이 즉시 (기획 02 §3-2 분리) */
+  const detachSession = async (n: LectureNote) => {
+    await assignNoteToLecture(n, null);
+    props.onChanged();
+  };
 
   const totalMatSize = materials.reduce((n, m) => n + (m.size ?? 0), 0);
   // 통합 정리 이후 세션이 추가/수정됐으면 오래됨
@@ -741,21 +769,69 @@ function LectureDetailView(props: {
       <div className="flex items-center gap-2 mb-2">
         <h4 className="text-xs font-semibold text-brand-textDim">🎙️ 세션 노트 ({sessions.length})</h4>
         <div className="flex-1" />
+        <button
+          onClick={() => { setAddOpen((v) => !v); setAddSelected(new Set()); }}
+          disabled={unassignedNotes.length === 0 && !addOpen}
+          className="px-3 py-1.5 text-xs border border-brand-subtle text-brand-textDim hover:text-brand-text disabled:opacity-40"
+          title={unassignedNotes.length === 0 ? "추가할 미분류 녹음이 없습니다" : ""}
+        >
+          {addOpen ? "추가 취소" : `📥 미분류에서 추가 (${unassignedNotes.length})`}
+        </button>
         <button onClick={recordHere} className="px-3 py-1.5 text-xs font-semibold bg-brand-primary text-black hover:opacity-90">
           ＋ 이 강의로 새 녹음
         </button>
       </div>
+
+      {/* 미분류 녹음 골라 담기 패널 */}
+      {addOpen && (
+        <div className="mb-3 p-3 border border-brand-primary/40 bg-brand-panel/60">
+          <p className="mb-2 text-[11px] text-brand-textDim">이 강의에 추가할 미분류 녹음을 선택하세요.</p>
+          {unassignedNotes.length === 0 ? (
+            <p className="text-xs text-brand-textDim">미분류 녹음이 없습니다.</p>
+          ) : (
+            <>
+              <ul className="space-y-1.5 max-h-56 overflow-y-auto">
+                {unassignedNotes.map((n) => (
+                  <li key={n.id}>
+                    <label className="flex items-center gap-2 p-2 border border-brand-subtle bg-brand-panel/40 text-xs cursor-pointer hover:border-brand-primary/60">
+                      <input
+                        type="checkbox"
+                        checked={addSelected.has(n.id)}
+                        onChange={() =>
+                          setAddSelected((s) => { const next = new Set(s); if (next.has(n.id)) next.delete(n.id); else next.add(n.id); return next; })
+                        }
+                      />
+                      <span className="flex-1 min-w-0">
+                        <span className="text-brand-text">{n.title}</span>
+                        <span className="text-brand-textDim"> · {n.recordedAt.slice(0, 10)} · {fmtDur(n.durationSec)}</span>
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+              <button
+                onClick={() => void addSelectedToLecture()}
+                disabled={addSelected.size === 0 || addBusy}
+                className="mt-2 px-3 py-1.5 text-xs font-semibold bg-brand-primary text-black disabled:opacity-40"
+              >
+                {addBusy ? "추가 중…" : `선택한 ${addSelected.size}개를 이 강의에 추가`}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
       {sessions.length === 0 ? (
         <p className="py-6 text-xs text-brand-textDim border border-dashed border-brand-subtle text-center">
-          아직 세션이 없습니다. '＋ 이 강의로 새 녹음'으로 시작하거나, 목록의 미분류 녹음을 묶어 오세요.
+          아직 세션이 없습니다. '＋ 이 강의로 새 녹음'으로 시작하거나 '📥 미분류에서 추가'로 기존 녹음을 담아 오세요.
         </p>
       ) : (
         <ul className="space-y-2">
           {sessions.map((n) => (
-            <li key={n.id}>
+            <li key={n.id} className="flex items-stretch gap-2">
               <button
                 onClick={() => props.onOpenNote(n.id)}
-                className="w-full text-left p-4 border border-brand-subtle bg-brand-panel/40 hover:border-brand-primary/60 transition-colors"
+                className="flex-1 text-left p-4 border border-brand-subtle bg-brand-panel/40 hover:border-brand-primary/60 transition-colors"
               >
                 <div className="flex items-center gap-2">
                   {n.sessionLabel && (
@@ -770,6 +846,13 @@ function LectureDetailView(props: {
                   {n.recordedAt.slice(0, 10)} · {fmtDur(n.durationSec)}
                   {n.summary ? ` · ${n.summary.oneLiner.slice(0, 60)}` : ""}
                 </div>
+              </button>
+              <button
+                onClick={() => void detachSession(n)}
+                title="이 강의에서 빼서 미분류로 (노트는 삭제되지 않음)"
+                className="px-3 text-xs border border-brand-subtle text-brand-textDim hover:text-red-400 hover:border-red-500/40 transition-colors"
+              >
+                빼기
               </button>
             </li>
           ))}
