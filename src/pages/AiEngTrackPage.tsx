@@ -308,7 +308,7 @@ export function AiEngTrackPage() {
             </div>
             <p className="text-sm text-brand-textDim mb-3 leading-relaxed">
               만든 것을 계속 살아있게 한다. 운영 루프 5국면(관측·평가·진단·개선·통제)으로 드리프트·사고·비용과 싸우는 법.
-              시리즈 A '운영의 탄생'(6강, 코드 0줄, 무료) 공개 — B '운영 지휘하기'·C '운영 만들기'(실전: 운영 30일)로 이어지는 3중 시리즈.
+              시리즈 A '운영의 탄생'(6강, 코드 0줄, 무료) + B '운영 지휘하기'(8강, 계기판·리뷰·대장·플레이북, PRO) 공개 — C '운영 만들기'(실전: 운영 30일)로 완성되는 3중 시리즈.
             </p>
             <div className="flex flex-wrap gap-2 mb-3">
               {["드리프트", "계기판", "이중 성적표", "포스트모템", "카나리", "운영 실패학"].map((t) => (
@@ -316,7 +316,7 @@ export function AiEngTrackPage() {
               ))}
             </div>
             <div className="text-xs text-brand-textDim">
-              📖 {ADVANCED3_LESSONS.length}강 · ⏱️ ~2시간 · ✅ {adv3Done}강 완료 · 선수: 고급1·2 시리즈 A 권장
+              📖 {ADVANCED3_LESSONS.length}강 · ⏱️ ~5.5시간 · ✅ {adv3Done}강 완료 · A는 누구나 · B는 A 수강 권장
             </div>
           </Link>
         </section>

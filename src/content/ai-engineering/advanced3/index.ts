@@ -5,6 +5,14 @@ import { lessonA03 } from "./story/03-two-report-cards";
 import { lessonA04 } from "./story/04-postmortem";
 import { lessonA05 } from "./story/05-discipline-of-change";
 import { lessonA06 } from "./story/06-ops-failure-clinic";
+import { lessonB01 } from "./handling/01-logbook";
+import { lessonB02 } from "./handling/02-three-numbers";
+import { lessonB03 } from "./handling/03-weekly-review";
+import { lessonB04 } from "./handling/04-field-signals";
+import { lessonB05 } from "./handling/05-change-ledger";
+import { lessonB06 } from "./handling/06-incident-playbook";
+import { lessonB07 } from "./handling/07-ops-ledger";
+import { lessonB08 } from "./handling/08-capstone-playbook";
 
 /**
  * AI 엔지니어링 — 고급3 "AI 에이전트 엔지니어링 ③ 평가·운영".
@@ -13,7 +21,7 @@ import { lessonA06 } from "./story/06-ops-failure-clinic";
  * 출시는 완성이 아니라 관측의 시작. 운영 루프 5국면(관측·평가·진단·개선·통제)을
  * 3개 깊이로 확대해 가는 3중 시리즈 (고급1 하네스·고급2 멀티에이전트의 완결편):
  *   시리즈 A "운영의 탄생"    (story/,    A1~A6, 누구나·코드 0줄·무료)   ← 완성
- *   시리즈 B "운영 지휘하기"  (handling/, B1~B8, AI 활용 비개발자·PRO)   ← 집필 예정
+ *   시리즈 B "운영 지휘하기"  (handling/, B1~B8, AI 활용 비개발자·PRO)   ← 완성 (일지·계기판·리뷰·대장·플레이북)
  *   시리즈 C "운영 만들기"    (building/, C1~C10, 개발자·PRO,
  *                              C7~C10 = 실전 아크 '코드리뷰 회사 운영 30일') ← 집필 예정
  *
@@ -27,6 +35,14 @@ export const LESSONS: Lesson[] = [
   lessonA04,
   lessonA05,
   lessonA06,
+  lessonB01,
+  lessonB02,
+  lessonB03,
+  lessonB04,
+  lessonB05,
+  lessonB06,
+  lessonB07,
+  lessonB08,
 ];
 
 export const LESSON_SUMMARIES: LessonSummary[] = LESSONS.map((l) => ({

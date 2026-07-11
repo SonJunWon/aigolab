@@ -89,7 +89,7 @@ export const TRACKS: TrackInfo[] = [
     id: "advanced3",
     name: "고급3 — 평가·운영",
     description: "AI 에이전트 엔지니어링 ③ 완결편. 달리게 만드는 것과 계속 달리게 하는 것은 다른 기술이다 — 운영 루프 5국면(관측·평가·진단·개선·통제)으로 시스템을 기른다.",
-    estimatedHours: 2,
+    estimatedHours: 6,
   },
   {
     id: "friendly-preview",
