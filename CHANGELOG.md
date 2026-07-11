@@ -13,6 +13,21 @@
 
 ---
 
+## [4.41.0] - 2026-07-11
+
+### Added
+
+- **관리자 「강의 정리」 프로그램 Phase 1 (MVP)** — /admin 5번째 탭 🎙️
+  - 외부 강의 수강 시 녹음 → STT → AI 정리 → 보관·검색을 한 탭에서. 관리자 전용 개인 학습 도구.
+  - 녹음: MediaRecorder(opus 32kbps) — 5분 단위 recorder 재시작 방식으로 완결형 webm 청크 생성, IndexedDB 즉시 저장(크래시 보존), Wake Lock, 녹음 중 🔖북마크.
+  - STT: Groq Whisper(whisper-large-v3-turbo, BYOK 키 재사용) 청크 순차 변환 + 실패 청크만 재시도, [m:ss] 타임스탬프 전사.
+  - 정리: chat()+responseSchema 구조화(제목·한줄요약·개념 카드·타임라인·용어·액션·북마크), 긴 전사는 맵-리듀스. 정리 실패 시 전사만 저장 후 상세에서 재시도.
+  - 저장: IndexedDB(Phase 1 로컬). 오디오 원본 기본 폐기(보관 옵션). Markdown 내보내기·검색·삭제.
+  - 신규 모듈 `src/lib/lectureNotes/`(types·db·recorder·stt·summarize·index) + `AdminLectureNotes.tsx`.
+  - 기획: `AI앱개발/관리자-강의정리/01-강의정리-프로그램-기획.md` (P2=Supabase 영속·Gemini 폴백, P3=탭 오디오·지식 트윈).
+
+---
+
 ## [4.40.0] - 2026-07-11
 
 ### Added

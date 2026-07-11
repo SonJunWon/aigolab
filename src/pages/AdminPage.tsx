@@ -32,8 +32,9 @@ import {
 import { AdminNoticesEditor } from "../components/admin/AdminNoticesEditor";
 import { AdminFAQEditor } from "../components/admin/AdminFAQEditor";
 import { AdminInquiryManager } from "../components/admin/AdminInquiryManager";
+import { AdminLectureNotes } from "../components/admin/AdminLectureNotes";
 
-type AdminTab = "entitlements" | "notices" | "faq" | "inquiries";
+type AdminTab = "entitlements" | "notices" | "faq" | "inquiries" | "lectures";
 
 export function AdminPage() {
   const user = useAuthStore((s) => s.user);
@@ -180,6 +181,7 @@ export function AdminPage() {
             { id: "notices" as AdminTab, label: "📢 공지사항", },
             { id: "faq" as AdminTab, label: "❓ FAQ", },
             { id: "inquiries" as AdminTab, label: "💬 문의 관리", },
+            { id: "lectures" as AdminTab, label: "🎙️ 강의 정리", },
           ]).map((tab) => (
             <button
               key={tab.id}
@@ -203,6 +205,9 @@ export function AdminPage() {
 
         {/* 문의 관리 탭 */}
         {activeTab === "inquiries" && <AdminInquiryManager />}
+
+        {/* 강의 정리 탭 */}
+        {activeTab === "lectures" && <AdminLectureNotes />}
 
         {/* 혜택 관리 탭 */}
         {activeTab === "entitlements" && <>
