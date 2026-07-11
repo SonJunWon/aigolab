@@ -15,6 +15,7 @@ import { LESSONS as INTERMEDIATE2_LESSONS } from "../content/ai-engineering/inte
 import { LESSONS as MCP_LESSONS } from "../content/ai-engineering/mcp-special";
 import { LESSONS as ADVANCED1_LESSONS } from "../content/ai-engineering/advanced1";
 import { LESSONS as ADVANCED2_LESSONS } from "../content/ai-engineering/advanced2";
+import { LESSONS as ADVANCED3_LESSONS } from "../content/ai-engineering/advanced3";
 
 export function AiEngTrackPage() {
   const isCompleted = useProgressStore((s) => s.isCompleted);
@@ -38,6 +39,9 @@ export function AiEngTrackPage() {
   ).length;
   const adv2Done = ADVANCED2_LESSONS.filter((l) =>
     isCompleted("ai-engineering", "advanced2", l.id)
+  ).length;
+  const adv3Done = ADVANCED3_LESSONS.filter((l) =>
+    isCompleted("ai-engineering", "advanced3", l.id)
   ).length;
 
   return (
@@ -279,12 +283,48 @@ export function AiEngTrackPage() {
               📖 {ADVANCED2_LESSONS.length}강 · ⏱️ ~12시간 · ✅ {adv2Done}강 완료 · A는 누구나 · B는 A 권장 · C는 개발자(고급1 C 권장)
             </div>
           </Link>
+          {/* 고급3 — 평가·운영 */}
+          <Link
+            to="/coding/learn/ai-engineering/advanced3"
+            className="group block p-6 sm:p-7 border border-teal-500/50 bg-brand-panel/40
+                       hover:border-teal-400/60 hover:shadow-lg hover:shadow-teal-500/10 transition-all"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="text-3xl">🎛</div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold group-hover:text-teal-400 transition-colors">
+                    고급3 — 평가·운영
+                  </h2>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-teal-500 text-white font-semibold">
+                    {ADVANCED3_LESSONS.length}강
+                  </span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500 text-white font-semibold">NEW</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand-green text-black font-semibold">A 무료</span>
+                </div>
+                <p className="text-xs text-brand-textDim">AI 에이전트 엔지니어링 ③ 완결편 — 출시는 관측의 시작</p>
+              </div>
+              <span className="text-brand-textDim group-hover:text-teal-400 group-hover:translate-x-1 transition-all">→</span>
+            </div>
+            <p className="text-sm text-brand-textDim mb-3 leading-relaxed">
+              만든 것을 계속 살아있게 한다. 운영 루프 5국면(관측·평가·진단·개선·통제)으로 드리프트·사고·비용과 싸우는 법.
+              시리즈 A '운영의 탄생'(6강, 코드 0줄, 무료) 공개 — B '운영 지휘하기'·C '운영 만들기'(실전: 운영 30일)로 이어지는 3중 시리즈.
+            </p>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {["드리프트", "계기판", "이중 성적표", "포스트모템", "카나리", "운영 실패학"].map((t) => (
+                <span key={t} className="px-2 py-0.5 rounded-md text-[10px] bg-teal-500/10 text-teal-300">{t}</span>
+              ))}
+            </div>
+            <div className="text-xs text-brand-textDim">
+              📖 {ADVANCED3_LESSONS.length}강 · ⏱️ ~2시간 · ✅ {adv3Done}강 완료 · 선수: 고급1·2 시리즈 A 권장
+            </div>
+          </Link>
         </section>
 
         {/* 학습 흐름 */}
         <section className="mt-10 text-center">
           <p className="text-xs text-brand-textDim">
-            입문자(기본기) → 중급1(지식 트윈) → MCP(연결) → 중급2(행동) → 고급1(하네스) → 고급2(멀티에이전트) → 바이브코딩 워크샵(앱 실전)
+            입문자(기본기) → 중급1(지식 트윈) → MCP(연결) → 중급2(행동) → 고급1(하네스) → 고급2(멀티에이전트) → 고급3(평가·운영) → 바이브코딩 워크샵(앱 실전)
           </p>
         </section>
       </div>

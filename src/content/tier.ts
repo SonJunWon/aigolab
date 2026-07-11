@@ -61,6 +61,13 @@ export const FREE_AI_ENG_LESSON_IDS: ReadonlySet<string> = new Set([
   "ai-eng-a2-a04-handoff-contract",
   "ai-eng-a2-a05-trust-and-verify",
   "ai-eng-a2-a06-failure-clinic",
+  // 고급3 시리즈 A "운영의 탄생" 6강도 전면 무료 (트랙 유입용) — B·C 시리즈는 PRO.
+  "ai-eng-a3-a01-launch-is-the-start",
+  "ai-eng-a3-a02-dashboard",
+  "ai-eng-a3-a03-two-report-cards",
+  "ai-eng-a3-a04-postmortem",
+  "ai-eng-a3-a05-discipline-of-change",
+  "ai-eng-a3-a06-ops-failure-clinic",
 ]);
 
 /**
