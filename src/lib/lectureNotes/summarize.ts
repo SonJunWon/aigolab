@@ -71,6 +71,31 @@ function fmtTime(sec: number): string {
   return `${m}:${String(sec % 60).padStart(2, "0")}`;
 }
 
+/**
+ * 라이브 구간 요약 — 녹음 중 5분 청크가 변환되는 즉시 2~4개 불릿으로.
+ * 최종 정리(summarizeTranscript)와 별개의 가벼운 경로 (task: fast).
+ */
+export async function quickChunkSummary(chunkTranscript: string): Promise<string[]> {
+  const res = await chat({
+    task: "fast",
+    messages: [
+      {
+        role: "system",
+        content:
+          "강의 전사 구간(약 5분)의 핵심을 한국어 불릿 2~4개로 요약하라. 개념 정의·숫자·이름은 보존. 잡담 제외. 내용이 거의 없으면 불릿 1개로 '(내용 없음/잡담 구간)'.",
+      },
+      { role: "user", content: chunkTranscript },
+    ],
+    responseSchema: {
+      type: "object",
+      properties: { bullets: { type: "array", items: { type: "string" } } },
+      required: ["bullets"],
+    },
+  });
+  const bullets = (res.json as { bullets?: string[] } | undefined)?.bullets;
+  return Array.isArray(bullets) && bullets.length ? bullets : [(res.text ?? "").slice(0, 120)];
+}
+
 /** 맵 단계 — 구간을 정보 보존형 압축 요약 (인수인계 문서 스타일) */
 async function mapChunk(text: string, idx: number, total: number): Promise<string> {
   const res = await chat({

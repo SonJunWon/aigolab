@@ -23,6 +23,12 @@ function fmtTime(sec: number): string {
     : `${m}:${String(s).padStart(2, "0")}`;
 }
 
+/** 청크 1개 즉시 변환 — 라이브 노트(녹음 중 실시간 정리)용 공개 API */
+export async function transcribeChunkBlob(blob: Blob): Promise<string> {
+  const apiKey = await requireKey("groq");
+  return transcribeBlob(apiKey, blob);
+}
+
 async function transcribeBlob(apiKey: string, blob: Blob): Promise<string> {
   const form = new FormData();
   form.append("file", blob, "chunk.webm");

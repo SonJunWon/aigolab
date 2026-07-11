@@ -9,6 +9,7 @@
  */
 
 import { putChunk } from "./db";
+import type { RecordingChunk } from "./types";
 
 const CHUNK_SEC = 300; // 5분
 const MIME = "audio/webm;codecs=opus";
@@ -24,7 +25,12 @@ export interface RecorderHandle {
   stop: () => Promise<{ durationSec: number; bookmarks: number[] }>;
 }
 
-export async function startRecording(): Promise<RecorderHandle> {
+export interface RecordingOptions {
+  /** 청크가 IndexedDB에 저장될 때마다 호출 — 라이브 STT·구간 정리 파이프라인의 입구 */
+  onChunk?: (chunk: RecordingChunk) => void;
+}
+
+export async function startRecording(opts?: RecordingOptions): Promise<RecorderHandle> {
   if (typeof MediaRecorder === "undefined" || !MediaRecorder.isTypeSupported(MIME)) {
     throw new Error("이 브라우저는 녹음(webm/opus)을 지원하지 않습니다. 데스크톱 Chrome/Edge를 사용해주세요.");
   }
@@ -60,15 +66,16 @@ export async function startRecording(): Promise<RecorderHandle> {
       const durationSec = Math.round((Date.now() - chunkStartedAt) / 1000);
       if (!parts.length || durationSec < 1) return;
       const mySeq = seq++;
+      const chunk: RecordingChunk = {
+        key: `${sessionId}:${mySeq}`,
+        sessionId,
+        seq: mySeq,
+        blob: new Blob(parts, { type: MIME }),
+        startSec: mySeq * CHUNK_SEC,
+        durationSec,
+      };
       pendingSaves.push(
-        putChunk({
-          key: `${sessionId}:${mySeq}`,
-          sessionId,
-          seq: mySeq,
-          blob: new Blob(parts, { type: MIME }),
-          startSec: mySeq * CHUNK_SEC,
-          durationSec,
-        }),
+        putChunk(chunk).then(() => { opts?.onChunk?.(chunk); }),
       );
       // 회전 중이면 다음 청크 recorder 를 즉시 시작
       if (!stopped) startChunkRecorder();

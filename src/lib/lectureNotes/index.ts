@@ -3,9 +3,9 @@
  * 파이프라인: startRecording → (stop) → transcribeSession → summarizeTranscript → putNote
  */
 export { startRecording } from "./recorder";
-export type { RecorderHandle } from "./recorder";
-export { transcribeSession } from "./stt";
-export { summarizeTranscript } from "./summarize";
+export type { RecorderHandle, RecordingOptions } from "./recorder";
+export { transcribeSession, transcribeChunkBlob } from "./stt";
+export { summarizeTranscript, quickChunkSummary } from "./summarize";
 export {
   putNote,
   getNote,
