@@ -5,6 +5,14 @@ import { lessonA03 } from "./story/03-orchestration-zoo";
 import { lessonA04 } from "./story/04-handoff-contract";
 import { lessonA05 } from "./story/05-trust-and-verify";
 import { lessonA06 } from "./story/06-failure-clinic";
+import { lessonB01 } from "./handling/01-team-anatomy";
+import { lessonB02 } from "./handling/02-job-description";
+import { lessonB03 } from "./handling/03-pipeline-delegation";
+import { lessonB04 } from "./handling/04-parallel-delegation";
+import { lessonB05 } from "./handling/05-verification-team";
+import { lessonB06 } from "./handling/06-team-automation";
+import { lessonB07 } from "./handling/07-team-scorecard";
+import { lessonB08 } from "./handling/08-capstone-manual";
 
 /**
  * AI 엔지니어링 — 고급2 "AI 에이전트 엔지니어링 ② 멀티에이전트 시스템".
@@ -13,7 +21,7 @@ import { lessonA06 } from "./story/06-failure-clinic";
  * 근본 동인은 컨텍스트 물리학(좁은 책상). 5대 설계 축(분업·역할·지휘·전달·신뢰)을
  * 3개 깊이로 확대해 가는 3중 시리즈 (고급1 하네스 엔지니어링의 후속):
  *   시리즈 A "팀의 탄생"    (story/,    A1~A6, 누구나·코드 0줄·무료)   ← 완성
- *   시리즈 B "팀 지휘하기"  (handling/, B1~B8, AI 활용 비개발자·PRO)   ← 집필 예정
+ *   시리즈 B "팀 지휘하기"  (handling/, B1~B8, AI 활용 비개발자·PRO)   ← 완성 (위임·병렬·검증·자동화 운용)
  *   시리즈 C "팀 만들기"    (building/, C1~C10, 개발자·PRO,
  *                            C7~C10 = 실전 아크 '자동 코드리뷰 회사')  ← 집필 예정 (고급1 C 선행)
  *
@@ -27,6 +35,14 @@ export const LESSONS: Lesson[] = [
   lessonA04,
   lessonA05,
   lessonA06,
+  lessonB01,
+  lessonB02,
+  lessonB03,
+  lessonB04,
+  lessonB05,
+  lessonB06,
+  lessonB07,
+  lessonB08,
 ];
 
 export const LESSON_SUMMARIES: LessonSummary[] = LESSONS.map((l) => ({
