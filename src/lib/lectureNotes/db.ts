@@ -6,10 +6,11 @@
  *   notes  — 완성된 강의 노트 (keyPath "id")
  */
 
-import type { LectureNote, RecordingChunk } from "./types";
+import type { Lecture, LectureNote, Material, RecordingChunk } from "./types";
 
 const DB_NAME = "aigolab-lecture-notes";
-const DB_VERSION = 1;
+// v2: lectures(강의 총괄)·materials(자료) 스토어 추가 — 기존 notes/chunks 무변경(하위 호환)
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -26,6 +27,13 @@ function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains("notes")) {
         db.createObjectStore("notes", { keyPath: "id" });
       }
+      if (!db.objectStoreNames.contains("lectures")) {
+        db.createObjectStore("lectures", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("materials")) {
+        const m = db.createObjectStore("materials", { keyPath: "id" });
+        m.createIndex("byLecture", "lectureId");
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -34,7 +42,7 @@ function openDb(): Promise<IDBDatabase> {
 }
 
 function tx<T>(
-  store: "chunks" | "notes",
+  store: "chunks" | "notes" | "lectures" | "materials",
   mode: IDBTransactionMode,
   run: (s: IDBObjectStore) => IDBRequest<T> | IDBRequest,
 ): Promise<T> {
@@ -107,4 +115,52 @@ export async function listNotes(): Promise<LectureNote[]> {
 
 export function deleteNote(id: string): Promise<unknown> {
   return tx("notes", "readwrite", (s) => s.delete(id));
+}
+
+// ── lectures (v2) ──
+export function putLecture(lecture: Lecture): Promise<unknown> {
+  return tx("lectures", "readwrite", (s) => s.put(lecture));
+}
+
+export function getLecture(id: string): Promise<Lecture | undefined> {
+  return tx("lectures", "readonly", (s) => s.get(id));
+}
+
+export async function listLectures(): Promise<Lecture[]> {
+  const all = await tx<Lecture[]>("lectures", "readonly", (s) => s.getAll());
+  return all.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
+export function deleteLecture(id: string): Promise<unknown> {
+  return tx("lectures", "readwrite", (s) => s.delete(id));
+}
+
+/** 강의 삭제 시 소속 노트를 미분류로 되돌린다 (노트는 파괴하지 않는다 — 비파괴 원칙) */
+export async function detachNotesFromLecture(lectureId: string): Promise<number> {
+  const all = await tx<LectureNote[]>("notes", "readonly", (s) => s.getAll());
+  const targets = all.filter((n) => n.lectureId === lectureId);
+  for (const n of targets) {
+    await tx("notes", "readwrite", (s) => s.put({ ...n, lectureId: null }));
+  }
+  return targets.length;
+}
+
+// ── materials (v2 스토어 — CRUD 는 M2에서 사용) ──
+export function putMaterial(material: Material): Promise<unknown> {
+  return tx("materials", "readwrite", (s) => s.put(material));
+}
+
+export async function listMaterials(lectureId: string): Promise<Material[]> {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const idx = db.transaction("materials", "readonly").objectStore("materials").index("byLecture");
+    const req = idx.getAll(lectureId);
+    req.onsuccess = () =>
+      resolve((req.result as Material[]).sort((a, b) => a.addedAt.localeCompare(b.addedAt)));
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export function deleteMaterial(id: string): Promise<unknown> {
+  return tx("materials", "readwrite", (s) => s.delete(id));
 }

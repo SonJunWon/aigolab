@@ -21,11 +21,21 @@ import {
   transcribeSession,
   deleteSessionChunks,
   noteToMarkdown,
+  listLectures,
+  saveLecture,
+  newLecture,
+  removeLecture,
+  assignNoteToLecture,
+  type Lecture,
   type LectureNote,
 } from "../../lib/lectureNotes";
 import { useLectureRecordingStore } from "../../store/lectureRecordingStore";
 
-type View = { name: "list" } | { name: "record" } | { name: "detail"; id: string };
+type View =
+  | { name: "list" }
+  | { name: "record" }
+  | { name: "detail"; id: string }
+  | { name: "lecture"; id: string };
 
 function fmtDur(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -41,12 +51,16 @@ function fmtClock(sec: number): string {
 export function AdminLectureNotes() {
   const [view, setView] = useState<View>({ name: "list" });
   const [notes, setNotes] = useState<LectureNote[]>([]);
+  const [lectures, setLectures] = useState<Lecture[]>([]);
   const [query, setQuery] = useState("");
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [cloudOk, setCloudOk] = useState<boolean | null>(null); // null = 동기화 중
   const recStatus = useLectureRecordingStore((s) => s.status);
 
-  const refresh = () => { void listNotes().then(setNotes); };
+  const refresh = () => {
+    void listNotes().then(setNotes);
+    void listLectures().then(setLectures);
+  };
   useEffect(() => {
     refresh(); // 로컬 먼저 즉시 표시
     void syncNotes().then((r) => { setCloudOk(r.cloud); if (r.pulled > 0) refresh(); });
@@ -77,6 +91,7 @@ export function AdminLectureNotes() {
         <ListView
           notes={filtered}
           allNotes={notes}
+          lectures={lectures}
           query={query}
           onQuery={setQuery}
           tagFilter={tagFilter}
@@ -84,18 +99,35 @@ export function AdminLectureNotes() {
           cloudOk={cloudOk}
           onNew={() => setView({ name: "record" })}
           onOpen={(id) => setView({ name: "detail", id })}
+          onOpenLecture={(id) => setView({ name: "lecture", id })}
+          onChanged={refresh}
         />
       )}
       {view.name === "record" && (
         <RecordView
+          lectures={lectures}
           onDone={(id) => { refresh(); setView({ name: "detail", id }); }}
           onCancel={() => setView({ name: "list" })}
+          onLectureCreated={refresh}
         />
       )}
       {view.name === "detail" && (
         <DetailView
           id={view.id}
+          lectures={lectures}
           onBack={() => { refresh(); setView({ name: "list" }); }}
+          onOpenLecture={(id) => { refresh(); setView({ name: "lecture", id }); }}
+        />
+      )}
+      {view.name === "lecture" && (
+        <LectureDetailView
+          id={view.id}
+          lectures={lectures}
+          notes={notes}
+          onBack={() => { refresh(); setView({ name: "list" }); }}
+          onOpenNote={(id) => setView({ name: "detail", id })}
+          onRecord={() => setView({ name: "record" })}
+          onChanged={refresh}
         />
       )}
     </div>
@@ -234,10 +266,11 @@ function OrphanRecoverySection(props: {
   );
 }
 
-// ─────────────────────────────── 목록 ───────────────────────────────
+// ─────────────────────────────── 목록 (2계층: 강의 + 미분류) ───────────────────────────────
 function ListView(props: {
   notes: LectureNote[];
   allNotes: LectureNote[];
+  lectures: Lecture[];
   query: string;
   onQuery: (q: string) => void;
   tagFilter: string | null;
@@ -245,8 +278,44 @@ function ListView(props: {
   cloudOk: boolean | null;
   onNew: () => void;
   onOpen: (id: string) => void;
+  onOpenLecture: (id: string) => void;
+  onChanged: () => void;
 }) {
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [assignTarget, setAssignTarget] = useState<string>(""); // 강의 id | "__new__"
+  const [newTitle, setNewTitle] = useState("");
+  const [newSpeaker, setNewSpeaker] = useState("");
+
   const allTags = [...new Set(props.allNotes.flatMap((n) => n.tags))].sort();
+  const q = props.query.trim().toLowerCase();
+  const visibleLectures = q
+    ? props.lectures.filter((l) => [l.title, l.speaker, l.description].join(" ").toLowerCase().includes(q))
+    : props.lectures;
+  // 검색·태그 필터를 통과한 노트(props.notes) 중 미분류만 아래 섹션에
+  const unassigned = props.notes.filter((n) => !n.lectureId);
+  const sessionCount = (lid: string) => props.allNotes.filter((n) => n.lectureId === lid).length;
+
+  const toggle = (id: string) =>
+    setSelected((s) => { const next = new Set(s); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+
+  const bulkAssign = async () => {
+    if (selected.size === 0) return;
+    let lectureId = assignTarget;
+    if (assignTarget === "__new__") {
+      if (!newTitle.trim()) return;
+      const lec = await saveLecture(newLecture(newTitle, newSpeaker));
+      lectureId = lec.id;
+    }
+    if (!lectureId) return;
+    const targets = props.allNotes.filter((n) => selected.has(n.id));
+    for (const n of targets) await assignNoteToLecture(n, lectureId);
+    setSelected(new Set());
+    setSelectMode(false);
+    setAssignTarget(""); setNewTitle(""); setNewSpeaker("");
+    props.onChanged();
+  };
+
   return (
     <div>
       <div className="flex items-center gap-3 mb-2">
@@ -260,7 +329,7 @@ function ListView(props: {
           onClick={props.onNew}
           className="px-4 py-2 text-sm font-semibold bg-brand-primary text-black hover:opacity-90 transition-opacity"
         >
-          🎙️ 새 강의
+          🎙️ 새 녹음
         </button>
       </div>
 
@@ -287,18 +356,99 @@ function ListView(props: {
         ))}
       </div>
 
-      {props.notes.length === 0 ? (
+      {/* 📚 강의 카드 섹션 */}
+      {visibleLectures.length > 0 && (
+        <section className="mb-6">
+          <h4 className="text-xs font-semibold text-brand-textDim mb-2">📚 강의</h4>
+          <ul className="space-y-2">
+            {visibleLectures.map((l) => (
+              <li key={l.id}>
+                <button
+                  onClick={() => props.onOpenLecture(l.id)}
+                  className="w-full text-left p-4 border border-brand-primary/40 bg-brand-panel/60 hover:border-brand-primary transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-brand-text">📚 {l.title}</span>
+                    {l.speaker && <span className="text-xs text-brand-textDim">· {l.speaker}</span>}
+                  </div>
+                  <div className="mt-1 text-xs text-brand-textDim">
+                    세션 {sessionCount(l.id)}개
+                    {l.tags.length > 0 && ` · ${l.tags.map((t) => `#${t}`).join(" ")}`}
+                    {l.description && ` · ${l.description.slice(0, 50)}`}
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* 🎙️ 미분류 노트 섹션 */}
+      <div className="flex items-center gap-2 mb-2">
+        <h4 className="text-xs font-semibold text-brand-textDim">🎙️ 미분류 녹음</h4>
+        <div className="flex-1" />
+        {unassigned.length > 0 && (
+          <button
+            onClick={() => { setSelectMode((v) => !v); setSelected(new Set()); }}
+            className={`px-2 py-0.5 text-[10px] border transition-colors ${
+              selectMode ? "border-brand-primary text-brand-primary" : "border-brand-subtle text-brand-textDim hover:text-brand-text"
+            }`}
+          >
+            {selectMode ? "선택 취소" : "선택해서 강의로 묶기"}
+          </button>
+        )}
+      </div>
+
+      {/* 일괄 묶기 패널 */}
+      {selectMode && selected.size > 0 && (
+        <div className="mb-3 p-3 border border-brand-primary/40 bg-brand-panel/60 flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-brand-text">{selected.size}개 노트를</span>
+          <select
+            value={assignTarget}
+            onChange={(e) => setAssignTarget(e.target.value)}
+            className="px-2 py-1 bg-brand-panel border border-brand-subtle text-brand-text"
+          >
+            <option value="">강의 선택…</option>
+            {props.lectures.map((l) => <option key={l.id} value={l.id}>📚 {l.title}</option>)}
+            <option value="__new__">＋ 새 강의 만들기</option>
+          </select>
+          {assignTarget === "__new__" && (
+            <>
+              <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="총괄 강의 제목 (필수)"
+                className="px-2 py-1 bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim" />
+              <input value={newSpeaker} onChange={(e) => setNewSpeaker(e.target.value)} placeholder="강연자"
+                className="px-2 py-1 bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim" />
+            </>
+          )}
+          <button
+            onClick={() => void bulkAssign()}
+            disabled={!assignTarget || (assignTarget === "__new__" && !newTitle.trim())}
+            className="px-3 py-1 font-semibold bg-brand-primary text-black disabled:opacity-40"
+          >
+            묶기
+          </button>
+        </div>
+      )}
+
+      {unassigned.length === 0 && visibleLectures.length === 0 ? (
         <div className="py-16 text-center text-sm text-brand-textDim border border-dashed border-brand-subtle">
-          아직 정리된 강의가 없습니다. '새 강의'로 첫 녹음을 시작하세요.
+          아직 정리된 강의가 없습니다. '새 녹음'으로 시작하세요.
           <div className="mt-2 text-xs">※ 개인 학습 목적 보관용입니다. 타인 강의의 공유·게시는 저작권 침해가 될 수 있어요.</div>
         </div>
+      ) : unassigned.length === 0 ? (
+        <p className="py-4 text-xs text-brand-textDim">미분류 녹음이 없습니다 — 전부 강의로 정리됐어요. 👍</p>
       ) : (
         <ul className="space-y-2">
-          {props.notes.map((n) => (
-            <li key={n.id}>
+          {unassigned.map((n) => (
+            <li key={n.id} className="flex items-stretch gap-2">
+              {selectMode && (
+                <label className="flex items-center px-2 border border-brand-subtle bg-brand-panel/40 cursor-pointer">
+                  <input type="checkbox" checked={selected.has(n.id)} onChange={() => toggle(n.id)} />
+                </label>
+              )}
               <button
-                onClick={() => props.onOpen(n.id)}
-                className="w-full text-left p-4 border border-brand-subtle bg-brand-panel/40 hover:border-brand-primary/60 transition-colors"
+                onClick={() => (selectMode ? toggle(n.id) : props.onOpen(n.id))}
+                className="flex-1 text-left p-4 border border-brand-subtle bg-brand-panel/40 hover:border-brand-primary/60 transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-brand-text">{n.title}</span>
@@ -320,13 +470,161 @@ function ListView(props: {
   );
 }
 
+// ─────────────────────────────── 강의 상세 (신설) ───────────────────────────────
+function LectureDetailView(props: {
+  id: string;
+  lectures: Lecture[];
+  notes: LectureNote[];
+  onBack: () => void;
+  onOpenNote: (id: string) => void;
+  onRecord: () => void;
+  onChanged: () => void;
+}) {
+  const lecture = props.lectures.find((l) => l.id === props.id);
+  const setRecMeta = useLectureRecordingStore((s) => s.setMeta);
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(lecture?.title ?? "");
+  const [speaker, setSpeaker] = useState(lecture?.speaker ?? "");
+  const [description, setDescription] = useState(lecture?.description ?? "");
+  const [tagsRaw, setTagsRaw] = useState((lecture?.tags ?? []).join(", "));
+
+  if (!lecture) {
+    return (
+      <div className="py-10 text-center text-sm text-brand-textDim">
+        강의를 찾을 수 없습니다. <button onClick={props.onBack} className="text-brand-primary">← 목록으로</button>
+      </div>
+    );
+  }
+  const sessions = props.notes
+    .filter((n) => n.lectureId === lecture.id)
+    .sort((a, b) => a.recordedAt.localeCompare(b.recordedAt));
+
+  const saveHeader = async () => {
+    if (!title.trim()) return;
+    await saveLecture({
+      ...lecture,
+      title: title.trim(),
+      speaker: speaker.trim(),
+      description: description.trim(),
+      tags: [...new Set(tagsRaw.split(",").map((t) => t.trim().replace(/^#/, "")).filter(Boolean))],
+    });
+    setEditing(false);
+    props.onChanged();
+  };
+
+  const removeThis = async () => {
+    if (!confirm(`'${lecture.title}' 강의를 삭제할까요?\n소속 세션 노트 ${sessions.length}개는 삭제되지 않고 '미분류'로 이동합니다.`)) return;
+    await removeLecture(lecture.id);
+    props.onBack();
+  };
+
+  const recordHere = () => {
+    setRecMeta({ lectureId: lecture.id, sessionLabel: `${sessions.length + 1}회차` });
+    props.onRecord();
+  };
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <button onClick={props.onBack} className="text-sm text-brand-textDim hover:text-brand-primary">← 목록</button>
+        <div className="flex-1" />
+        <button onClick={() => setEditing((v) => !v)} className="px-3 py-1.5 text-xs border border-brand-subtle text-brand-textDim hover:text-brand-text">
+          {editing ? "편집 취소" : "✏️ 정보 편집"}
+        </button>
+        <button onClick={() => void removeThis()} className="px-3 py-1.5 text-xs border border-red-500/40 text-red-400 hover:bg-red-500/10">
+          강의 삭제
+        </button>
+      </div>
+
+      {editing ? (
+        <div className="space-y-2 mb-6 max-w-xl">
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="총괄 강의 제목 (필수)"
+            className="w-full px-3 py-2 text-sm bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim focus:outline-none focus:border-brand-primary" />
+          <input value={speaker} onChange={(e) => setSpeaker(e.target.value)} placeholder="강연자"
+            className="w-full px-3 py-2 text-sm bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim focus:outline-none focus:border-brand-primary" />
+          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="설명 (선택)"
+            className="w-full px-3 py-2 text-sm bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim focus:outline-none focus:border-brand-primary" />
+          <input value={tagsRaw} onChange={(e) => setTagsRaw(e.target.value)} placeholder="태그 — 쉼표로 구분"
+            className="w-full px-3 py-2 text-sm bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim focus:outline-none focus:border-brand-primary" />
+          <button onClick={() => void saveHeader()} disabled={!title.trim()}
+            className="px-4 py-2 text-sm font-semibold bg-brand-primary text-black disabled:opacity-40">저장</button>
+        </div>
+      ) : (
+        <div className="mb-6">
+          <h3 className="text-lg font-bold text-brand-text">📚 {lecture.title}</h3>
+          <p className="mt-1 text-xs text-brand-textDim">
+            {lecture.speaker ? `강연자: ${lecture.speaker}` : "강연자 미입력"}
+            {lecture.tags.length > 0 && ` · ${lecture.tags.map((t) => `#${t}`).join(" ")}`}
+          </p>
+          {lecture.description && <p className="mt-2 text-sm text-brand-textDim">{lecture.description}</p>}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 mb-2">
+        <h4 className="text-xs font-semibold text-brand-textDim">🎙️ 세션 노트 ({sessions.length})</h4>
+        <div className="flex-1" />
+        <button onClick={recordHere} className="px-3 py-1.5 text-xs font-semibold bg-brand-primary text-black hover:opacity-90">
+          ＋ 이 강의로 새 녹음
+        </button>
+      </div>
+      {sessions.length === 0 ? (
+        <p className="py-6 text-xs text-brand-textDim border border-dashed border-brand-subtle text-center">
+          아직 세션이 없습니다. '＋ 이 강의로 새 녹음'으로 시작하거나, 목록의 미분류 녹음을 묶어 오세요.
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {sessions.map((n) => (
+            <li key={n.id}>
+              <button
+                onClick={() => props.onOpenNote(n.id)}
+                className="w-full text-left p-4 border border-brand-subtle bg-brand-panel/40 hover:border-brand-primary/60 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  {n.sessionLabel && (
+                    <span className="text-[10px] px-1.5 py-0.5 border border-brand-primary/50 text-brand-primary shrink-0">{n.sessionLabel}</span>
+                  )}
+                  <span className="text-sm font-semibold text-brand-text">{n.title}</span>
+                  {n.summary === null && (
+                    <span className="text-[9px] px-1.5 py-0.5 bg-amber-500 text-black font-semibold">정리 실패</span>
+                  )}
+                </div>
+                <div className="mt-1 text-xs text-brand-textDim">
+                  {n.recordedAt.slice(0, 10)} · {fmtDur(n.durationSec)}
+                  {n.summary ? ` · ${n.summary.oneLiner.slice(0, 60)}` : ""}
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 // ─────────────────────────────── 녹음 (전역 세션의 뷰) ───────────────────────────────
-function RecordView(props: { onDone: (noteId: string) => void; onCancel: () => void }) {
+function RecordView(props: {
+  lectures: Lecture[];
+  onDone: (noteId: string) => void;
+  onCancel: () => void;
+  onLectureCreated: () => void;
+}) {
   const store = useLectureRecordingStore();
-  const { status, handle, title, source, keepAudio, live, markCount, finishStage, finishedNoteId } = store;
+  const { status, handle, title, source, keepAudio, lectureId, sessionLabel, live, markCount, finishStage, finishedNoteId } = store;
   const [elapsed, setElapsed] = useState(() => handle?.elapsedSec() ?? 0);
   const [startError, setStartError] = useState<string | null>(null);
+  const [newLec, setNewLec] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newSpeaker, setNewSpeaker] = useState("");
   const listEndRef = useRef<HTMLDivElement>(null);
+  const currentLecture = props.lectures.find((l) => l.id === lectureId) ?? null;
+
+  const createLectureInline = async () => {
+    if (!newTitle.trim()) return;
+    const lec = await saveLecture(newLecture(newTitle, newSpeaker));
+    props.onLectureCreated();
+    store.setMeta({ lectureId: lec.id, sessionLabel: "1회차" });
+    setNewLec(false); setNewTitle(""); setNewSpeaker("");
+  };
 
   useEffect(() => {
     if (!handle) return;
@@ -388,18 +686,62 @@ function RecordView(props: { onDone: (noteId: string) => void; onCancel: () => v
           </div>
         )}
         <div className="space-y-3 mb-5">
+          {/* 소속 강의 선택 */}
+          <div className="flex items-center gap-2">
+            <select
+              value={newLec ? "__new__" : (lectureId ?? "")}
+              onChange={(e) => {
+                if (e.target.value === "__new__") { setNewLec(true); return; }
+                setNewLec(false);
+                const lid = e.target.value || null;
+                store.setMeta({ lectureId: lid, sessionLabel: lid ? (sessionLabel || "1회차") : "" });
+              }}
+              className="flex-1 px-3 py-2 text-sm bg-brand-panel border border-brand-subtle text-brand-text focus:outline-none focus:border-brand-primary"
+            >
+              <option value="">미분류 (강의에 속하지 않음)</option>
+              {props.lectures.map((l) => (
+                <option key={l.id} value={l.id}>📚 {l.title}{l.speaker ? ` — ${l.speaker}` : ""}</option>
+              ))}
+              <option value="__new__">＋ 새 강의 만들기</option>
+            </select>
+            {(lectureId || newLec) && (
+              <input
+                value={sessionLabel}
+                onChange={(e) => store.setMeta({ sessionLabel: e.target.value })}
+                placeholder="회차 라벨 (예: 1회차)"
+                className="w-40 px-3 py-2 text-sm bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim focus:outline-none focus:border-brand-primary"
+              />
+            )}
+          </div>
+          {newLec && (
+            <div className="flex items-center gap-2 p-3 border border-brand-primary/40 bg-brand-panel/60">
+              <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="총괄 강의 제목 (필수)"
+                className="flex-1 px-3 py-2 text-sm bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim focus:outline-none focus:border-brand-primary" />
+              <input value={newSpeaker} onChange={(e) => setNewSpeaker(e.target.value)} placeholder="강연자"
+                className="w-40 px-3 py-2 text-sm bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim focus:outline-none focus:border-brand-primary" />
+              <button onClick={() => void createLectureInline()} disabled={!newTitle.trim()}
+                className="px-3 py-2 text-xs font-semibold bg-brand-primary text-black disabled:opacity-40">생성</button>
+            </div>
+          )}
+          {currentLecture && (
+            <p className="text-[11px] text-brand-textDim">
+              📚 <strong>{currentLecture.title}</strong>{currentLecture.speaker ? ` (${currentLecture.speaker})` : ""} 의 세션으로 저장됩니다.
+            </p>
+          )}
           <input
             value={title}
             onChange={(e) => store.setMeta({ title: e.target.value })}
-            placeholder="강의 제목 (비우면 AI가 자동 작성)"
+            placeholder={lectureId ? "세션 제목 (비우면 회차 라벨/AI 자동)" : "강의 제목 (비우면 AI가 자동 작성)"}
             className="w-full px-3 py-2 text-sm bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim focus:outline-none focus:border-brand-primary"
           />
-          <input
-            value={source}
-            onChange={(e) => store.setMeta({ source: e.target.value })}
-            placeholder="출처 — 강의명·플랫폼·강사 (선택)"
-            className="w-full px-3 py-2 text-sm bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim focus:outline-none focus:border-brand-primary"
-          />
+          {!lectureId && (
+            <input
+              value={source}
+              onChange={(e) => store.setMeta({ source: e.target.value })}
+              placeholder="출처 — 강의명·플랫폼·강사 (선택)"
+              className="w-full px-3 py-2 text-sm bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim focus:outline-none focus:border-brand-primary"
+            />
+          )}
           <label className="flex items-center gap-2 text-xs text-brand-textDim">
             <input type="checkbox" checked={keepAudio} onChange={(e) => store.setMeta({ keepAudio: e.target.checked })} />
             오디오 원본 보관 (기본: 정리 후 폐기 — 저작권·용량)
@@ -481,7 +823,12 @@ function RecordView(props: { onDone: (noteId: string) => void; onCancel: () => v
 }
 
 // ─────────────────────────────── 상세 ───────────────────────────────
-function DetailView(props: { id: string; onBack: () => void }) {
+function DetailView(props: {
+  id: string;
+  lectures: Lecture[];
+  onBack: () => void;
+  onOpenLecture: (id: string) => void;
+}) {
   const [note, setNote] = useState<LectureNote | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -547,6 +894,49 @@ function DetailView(props: { id: string; onBack: () => void }) {
         {note.source || "출처 미입력"} · {note.recordedAt.slice(0, 16).replace("T", " ")} · {fmtDur(note.durationSec)}
         {note.bookmarks.length > 0 && ` · 🔖 ${note.bookmarks.length}개`}
       </p>
+      {/* 소속 강의 · 회차 */}
+      <div className="mt-2 flex items-center gap-2">
+        <span className="text-[10px] text-brand-textDim shrink-0">소속</span>
+        <select
+          value={note.lectureId ?? ""}
+          onChange={(e) => {
+            const lid = e.target.value || null;
+            void (async () => {
+              const updated = await assignNoteToLecture(note, lid, lid ? (note.sessionLabel ?? "") : undefined);
+              setNote(updated);
+            })();
+          }}
+          className="px-2 py-1 text-xs bg-brand-panel border border-brand-subtle text-brand-text focus:outline-none focus:border-brand-primary"
+        >
+          <option value="">미분류</option>
+          {props.lectures.map((l) => <option key={l.id} value={l.id}>📚 {l.title}</option>)}
+        </select>
+        {note.lectureId && (
+          <>
+            <input
+              key={`sl-${note.id}-${note.sessionLabel ?? ""}`}
+              defaultValue={note.sessionLabel ?? ""}
+              onBlur={(e) => {
+                const v = e.target.value.trim();
+                if (v !== (note.sessionLabel ?? "")) {
+                  void saveNote({ ...note, sessionLabel: v || undefined }).then(() =>
+                    setNote({ ...note, sessionLabel: v || undefined }),
+                  );
+                }
+              }}
+              onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+              placeholder="회차 라벨"
+              className="w-28 px-2 py-1 text-xs bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim focus:outline-none focus:border-brand-primary"
+            />
+            <button
+              onClick={() => props.onOpenLecture(note.lectureId!)}
+              className="text-[10px] text-brand-primary hover:underline"
+            >
+              강의로 이동 →
+            </button>
+          </>
+        )}
+      </div>
       <div className="mt-2 flex items-center gap-2">
         <span className="text-[10px] text-brand-textDim shrink-0">태그</span>
         <input

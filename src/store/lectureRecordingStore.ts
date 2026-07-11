@@ -47,13 +47,19 @@ interface LectureRecordingState {
   title: string;
   source: string;
   keepAudio: boolean;
+  /** 소속 강의 (녹음 시작 폼에서 선택) — null = 미분류 */
+  lectureId: string | null;
+  /** 회차 라벨 — 자유 텍스트 */
+  sessionLabel: string;
   live: LiveChunk[];
   markCount: number;
   finishStage: FinishStage;
   /** finish 성공 시 채워짐 — UI가 상세로 이동한 뒤 reset() */
   finishedNoteId: string | null;
 
-  setMeta: (meta: Partial<Pick<LectureRecordingState, "title" | "source" | "keepAudio">>) => void;
+  setMeta: (
+    meta: Partial<Pick<LectureRecordingState, "title" | "source" | "keepAudio" | "lectureId" | "sessionLabel">>,
+  ) => void;
   start: () => Promise<void>;
   bookmark: () => void;
   finish: () => Promise<void>;
@@ -97,6 +103,8 @@ export const useLectureRecordingStore = create<LectureRecordingState>((set, get)
     title: "",
     source: "",
     keepAudio: false,
+    lectureId: null,
+    sessionLabel: "",
     live: [],
     markCount: 0,
     finishStage: { stage: "idle" },
@@ -121,7 +129,7 @@ export const useLectureRecordingStore = create<LectureRecordingState>((set, get)
     },
 
     finish: async () => {
-      const { handle, title, source, keepAudio } = get();
+      const { handle, title, source, keepAudio, lectureId, sessionLabel } = get();
       if (!handle || get().status !== "recording") return;
       set({ status: "finishing" });
       try {
@@ -158,7 +166,7 @@ export const useLectureRecordingStore = create<LectureRecordingState>((set, get)
         set({ finishStage: { stage: "saving" } });
         const note: LectureNote = {
           id: handle.sessionId,
-          title: title.trim() || summary?.title || `강의 노트 ${new Date().toLocaleDateString("ko-KR")}`,
+          title: title.trim() || sessionLabel.trim() || summary?.title || `강의 노트 ${new Date().toLocaleDateString("ko-KR")}`,
           source: source.trim(),
           recordedAt: new Date().toISOString(),
           durationSec,
@@ -167,6 +175,8 @@ export const useLectureRecordingStore = create<LectureRecordingState>((set, get)
           bookmarks,
           tags: [],
           keepAudio,
+          lectureId,
+          sessionLabel: sessionLabel.trim() || undefined,
         };
         await saveNote(note);
         if (!keepAudio) await deleteSessionChunks(handle.sessionId); // 원본 기본 폐기
@@ -191,6 +201,8 @@ export const useLectureRecordingStore = create<LectureRecordingState>((set, get)
         title: "",
         source: "",
         keepAudio: false,
+        lectureId: null,
+        sessionLabel: "",
         live: [],
         markCount: 0,
         finishStage: { stage: "idle" },

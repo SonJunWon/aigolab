@@ -27,6 +27,22 @@ export interface LectureSummary {
   myBookmarks: string[];
 }
 
+/**
+ * 강의(총괄) — 세션 노트들을 묶는 상위 단위 (v2 재편, 기획 02).
+ * 강연자는 단순 문자열(복수면 쉼표), 회차 라벨은 노트 쪽 자유 텍스트.
+ */
+export interface Lecture {
+  id: string;                 // "lec-{ts}"
+  title: string;              // 총괄 강의 제목
+  speaker: string;            // 강연자
+  description: string;
+  tags: string[];
+  /** 통합 정리본 — 세션 정리본들의 재종합 (M2). null = 미생성 */
+  overview: LectureSummary | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 /** 저장되는 강의 노트 1건 */
 export interface LectureNote {
   id: string;
@@ -45,6 +61,24 @@ export interface LectureNote {
   keepAudio: boolean;
   /** 마지막 수정 시각 (ISO) — 로컬↔클라우드 last-write-wins 병합 기준. P1 노트에는 없을 수 있음 */
   updatedAt?: string;
+  /** 소속 강의 id — null/undefined = 미분류 (하위 호환: 기존 노트는 전부 미분류) */
+  lectureId?: string | null;
+  /** 회차 라벨 — 자유 텍스트 (예: "1회차", "2일차 오전") */
+  sessionLabel?: string;
+}
+
+/** 강의 자료 — 파일/링크/메모 (M2). Blob 본체는 IDB materials 스토어의 blob 필드에 */
+export interface Material {
+  id: string;                 // "mat-{ts}"
+  lectureId: string;
+  kind: "file" | "link" | "memo";
+  name: string;
+  url?: string;
+  mime?: string;
+  size?: number;
+  memo?: string;
+  blob?: Blob;
+  addedAt: string;
 }
 
 /** 파이프라인 진행 상태 (UI 표시용) */

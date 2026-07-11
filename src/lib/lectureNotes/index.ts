@@ -13,12 +13,25 @@ export {
   deleteNote,
   deleteSessionChunks,
   listOrphanSessions,
+  getLecture,
+  listLectures,
+  listMaterials,
+  putMaterial,
+  deleteMaterial,
 } from "./db";
-export type { LectureNote, LectureSummary, PipelineStage, RecordingChunk } from "./types";
+export type { Lecture, LectureNote, LectureSummary, Material, PipelineStage, RecordingChunk } from "./types";
 
-import { putNote as dbPut, deleteNote as dbDelete, listNotes as dbList, deleteSessionChunks as dbDeleteChunks } from "./db";
+import {
+  putNote as dbPut,
+  deleteNote as dbDelete,
+  listNotes as dbList,
+  deleteSessionChunks as dbDeleteChunks,
+  putLecture as dbPutLecture,
+  deleteLecture as dbDeleteLecture,
+  detachNotesFromLecture,
+} from "./db";
 import { upsertNoteCloud, deleteNoteCloud, fetchCloudNotes, CLOUD_ENABLED } from "./cloud";
-import type { LectureNote } from "./types";
+import type { Lecture, LectureNote } from "./types";
 
 /** 클라우드 동기화 활성 여부 — UI 배지 분기용 (cloud.ts 스위치 재노출) */
 export const cloudEnabled = CLOUD_ENABLED;
@@ -40,6 +53,52 @@ export async function removeNote(id: string): Promise<{ cloud: boolean }> {
   await dbDeleteChunks(id);
   const cloud = await deleteNoteCloud(id);
   return { cloud };
+}
+
+/** 강의 저장/수정 — updatedAt 스탬프. (클라우드 동기화는 M3에서 확장) */
+export async function saveLecture(
+  lecture: Omit<Lecture, "updatedAt"> & { updatedAt?: string },
+): Promise<Lecture> {
+  const stamped: Lecture = { ...lecture, updatedAt: new Date().toISOString() };
+  await dbPutLecture(stamped);
+  return stamped;
+}
+
+/** 새 강의 생성 헬퍼 */
+export function newLecture(title: string, speaker: string): Lecture {
+  const now = new Date().toISOString();
+  return {
+    id: `lec-${Date.now()}`,
+    title: title.trim(),
+    speaker: speaker.trim(),
+    description: "",
+    tags: [],
+    overview: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+/** 강의 삭제 — 소속 노트는 파괴하지 않고 미분류로 (비파괴 원칙) */
+export async function removeLecture(id: string): Promise<{ detached: number }> {
+  const detached = await detachNotesFromLecture(id);
+  await dbDeleteLecture(id);
+  return { detached };
+}
+
+/** 노트를 강의에 배속/이동/해제 (lectureId=null 이면 미분류로) — 뭉치기/분리의 단일 진입점 */
+export async function assignNoteToLecture(
+  note: LectureNote,
+  lectureId: string | null,
+  sessionLabel?: string,
+): Promise<LectureNote> {
+  const updated: LectureNote = {
+    ...note,
+    lectureId,
+    sessionLabel: lectureId ? (sessionLabel ?? note.sessionLabel) : undefined,
+  };
+  await saveNote(updated);
+  return updated;
 }
 
 /**
