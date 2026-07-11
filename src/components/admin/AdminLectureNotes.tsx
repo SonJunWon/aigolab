@@ -15,9 +15,11 @@ import {
   transcribeChunkBlob,
   summarizeTranscript,
   quickChunkSummary,
-  putNote,
+  saveNote,
+  removeNote,
+  syncNotes,
+  cloudEnabled,
   listNotes,
-  deleteNote,
   deleteSessionChunks,
   noteToMarkdown,
   type RecorderHandle,
@@ -42,23 +44,33 @@ export function AdminLectureNotes() {
   const [view, setView] = useState<View>({ name: "list" });
   const [notes, setNotes] = useState<LectureNote[]>([]);
   const [query, setQuery] = useState("");
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [cloudOk, setCloudOk] = useState<boolean | null>(null); // null = 동기화 중
 
   const refresh = () => { void listNotes().then(setNotes); };
-  useEffect(refresh, []);
+  useEffect(() => {
+    refresh(); // 로컬 먼저 즉시 표시
+    void syncNotes().then((r) => { setCloudOk(r.cloud); if (r.pulled > 0) refresh(); });
+  }, []);
 
-  const filtered = query.trim()
+  let filtered = query.trim()
     ? notes.filter((n) =>
         [n.title, n.source, n.transcript, JSON.stringify(n.summary ?? "")].join(" ").toLowerCase().includes(query.toLowerCase()),
       )
     : notes;
+  if (tagFilter) filtered = filtered.filter((n) => n.tags.includes(tagFilter));
 
   return (
     <div>
       {view.name === "list" && (
         <ListView
           notes={filtered}
+          allNotes={notes}
           query={query}
           onQuery={setQuery}
+          tagFilter={tagFilter}
+          onTagFilter={setTagFilter}
+          cloudOk={cloudOk}
           onNew={() => setView({ name: "record" })}
           onOpen={(id) => setView({ name: "detail", id })}
         />
@@ -82,14 +94,19 @@ export function AdminLectureNotes() {
 // ─────────────────────────────── 목록 ───────────────────────────────
 function ListView(props: {
   notes: LectureNote[];
+  allNotes: LectureNote[];
   query: string;
   onQuery: (q: string) => void;
+  tagFilter: string | null;
+  onTagFilter: (t: string | null) => void;
+  cloudOk: boolean | null;
   onNew: () => void;
   onOpen: (id: string) => void;
 }) {
+  const allTags = [...new Set(props.allNotes.flatMap((n) => n.tags))].sort();
   return (
     <div>
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-3 mb-2">
         <input
           value={props.query}
           onChange={(e) => props.onQuery(e.target.value)}
@@ -102,6 +119,29 @@ function ListView(props: {
         >
           🎙️ 새 강의
         </button>
+      </div>
+
+      <div className="flex items-center gap-2 mb-4 min-h-[22px]">
+        <span className="text-[10px] text-brand-textDim">
+          {!cloudEnabled && "💾 로컬 저장 모드 — 이 브라우저에 저장됩니다 (Supabase 연동 예정)"}
+          {cloudEnabled && props.cloudOk === null && "☁️ 동기화 중…"}
+          {cloudEnabled && props.cloudOk === true && "☁️ 클라우드 동기화됨"}
+          {cloudEnabled && props.cloudOk === false && "⚠️ 오프라인 — 이 브라우저에만 저장됩니다"}
+        </span>
+        <div className="flex-1" />
+        {allTags.map((t) => (
+          <button
+            key={t}
+            onClick={() => props.onTagFilter(props.tagFilter === t ? null : t)}
+            className={`px-2 py-0.5 text-[10px] border transition-colors ${
+              props.tagFilter === t
+                ? "border-brand-primary text-brand-primary"
+                : "border-brand-subtle text-brand-textDim hover:text-brand-text"
+            }`}
+          >
+            #{t}
+          </button>
+        ))}
       </div>
 
       {props.notes.length === 0 ? (
@@ -125,6 +165,7 @@ function ListView(props: {
                 </div>
                 <div className="mt-1 text-xs text-brand-textDim">
                   {n.source || "출처 미입력"} · {n.recordedAt.slice(0, 10)} · {fmtDur(n.durationSec)}
+                  {n.tags.length > 0 && ` · ${n.tags.map((t) => `#${t}`).join(" ")}`}
                   {n.summary ? ` · ${n.summary.oneLiner.slice(0, 60)}` : ""}
                 </div>
               </button>
@@ -275,7 +316,7 @@ function RecordView(props: { onDone: (noteId: string) => void; onCancel: () => v
         tags: [],
         keepAudio,
       };
-      await putNote(note);
+      await saveNote(note); // IDB + 클라우드 (클라우드 실패해도 로컬 저장은 완료)
       if (!keepAudio) await deleteSessionChunks(handle.sessionId); // 원본 기본 폐기
       props.onDone(note.id);
     } catch (e) {
@@ -426,13 +467,20 @@ function DetailView(props: { id: string; onBack: () => void }) {
     try {
       const summary = await summarizeTranscript(note.transcript, note.bookmarks);
       const updated = { ...note, summary, title: note.title || summary.title };
-      await putNote(updated);
+      await saveNote(updated);
       setNote(updated);
     } catch (e) {
       alert(`정리 재시도 실패: ${e instanceof Error ? e.message : "unknown"}`);
     } finally {
       setBusy(false);
     }
+  };
+
+  const saveTags = async (raw: string) => {
+    const tags = [...new Set(raw.split(",").map((t) => t.trim().replace(/^#/, "")).filter(Boolean))];
+    const updated = { ...note, tags };
+    await saveNote(updated);
+    setNote(updated);
   };
 
   const copyMd = async () => {
@@ -442,9 +490,8 @@ function DetailView(props: { id: string; onBack: () => void }) {
   };
 
   const remove = async () => {
-    if (!confirm(`'${note.title}' 노트를 삭제할까요? (복구 불가)`)) return;
-    await deleteNote(note.id);
-    await deleteSessionChunks(note.id);
+    if (!confirm(`'${note.title}' 노트를 삭제할까요? (로컬+클라우드, 복구 불가)`)) return;
+    await removeNote(note.id);
     props.onBack();
   };
 
@@ -466,6 +513,17 @@ function DetailView(props: { id: string; onBack: () => void }) {
         {note.source || "출처 미입력"} · {note.recordedAt.slice(0, 16).replace("T", " ")} · {fmtDur(note.durationSec)}
         {note.bookmarks.length > 0 && ` · 🔖 ${note.bookmarks.length}개`}
       </p>
+      <div className="mt-2 flex items-center gap-2">
+        <span className="text-[10px] text-brand-textDim shrink-0">태그</span>
+        <input
+          key={note.tags.join(",")}
+          defaultValue={note.tags.join(", ")}
+          onBlur={(e) => { if (e.target.value !== note.tags.join(", ")) void saveTags(e.target.value); }}
+          onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+          placeholder="쉼표로 구분 (예: 마케팅, 온라인강의)"
+          className="flex-1 max-w-sm px-2 py-1 text-xs bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim focus:outline-none focus:border-brand-primary"
+        />
+      </div>
 
       {!s ? (
         <div className="mt-6 p-4 border border-amber-500/40 bg-amber-500/10 text-sm text-brand-text">

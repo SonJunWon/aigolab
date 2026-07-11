@@ -13,6 +13,18 @@
 
 ---
 
+## [4.43.0] - 2026-07-11
+
+### Added
+
+- **강의 정리 Phase 2 (부분) — Gemini STT 폴백 + 태그**
+  - STT 폴백: Groq Whisper 2회 실패 또는 키 부재 시 Gemini 멀티모달(gemini-2.5-flash, 오디오 inline)로 자동 전환. 라이브 노트·일괄 변환 공용 경로.
+  - 태그: 상세에서 쉼표 구분 편집, 목록에서 태그 칩 필터.
+  - Supabase 영속화 기반 준비: `cloud.ts` 동기화 계층(saveNote/removeNote/syncNotes, updatedAt last-write-wins) + 마이그레이션 `v4.43.0_admin_lecture_notes.sql`(is_admin RLS) 동봉.
+  - **단, 클라우드 동기화는 `CLOUD_ENABLED=false` 로 비활성** — 현재는 로컬 저장 모드(💾 배지, 네트워크 호출 0회). 추후 마이그레이션 적용 + 플래그 전환으로 활성화 예정.
+
+---
+
 ## [4.42.0] - 2026-07-11
 
 ### Added

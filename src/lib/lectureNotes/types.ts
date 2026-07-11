@@ -43,6 +43,8 @@ export interface LectureNote {
   tags: string[];
   /** 오디오 원본 보관 여부 (기본 false — 정리 후 폐기) */
   keepAudio: boolean;
+  /** 마지막 수정 시각 (ISO) — 로컬↔클라우드 last-write-wins 병합 기준. P1 노트에는 없을 수 있음 */
+  updatedAt?: string;
 }
 
 /** 파이프라인 진행 상태 (UI 표시용) */
