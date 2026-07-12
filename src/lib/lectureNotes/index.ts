@@ -7,6 +7,7 @@ export type { RecorderHandle, RecordingOptions } from "./recorder";
 export { transcribeSession, transcribeChunkBlob } from "./stt";
 export { printNoteAsPdf, noteToPrintHtml } from "./printPdf";
 export { summarizeTranscript, quickChunkSummary, summarizeLectureOverview } from "./summarize";
+export { downloadSessionAudio } from "./audioExport";
 
 /** 자료 파일 업로드 한도 — 파일당 100MB (사용자 확정, 기획 02 §8) */
 export const MATERIAL_FILE_LIMIT = 100 * 1024 * 1024;

@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   getSessionChunks,
   deleteSessionChunks,
+  downloadSessionAudio,
   saveNote,
   type LectureNote,
 } from "../../lib/lectureNotes";
@@ -42,6 +43,7 @@ export function LectureAudioPlayer(props: {
   const [playing, setPlaying] = useState(false);
   const [rate, setRate] = useState(1);
   const [pos, setPos] = useState(0); // 전역 재생 위치(초)
+  const [downloading, setDownloading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // 청크 전환(src 교체) 직후 loadedmetadata 에서 적용할 청크 내 오프셋 / 재생 재개 여부
   const pendingOffset = useRef(0);
@@ -142,6 +144,17 @@ export function LectureAudioPlayer(props: {
     }
   };
 
+  const download = async () => {
+    setDownloading(true);
+    try {
+      await downloadSessionAudio(note);
+    } catch (e) {
+      alert(`다운로드 실패: ${e instanceof Error ? e.message : "unknown"}`);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const deleteAudio = async () => {
     if (!confirm("보관된 오디오 원본을 삭제할까요? (노트·전사·정리본은 유지, 오디오만 복구 불가)")) return;
     audioRef.current?.pause();
@@ -211,6 +224,14 @@ export function LectureAudioPlayer(props: {
         )}
         <div className="flex-1" />
         <span className="text-[10px] text-brand-textDim">{(totalBytes / (1024 * 1024)).toFixed(1)}MB</span>
+        <button
+          onClick={() => void download()}
+          disabled={downloading}
+          title={segs.length > 1 ? `원본 무손실 — 5분 구간 ${segs.length}개를 ZIP 하나로` : "원본 무손실 webm"}
+          className="px-2 py-0.5 text-[11px] border border-brand-subtle text-brand-textDim hover:text-brand-text disabled:opacity-50"
+        >
+          {downloading ? "준비 중…" : "⬇ 다운로드"}
+        </button>
         <button
           onClick={() => void deleteAudio()}
           className="px-2 py-0.5 text-[11px] border border-red-500/40 text-red-400 hover:bg-red-500/10"
