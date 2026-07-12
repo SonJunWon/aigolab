@@ -21,6 +21,7 @@ import {
   transcribeSession,
   deleteSessionChunks,
   noteToMarkdown,
+  printNoteAsPdf,
   listLectures,
   saveLecture,
   newLecture,
@@ -1300,6 +1301,13 @@ function DetailView(props: {
       <div className="flex items-center gap-2 mb-4">
         <button onClick={props.onBack} className="text-sm text-brand-textDim hover:text-brand-primary">← 목록</button>
         <div className="flex-1" />
+        <button
+          onClick={() => printNoteAsPdf(note, props.lectures.find((l) => l.id === note.lectureId) ?? null)}
+          title="인쇄 다이얼로그에서 '대상: PDF로 저장'을 선택하세요"
+          className="px-3 py-1.5 text-xs border border-brand-subtle text-brand-textDim hover:text-brand-text"
+        >
+          📄 PDF 저장
+        </button>
         <button onClick={() => void copyMd()} className="px-3 py-1.5 text-xs border border-brand-subtle text-brand-textDim hover:text-brand-text">
           {copied ? "✅ 복사됨" : "📋 Markdown 복사"}
         </button>
