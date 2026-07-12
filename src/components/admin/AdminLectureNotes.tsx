@@ -37,6 +37,7 @@ import {
   type Material,
 } from "../../lib/lectureNotes";
 import { useLectureRecordingStore } from "../../store/lectureRecordingStore";
+import { LectureAudioPlayer } from "./LectureAudioPlayer";
 
 type View =
   | { name: "list" }
@@ -1120,7 +1121,7 @@ function RecordView(props: {
           )}
           <label className="flex items-center gap-2 text-xs text-brand-textDim">
             <input type="checkbox" checked={keepAudio} onChange={(e) => store.setMeta({ keepAudio: e.target.checked })} />
-            오디오 원본 보관 (기본: 정리 후 폐기 — 저작권·용량)
+            오디오 원본 보관 — 노트에서 다시 듣기·배속 재생 가능 (해제 시 정리 후 폐기 — 저작권·용량)
           </label>
         </div>
         {scheduledAt ? (
@@ -1375,6 +1376,8 @@ function DetailView(props: {
           className="flex-1 max-w-sm px-2 py-1 text-xs bg-brand-panel border border-brand-subtle text-brand-text placeholder:text-brand-textDim focus:outline-none focus:border-brand-primary"
         />
       </div>
+
+      <LectureAudioPlayer key={note.id} note={note} onAudioDeleted={setNote} />
 
       {!s ? (
         <div className="mt-6 p-4 border border-amber-500/40 bg-amber-500/10 text-sm text-brand-text">

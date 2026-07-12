@@ -15,6 +15,7 @@ export {
   getNote,
   listNotes,
   deleteNote,
+  getSessionChunks,
   deleteSessionChunks,
   listOrphanSessions,
   getLecture,

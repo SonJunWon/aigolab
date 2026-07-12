@@ -59,7 +59,7 @@ export interface LectureNote {
   /** 녹음 중 북마크 시점(초) */
   bookmarks: number[];
   tags: string[];
-  /** 오디오 원본 보관 여부 (기본 false — 정리 후 폐기) */
+  /** 오디오 원본 보관 여부 (기본 true — 노트에서 다시 듣기. 해제 시 정리 후 폐기) */
   keepAudio: boolean;
   /** 마지막 수정 시각 (ISO) — 로컬↔클라우드 last-write-wins 병합 기준. P1 노트에는 없을 수 있음 */
   updatedAt?: string;
